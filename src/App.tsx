@@ -10,6 +10,7 @@ import Dashboard from './pages/Dashboard'
 import PlaceholderPage from './pages/PlaceholderPage'
 import PersonaManagement from './pages/PersonaManagement'
 import Products from './pages/Products'
+import Inventory from './pages/Inventory'
 import {
   ShoppingCart,
   History,
@@ -67,6 +68,16 @@ function App() {
               <PersonaProtectedRoute>
                 <Layout>
                   <Products />
+                </Layout>
+              </PersonaProtectedRoute>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/management/inventory" element={
+            <ProtectedRoute>
+              <PersonaProtectedRoute>
+                <Layout>
+                  <Inventory />
                 </Layout>
               </PersonaProtectedRoute>
             </ProtectedRoute>

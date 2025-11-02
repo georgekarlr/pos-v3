@@ -9,6 +9,7 @@ export interface Product {
   sku: string | null
   barcode: string | null
   image_url: string | null
+  quantity: number
   is_active: boolean
   created_at: string
   updated_at: string
