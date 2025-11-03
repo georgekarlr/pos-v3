@@ -11,6 +11,7 @@ import PlaceholderPage from './pages/PlaceholderPage'
 import PersonaManagement from './pages/PersonaManagement'
 import Products from './pages/Products'
 import Inventory from './pages/Inventory'
+import POS from './pages/POS'
 import {
   ShoppingCart,
   History,
@@ -53,11 +54,7 @@ function App() {
             <ProtectedRoute>
               <PersonaProtectedRoute>
                 <Layout>
-                  <PlaceholderPage
-                    title="Point of Sale"
-                    description="Process transactions and manage sales at the point of sale."
-                    icon={ShoppingCart}
-                  />
+                  <POS />
                 </Layout>
               </PersonaProtectedRoute>
             </ProtectedRoute>
