@@ -12,6 +12,7 @@ import PersonaManagement from './pages/PersonaManagement'
 import Products from './pages/Products'
 import Inventory from './pages/Inventory'
 import POS from './pages/POS'
+import SalesHistory from './pages/SalesHistory'
 import {
   ShoppingCart,
   History,
@@ -19,6 +20,7 @@ import {
   BarChart3,
   Settings
 } from 'lucide-react'
+import Reports from './pages/Reports'
 
 function App() {
   return (
@@ -84,11 +86,7 @@ function App() {
             <ProtectedRoute>
               <PersonaProtectedRoute>
                 <Layout>
-                  <PlaceholderPage
-                    title="Sales History"
-                    description="View and analyze your past sales transactions."
-                    icon={History}
-                  />
+                  <SalesHistory />
                 </Layout>
               </PersonaProtectedRoute>
             </ProtectedRoute>
@@ -112,11 +110,7 @@ function App() {
             <ProtectedRoute>
               <PersonaProtectedRoute>
                 <Layout>
-                  <PlaceholderPage
-                    title="Analytics Reports"
-                    description="View detailed analytics reports and business insights."
-                    icon={BarChart3}
-                  />
+                  <Reports />
                 </Layout>
               </PersonaProtectedRoute>
             </ProtectedRoute>

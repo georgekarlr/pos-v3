@@ -59,7 +59,6 @@ const staffNavigation: NavigationItem[] = [
       { name: 'Customers', href: '/management/customers' },
     ]
   },
-  { name: 'Analytics Reports', href: '/analytics-reports', icon: BarChart3 },
   { name: 'Settings', href: '/settings', icon: Settings },
 ]
 

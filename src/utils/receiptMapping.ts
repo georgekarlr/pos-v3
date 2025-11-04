@@ -1,0 +1,50 @@
+import { ReceiptData, ReceiptLine, ReceiptPayment } from '../components/pos/Receipt'
+import { SaleDetailsResponse } from '../types/sales'
+
+export function mapSaleDetailsToReceipt(details: SaleDetailsResponse): ReceiptData {
+  const order = details.order
+  const items = details.items || []
+  const payments = details.payments || []
+
+  const lines: ReceiptLine[] = items.map((it) => {
+    const unit = (it.unit_price ?? (it.line_total && it.quantity ? it.line_total / it.quantity : 0)) || 0
+    const total = (it.line_total ?? (it.quantity && it.unit_price ? it.quantity * it.unit_price : 0)) || 0
+    return {
+      name: it.product_name,
+      qty: it.quantity,
+      unitPrice: Number(unit),
+      lineTotal: Number(total)
+    }
+  })
+
+  const subtotalFromItems = lines.reduce((sum, l) => sum + l.lineTotal, 0)
+  const subtotal = Number(order.subtotal_amount ?? subtotalFromItems)
+  const tax = Number(order.tax_amount ?? Math.max(0, Number(order.total_amount) - subtotal))
+  const total = Number(order.total_amount)
+
+  const receiptPayments: ReceiptPayment[] = payments.map((p) => ({
+    method: p.method,
+    amount: Number(p.amount),
+    reference: p.transaction_ref ?? undefined
+  }))
+
+  const totalPaid = receiptPayments.reduce((s, p) => s + p.amount, 0)
+  const change = Math.max(0, totalPaid - total)
+
+  return {
+    orderId: order.id,
+    businessName: undefined,
+    businessAddress1: undefined,
+    businessAddress2: undefined,
+    cashier: order.account_person_name || undefined,
+    dateISO: order.created_at,
+    lines,
+    subtotal,
+    tax,
+    total,
+    payments: receiptPayments,
+    totalPaid,
+    change,
+    notes: order.notes ?? undefined
+  }
+}
