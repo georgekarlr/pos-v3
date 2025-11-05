@@ -30,7 +30,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
             <Menu className="h-5 w-5" />
           </button>
           <h2 className="ml-2 text-lg font-semibold text-gray-900">
-            Your App 
+            POS Pro
           </h2>
         </div>
 

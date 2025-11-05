@@ -9,8 +9,6 @@ import {
   Shield,
   ShoppingCart,
   Package,
-  History,
-  Users,
   ChevronDown,
   ChevronRight
 } from 'lucide-react'
@@ -37,7 +35,6 @@ const adminNavigation: NavigationItem[] = [
       { name: 'Products', href: '/management/products' },
       { name: 'Inventory', href: '/management/inventory' },
       { name: 'Sales History', href: '/management/sales-history' },
-      { name: 'Customers', href: '/management/customers' },
     ]
   },
   { name: 'Analytics Reports', href: '/analytics-reports', icon: BarChart3 },
@@ -53,10 +50,7 @@ const staffNavigation: NavigationItem[] = [
     name: 'Management',
     icon: Package,
     children: [
-      { name: 'Products', href: '/management/products' },
-      { name: 'Inventory', href: '/management/inventory' },
       { name: 'Sales History', href: '/management/sales-history' },
-      { name: 'Customers', href: '/management/customers' },
     ]
   },
   { name: 'Settings', href: '/settings', icon: Settings },
@@ -100,7 +94,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           {/* Header */}
           <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200">
             <div>
-              <h1 className="text-xl font-bold text-gray-900">Your App</h1>
+              <h1 className="text-xl font-bold text-gray-900">POS Pro</h1>
               {persona && (
                 <p className="text-xs text-gray-500">
                   {persona.type === 'admin' ? 'Admin' : (persona.personName || persona.loginName || 'Staff')} Portal

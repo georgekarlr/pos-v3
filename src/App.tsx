@@ -1,4 +1,3 @@
-import React from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -14,10 +13,7 @@ import Inventory from './pages/Inventory'
 import POS from './pages/POS'
 import SalesHistory from './pages/SalesHistory'
 import {
-  ShoppingCart,
-  History,
   Users,
-  BarChart3,
   Settings
 } from 'lucide-react'
 import Reports from './pages/Reports'
