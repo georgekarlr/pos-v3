@@ -22,7 +22,7 @@ const toISOEndOfDay = (dateStr: string) => {
 const formatCurrency = (value: string | number) => {
   const num = typeof value === 'string' ? Number(value) : value
   if (isNaN(num)) return '-'
-  return new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD' }).format(num)
+  return new Intl.NumberFormat(undefined, { style: 'currency', currency: 'PHP' }).format(num)
 }
 
 const Reports: React.FC = () => {
@@ -53,6 +53,43 @@ const Reports: React.FC = () => {
     startISO: toISOStartOfDay(startDate),
     endISO: toISOEndOfDay(endDate)
   }), [startDate, endDate])
+
+  const kpis = useMemo(() => {
+    const totalOrders = salesOverTime.reduce((s, r) => s + (r.order_count || 0), 0)
+    const totalRevenue = salesOverTime.reduce((s, r) => s + (Number(r.total_revenue) || 0), 0)
+    const avgOrderValue = totalOrders ? totalRevenue / totalOrders : 0
+    return { totalOrders, totalRevenue, avgOrderValue }
+  }, [salesOverTime])
+
+  const selectedQuickRange = useMemo(() => {
+    const today = new Date().toISOString().slice(0, 10)
+    const start = new Date(startDate)
+    const end = new Date(endDate)
+    const diffDays = Math.round((end.getTime() - start.getTime()) / (24 * 60 * 60 * 1000)) + 1
+    if (endDate === today) {
+      if (diffDays === 1) return 1
+      if (diffDays === 7) return 7
+      if (diffDays === 30) return 30
+    }
+    return null
+  }, [startDate, endDate])
+
+  const revenueSeries = useMemo(() => salesOverTime.map(r => Number(r.total_revenue) || 0), [salesOverTime])
+  const sparkPoints = useMemo(() => {
+    const n = revenueSeries.length
+    if (n === 0) return ''
+    const min = Math.min(...revenueSeries)
+    const max = Math.max(...revenueSeries)
+    const range = max - min || 1
+    return revenueSeries.map((v, i) => {
+      const x = (i * 100) / (n - 1)
+      const y = 100 - ((v - min) / range) * 100
+      return `${x},${y}`
+    }).join(' ')
+  }, [revenueSeries])
+
+  const maxStaffRevenue = useMemo(() => Math.max(0, ...salesByStaff.map(r => Number(r.total_revenue) || 0)), [salesByStaff])
+  const maxUnitsSold = useMemo(() => Math.max(0, ...bestSellers.map(r => r.total_units_sold || 0)), [bestSellers])
 
   const loadAll = useCallback(async () => {
     if (!isAdmin || !persona?.id) return
@@ -125,24 +162,68 @@ const Reports: React.FC = () => {
             <p className="text-sm text-gray-600">Insights into sales, products, inventory, and payments.</p>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={() => onQuickRange(1)} className="px-3 py-2 text-sm bg-white border rounded-lg">Today</button>
-            <button onClick={() => onQuickRange(7)} className="px-3 py-2 text-sm bg-white border rounded-lg">7d</button>
-            <button onClick={() => onQuickRange(30)} className="px-3 py-2 text-sm bg-white border rounded-lg">30d</button>
+            <button
+              onClick={() => onQuickRange(1)}
+              disabled={loading}
+              aria-pressed={selectedQuickRange === 1}
+              className={`px-3 py-2 text-sm rounded-lg border transition-colors ${selectedQuickRange === 1 ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'} ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+            >
+              Today
+            </button>
+            <button
+              onClick={() => onQuickRange(7)}
+              disabled={loading}
+              aria-pressed={selectedQuickRange === 7}
+              className={`px-3 py-2 text-sm rounded-lg border transition-colors ${selectedQuickRange === 7 ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'} ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+            >
+              7d
+            </button>
+            <button
+              onClick={() => onQuickRange(30)}
+              disabled={loading}
+              aria-pressed={selectedQuickRange === 30}
+              className={`px-3 py-2 text-sm rounded-lg border transition-colors ${selectedQuickRange === 30 ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'} ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+            >
+              30d
+            </button>
+          </div>
+        </div>
+
+        {/* KPI Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="bg-white border rounded-lg p-4">
+            <div className="text-xs text-gray-600">Total Revenue</div>
+            <div className="mt-1 text-2xl font-semibold tabular-nums">{formatCurrency(kpis.totalRevenue)}</div>
+            <div className="mt-2 text-xs text-gray-500">Sum for the selected range</div>
+          </div>
+          <div className="bg-white border rounded-lg p-4">
+            <div className="text-xs text-gray-600">Total Orders</div>
+            <div className="mt-1 text-2xl font-semibold tabular-nums">{kpis.totalOrders.toLocaleString()}</div>
+            <div className="mt-2 text-xs text-gray-500">Across selected date range</div>
+          </div>
+          <div className="bg-white border rounded-lg p-4">
+            <div className="text-xs text-gray-600">Avg. Order Value</div>
+            <div className="mt-1 text-2xl font-semibold tabular-nums">{formatCurrency(kpis.avgOrderValue)}</div>
+            {salesOverTime.length > 1 && (
+              <svg viewBox="0 0 100 100" className="mt-2 h-10 w-full text-blue-600">
+                <polyline fill="none" stroke="currentColor" strokeWidth="2" points={sparkPoints} />
+              </svg>
+            )}
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="flex flex-col gap-1">
             <label className="text-xs text-gray-600">Start date</label>
-            <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="border rounded-lg px-3 py-2" />
+            <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} disabled={loading} className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:bg-gray-50 disabled:text-gray-500" />
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs text-gray-600">End date</label>
-            <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="border rounded-lg px-3 py-2" />
+            <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} disabled={loading} className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:bg-gray-50 disabled:text-gray-500" />
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs text-gray-600">Low stock threshold</label>
-            <input type="number" min={0} value={lowStockThreshold} onChange={e => setLowStockThreshold(parseInt(e.target.value || '0', 10))} className="border rounded-lg px-3 py-2" />
+            <input type="number" min={0} value={lowStockThreshold} onChange={e => setLowStockThreshold(parseInt(e.target.value || '0', 10))} disabled={loading} className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:bg-gray-50 disabled:text-gray-500" />
           </div>
         </div>
 
@@ -171,22 +252,31 @@ const Reports: React.FC = () => {
               <thead>
                 <tr className="text-left text-gray-600">
                   <th className="py-2 pr-4">Date</th>
-                  <th className="py-2 pr-4">Orders</th>
-                  <th className="py-2 pr-4">Revenue</th>
+                  <th className="py-2 pr-4 text-right">Orders</th>
+                  <th className="py-2 pr-4 text-right">Revenue</th>
                 </tr>
               </thead>
               <tbody>
                 {salesOverTime.map((r) => (
-                  <tr key={r.report_date} className="border-t">
+                  <tr key={r.report_date} className="border-t odd:bg-white even:bg-gray-50 hover:bg-gray-50/80">
                     <td className="py-2 pr-4">{r.report_date}</td>
-                    <td className="py-2 pr-4">{r.order_count}</td>
-                    <td className="py-2 pr-4">{formatCurrency(r.total_revenue)}</td>
+                    <td className="py-2 pr-4 text-right tabular-nums">{r.order_count}</td>
+                    <td className="py-2 pr-4 text-right tabular-nums">{formatCurrency(r.total_revenue)}</td>
                   </tr>
                 ))}
                 {salesOverTime.length === 0 && (
                   <tr><td colSpan={3} className="py-4 text-gray-500">No data for selected range.</td></tr>
                 )}
               </tbody>
+              {salesOverTime.length > 0 && (
+                <tfoot className="border-t">
+                  <tr>
+                    <td className="py-2 pr-4 font-medium text-gray-700">Total</td>
+                    <td className="py-2 pr-4 text-right tabular-nums">{kpis.totalOrders.toLocaleString()}</td>
+                    <td className="py-2 pr-4 text-right tabular-nums">{formatCurrency(kpis.totalRevenue)}</td>
+                  </tr>
+                </tfoot>
+              )}
             </table>
           </div>
         </section>
@@ -199,16 +289,25 @@ const Reports: React.FC = () => {
               <thead>
                 <tr className="text-left text-gray-600">
                   <th className="py-2 pr-4">Staff</th>
-                  <th className="py-2 pr-4">Orders</th>
-                  <th className="py-2 pr-4">Revenue</th>
+                  <th className="py-2 pr-4 text-right">Orders</th>
+                  <th className="py-2 pr-4 text-right">Revenue</th>
                 </tr>
               </thead>
               <tbody>
                 {salesByStaff.map((r) => (
-                  <tr key={r.account_id} className="border-t">
+                  <tr key={r.account_id} className="border-t odd:bg-white even:bg-gray-50 hover:bg-gray-50/80">
                     <td className="py-2 pr-4">{r.account_name || `#${r.account_id}`}</td>
-                    <td className="py-2 pr-4">{r.order_count}</td>
-                    <td className="py-2 pr-4">{formatCurrency(r.total_revenue)}</td>
+                    <td className="py-2 pr-4 text-right tabular-nums">{r.order_count}</td>
+                    <td className="py-2 pr-4 text-right tabular-nums">
+                      <div className="flex flex-col items-end gap-1">
+                        <div>{formatCurrency(r.total_revenue)}</div>
+                        {maxStaffRevenue > 0 && (
+                          <div className="w-40 h-1.5 bg-gray-200 rounded overflow-hidden">
+                            <div className="h-full bg-blue-500" style={{ width: `${Math.round(((Number(r.total_revenue) || 0) / maxStaffRevenue) * 100)}%` }} />
+                          </div>
+                        )}
+                      </div>
+                    </td>
                   </tr>
                 ))}
                 {salesByStaff.length === 0 && (
@@ -227,22 +326,38 @@ const Reports: React.FC = () => {
               <thead>
                 <tr className="text-left text-gray-600">
                   <th className="py-2 pr-4">Product</th>
-                  <th className="py-2 pr-4">Units Sold</th>
-                  <th className="py-2 pr-4">Revenue</th>
+                  <th className="py-2 pr-4 text-right">Units Sold</th>
+                  <th className="py-2 pr-4 text-right">Revenue</th>
                 </tr>
               </thead>
               <tbody>
                 {bestSellers.map((r) => (
-                  <tr key={r.product_id} className="border-t">
+                  <tr key={r.product_id} className="border-t odd:bg-white even:bg-gray-50 hover:bg-gray-50/80">
                     <td className="py-2 pr-4">{r.product_name}</td>
-                    <td className="py-2 pr-4">{r.total_units_sold}</td>
-                    <td className="py-2 pr-4">{formatCurrency(r.total_revenue)}</td>
+                    <td className="py-2 pr-4 text-right tabular-nums">
+                      <div className="flex items-center gap-2 justify-end">
+                        <div className="w-32 h-1.5 bg-gray-200 rounded overflow-hidden">
+                          <div className="h-full bg-emerald-500" style={{ width: `${maxUnitsSold > 0 ? Math.round((r.total_units_sold / maxUnitsSold) * 100) : 0}%` }} />
+                        </div>
+                        <span>{r.total_units_sold}</span>
+                      </div>
+                    </td>
+                    <td className="py-2 pr-4 text-right tabular-nums">{formatCurrency(r.total_revenue)}</td>
                   </tr>
                 ))}
                 {bestSellers.length === 0 && (
                   <tr><td colSpan={3} className="py-4 text-gray-500">No data for selected range.</td></tr>
                 )}
               </tbody>
+              {bestSellers.length > 0 && (
+                <tfoot className="border-t">
+                  <tr>
+                    <td className="py-2 pr-4 font-medium text-gray-700">Total</td>
+                    <td className="py-2 pr-4 text-right tabular-nums">{bestSellers.reduce((s, r) => s + (r.total_units_sold || 0), 0).toLocaleString()}</td>
+                    <td className="py-2 pr-4 text-right tabular-nums">{formatCurrency(bestSellers.reduce((s, r) => s + (Number(r.total_revenue) || 0), 0))}</td>
+                  </tr>
+                </tfoot>
+              )}
             </table>
           </div>
         </section>

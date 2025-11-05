@@ -79,7 +79,7 @@ const ProductTile: React.FC<ProductTileProps> = ({ product, orderQty, action, on
                     {/* Price Section */}
                     <div className="text-center">
                         <p className="text-sm text-gray-500">Price</p>
-                        <p className="text-xl font-bold text-gray-900">${product.display_price.toFixed(2)}</p>
+                        <p className="text-xl font-bold text-gray-900">{'\u20B1' + product.display_price.toFixed(2)}</p>
                     </div>
 
                     {/* Stock Section */}

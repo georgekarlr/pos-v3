@@ -12,7 +12,7 @@ interface ProductCardProps {
 
 const ProductCard: React.FC<ProductCardProps> = ({ product, isAdmin, onAdjust, onViewHistory }) => {
     const formatCurrency = (amount: number) =>
-        new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+        new Intl.NumberFormat('en-US', { style: 'currency', currency: 'PHP' }).format(amount);
 
     // Determine text color for quantity for extra emphasis
     const quantityColor = product.quantity === 0 ? 'text-red-600' :
@@ -44,6 +44,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, isAdmin, onAdjust, o
                         </div>
                         <div className="mt-1 text-xs text-gray-500">
                             <span>SKU: {product.sku || 'N/A'}</span>
+                        </div>
+                        <div className="mt-1 text-xs text-gray-500">
+                            <span>Barcode: {product.barcode || 'N/A'}</span>
                         </div>
                     </div>
                 </div>

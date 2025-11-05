@@ -12,7 +12,7 @@ const ProductList: React.FC<ProductListProps> = ({ products, onEdit, isAdmin }) 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD'
+      currency: 'PHP'
     }).format(amount)
   }
 

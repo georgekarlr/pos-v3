@@ -19,7 +19,7 @@ interface CartPanelProps {
     onClearAll: () => void
 }
 
-const currency = (n: number) => `$${n.toFixed(2)}`
+const currency = (n: number) => `\u20B1${n.toFixed(2)}`
 
 // --- THE IMPROVED COMPONENT ---
 const CartPanel: React.FC<CartPanelProps> = ({ lines, subtotal, tax, total, onAdd, onDeduct, onClear, onClearAll }) => {
