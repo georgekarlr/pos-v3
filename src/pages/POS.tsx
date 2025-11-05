@@ -11,7 +11,6 @@ import { AlertCircle, RefreshCw, Search } from 'lucide-react'
 import { PaymentInput, PosAction, PosViewMode } from '../types/pos'
 import ActionModeBar from '../components/pos/ActionModeBar'
 import ViewModeSwitcher from '../components/pos/ViewModeSwitcher'
-import TotalsBar from '../components/pos/TotalsBar'
 import ReceiptModal from '../components/pos/ReceiptModal'
 import { ReceiptData } from '../components/pos/Receipt'
 
@@ -113,9 +112,9 @@ const POS: React.FC = () => {
   const subtotal = useMemo(() => cartLines.reduce((sum, l) => sum + l.product.base_price * l.qty, 0), [cartLines])
   const tax = useMemo(() => cartLines.reduce((sum, l) => sum + (l.product.base_price * l.qty) * (l.product.tax_rate / 100), 0), [cartLines])
   const total = useMemo(() => subtotal + tax, [subtotal, tax])
-  const totalPaid = useMemo(() => payments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0), [payments])
+    {/**const totalPaid = useMemo(() => payments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0), [payments])
   const itemsCount = useMemo(() => cartLines.reduce((sum, l) => sum + l.qty, 0), [cartLines])
-
+     **/}
   const handleProductClick = (productId: number) => {
     switch (selectedAction) {
       case 'add':
@@ -217,15 +216,11 @@ const POS: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-          <div className="mb-4 flex flex-col gap-3">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                  <div className="flex flex-wrap items-center gap-3">
-                      <ActionModeBar value={selectedAction} onChange={setSelectedAction} />
-                      <ViewModeSwitcher value={viewMode} onChange={setViewMode} />
-                  </div>
-                  {/**<TotalsBar items={itemsCount} subtotal={subtotal} tax={tax} total={total} paid={totalPaid} />**/}
-              </div>
+          <div className="mb-4 flex flex-col items-center gap-3">
+              <ActionModeBar value={selectedAction} onChange={setSelectedAction} />
+              <ViewModeSwitcher value={viewMode} onChange={setViewMode} />
           </div>
+          {/**<TotalsBar items={itemsCount} subtotal={subtotal} tax={tax} total={total} paid={totalPaid} />**/}
         <div className="mb-4 sm:mb-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               {/**<div>
