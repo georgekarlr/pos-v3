@@ -8,7 +8,7 @@ import { DashboardData } from '../types/dashboard'
 const formatCurrency = (value: string | number) => {
   const num = typeof value === 'string' ? Number(value) : value
   if (isNaN(num)) return '-'
-  return new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD' }).format(num)
+  return new Intl.NumberFormat(undefined, { style: 'currency', currency: 'PHP' }).format(num)
 }
 
 const formatDateTime = (iso: string) => {

@@ -18,7 +18,7 @@ interface PaymentPanelProps {
 }
 
 // CHANGED: Reverted to a simple currency formatter for dollars
-const formatAsCurrency = (n: number) => `$${n.toFixed(2)}`
+const formatAsCurrency = (n: number) => `\u20b1${n.toFixed(2)}`
 
 const methods = ['Cash', 'Credit Card', 'Debit Card', 'Mobile Pay', 'Other']
 
