@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
-import { User as SupabaseUser, Session as SupabaseSession, AuthError } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
 import { AuthContextType, PersonaData, User, Session } from '../types/auth'
 import { usePersonaStorage } from '../hooks/usePersonaStorage'

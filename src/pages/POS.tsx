@@ -217,12 +217,21 @@ const POS: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+          <div className="mb-4 flex flex-col gap-3">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                  <div className="flex flex-wrap items-center gap-3">
+                      <ActionModeBar value={selectedAction} onChange={setSelectedAction} />
+                      <ViewModeSwitcher value={viewMode} onChange={setViewMode} />
+                  </div>
+                  {/**<TotalsBar items={itemsCount} subtotal={subtotal} tax={tax} total={total} paid={totalPaid} />**/}
+              </div>
+          </div>
         <div className="mb-4 sm:mb-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
+              {/**<div>
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Point of Sale</h1>
               <p className="mt-1 text-sm text-gray-500">Process new sales. Customer is optional and not required.</p>
-            </div>
+            </div>**/}
 
             <div className="flex items-center gap-3">
               <div className="relative">
@@ -266,16 +275,6 @@ const POS: React.FC = () => {
               </div>
             </div>
           )}
-        </div>
-
-        <div className="mb-4 flex flex-col gap-3">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-            <div className="flex flex-wrap items-center gap-3">
-              <ActionModeBar value={selectedAction} onChange={setSelectedAction} />
-              <ViewModeSwitcher value={viewMode} onChange={setViewMode} />
-            </div>
-            <TotalsBar items={itemsCount} subtotal={subtotal} tax={tax} total={total} paid={totalPaid} />
-          </div>
         </div>
 
         {viewMode === 'products' && (
