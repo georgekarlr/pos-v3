@@ -10,7 +10,7 @@ interface SalesTableProps {
 
 function formatCurrency(n: number) {
   if (typeof n !== 'number' || isNaN(n)) return '$0.00'
-  return `$${n.toFixed(2)}`
+  return `\u20b1${n.toFixed(2)}`
 }
 
 const SalesTable: React.FC<SalesTableProps> = ({ rows, loading, onView }) => {

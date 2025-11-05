@@ -33,7 +33,7 @@ export interface ReceiptData {
 // Narrow, thermal-like receipt using Tailwind
 const Receipt: React.FC<{ data: ReceiptData; className?: string }>
   = ({ data, className }) => {
-  const format = (n: number) => `$${n.toFixed(2)}`
+  const format = (n: number) => `\u20b1${n.toFixed(2)}`
   const date = new Date(data.dateISO)
 
   return (
