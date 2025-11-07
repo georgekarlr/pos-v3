@@ -155,7 +155,7 @@ const POS: React.FC = () => {
     setError(null)
     try {
       const cartPayload = cartLines.map(l => ({ product_id: l.product.id, quantity: l.qty, price: l.product.display_price }))
-      const result = await import('../services/posService').then(m => m.posService.createSale(persona.id!, cartPayload, payments, notes || null))
+      const result = await import('../services/posService').then(m => m.posService.createSale(persona.id!, cartPayload, payments, notes || null, total, tax))
       if (!result.success) {
         setError(result.message || 'Failed to create sale')
       } else {
