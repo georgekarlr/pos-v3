@@ -19,14 +19,12 @@ interface CartPanelProps {
     onClearAll: () => void
 }
 
-const currency = (n: number) => `\u20B1${n.toFixed(2)}`
+const currency = (n: number) => `$${n.toFixed(2)}`
 
-// --- THE IMPROVED COMPONENT ---
+// --- THE COMPONENT WITH A CONSISTENT, STACKED LAYOUT ---
 const CartPanel: React.FC<CartPanelProps> = ({ lines, subtotal, tax, total, onAdd, onDeduct, onClear, onClearAll }) => {
     return (
-        // Softer shadow and slightly thicker border for a more modern feel
         <div className="bg-white rounded-xl border border-gray-200 shadow-md flex flex-col h-full">
-            {/* Header with more padding and a more distinct button style */}
             <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
                 <h3 className="text-xl font-semibold text-gray-800">Your Cart</h3>
                 <button
@@ -38,51 +36,50 @@ const CartPanel: React.FC<CartPanelProps> = ({ lines, subtotal, tax, total, onAd
                 </button>
             </div>
 
-            {/* Main content area */}
             <div className="flex-1 overflow-y-auto">
                 {lines.length === 0 ? (
-                    // A more engaging empty state with an icon
                     <div className="flex flex-col items-center justify-center h-full p-8 text-center text-gray-500">
                         <ShoppingCart className="w-16 h-16 mb-4 text-gray-300" />
                         <h4 className="text-lg font-semibold text-gray-700">Your cart is empty</h4>
                         <p className="text-sm">Add some products to see them here.</p>
                     </div>
                 ) : (
-                    // List with better vertical dividers
                     <ul className="divide-y divide-gray-200">
                         {lines.map(({ product, qty }) => (
-                            // Using a list item `li` for better semantics
-                            <li key={product.id} className="p-6 flex items-center justify-between gap-4">
-                                {/* Product info now has more space */}
-                                <div className="flex-grow min-w-0">
+                            // Each list item is a vertical flex container with a gap between its two rows.
+                            <li key={product.id} className="p-6 flex flex-col gap-3">
+
+                                {/* Top Row: Product Info */}
+                                <div>
                                     <div className="text-base font-semibold text-gray-800 truncate">{product.name}</div>
                                     <div className="text-sm text-gray-500">
                                         {currency(product.display_price)} • <span className="text-xs">Stock: {product.quantity}</span>
                                     </div>
                                 </div>
 
-                                {/* All actions grouped on the right */}
-                                <div className="flex items-center gap-4">
-                                    {/* Cohesive quantity control group */}
-                                    <div className="flex items-center border border-gray-300 rounded-lg">
-                                        <button onClick={() => onDeduct(product.id)} className="p-2 text-gray-600 hover:bg-gray-100 rounded-l-md transition-colors">
-                                            <Minus className="h-4 w-4" />
-                                        </button>
-                                        <div className="w-10 text-center font-medium text-gray-800 border-x border-gray-300">{qty}</div>
-                                        <button onClick={() => onAdd(product.id)} className="p-2 text-gray-600 hover:bg-gray-100 rounded-r-md transition-colors">
-                                            <Plus className="h-4 w-4" />
+                                {/* Bottom Row: Controls and Price, spaced apart */}
+                                <div className="flex items-center justify-between">
+                                    {/* Left Side: Grouped quantity controls and trash icon */}
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex items-center border border-gray-300 rounded-lg">
+                                            <button onClick={() => onDeduct(product.id)} className="p-2 text-gray-600 hover:bg-gray-100 rounded-l-md transition-colors">
+                                                <Minus className="h-4 w-4" />
+                                            </button>
+                                            <div className="w-10 text-center font-medium text-gray-800 border-x border-gray-300">{qty}</div>
+                                            <button onClick={() => onAdd(product.id)} className="p-2 text-gray-600 hover:bg-gray-100 rounded-r-md transition-colors">
+                                                <Plus className="h-4 w-4" />
+                                            </button>
+                                        </div>
+
+                                        <button onClick={() => onClear(product.id)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                                            <Trash2 className="h-5 w-5" />
                                         </button>
                                     </div>
 
-                                    {/* Trash button is visually distinct */}
-                                    <button onClick={() => onClear(product.id)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors">
-                                        <Trash2 className="h-5 w-5" />
-                                    </button>
-                                </div>
-
-                                {/* Line total is clearer */}
-                                <div className="w-24 text-right text-base font-semibold text-gray-900">
-                                    {currency(product.base_price * qty * (1 + product.tax_rate / 100))}
+                                    {/* Right Side: Line Total */}
+                                    <div className="text-base font-semibold text-gray-900">
+                                        {currency(product.base_price * qty * (1 + product.tax_rate / 100))}
+                                    </div>
                                 </div>
                             </li>
                         ))}
@@ -90,7 +87,6 @@ const CartPanel: React.FC<CartPanelProps> = ({ lines, subtotal, tax, total, onAd
                 )}
             </div>
 
-            {/* A more structured and readable totals/summary section */}
             {lines.length > 0 && (
                 <div className="border-t border-gray-200 p-6 bg-gray-50 rounded-b-xl">
                     <h4 className="text-md font-semibold text-gray-800 mb-3">Order Summary</h4>

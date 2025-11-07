@@ -14,7 +14,7 @@ export interface PersonaValidationResult {
 export class PersonaService {
   static async validateAdminPersona(password: string): Promise<PersonaValidationResult> {
     try {
-      const { data, error } = await supabase.rpc('validate_template_account_password', {
+      const { data, error } = await supabase.rpc('pos_template_account_password', {
         p_account_password: password
       })
 
@@ -44,7 +44,7 @@ export class PersonaService {
 
   static async validateStaffPersona(loginName: string, password: string): Promise<PersonaValidationResult> {
     try {
-      const { data, error } = await supabase.rpc('validate_template_staff_user', {
+      const { data, error } = await supabase.rpc('validate_pos_staff_user', {
         p_login_name: loginName,
         p_login_password: password
       })
@@ -76,7 +76,7 @@ export class PersonaService {
   // Staff Management Functions
   static async createStaffAccount(name: string, password: string, personName: string): Promise<PersonaValidationResult> {
     try {
-      const { data, error } = await supabase.rpc('template_create_staff_account', {
+      const { data, error } = await supabase.rpc('pos_create_staff_account', {
         p_name: name,
         p_password: password,
         p_person_name: personName
@@ -106,7 +106,7 @@ export class PersonaService {
 
   static async deleteStaffAccount(name: string): Promise<PersonaValidationResult> {
     try {
-      const { data, error } = await supabase.rpc('template_delete_staff_account', {
+      const { data, error } = await supabase.rpc('pos_delete_staff_account', {
         p_name: name
       })
 
@@ -134,7 +134,7 @@ export class PersonaService {
 
   static async updateAdminPassword(oldPassword: string, newPassword: string): Promise<PersonaValidationResult> {
     try {
-      const { data, error } = await supabase.rpc('template_update_admin_password_with_old', {
+      const { data, error } = await supabase.rpc('pos_update_admin_password_with_old', {
         p_old_password: oldPassword,
         p_new_password: newPassword
       })
@@ -163,7 +163,7 @@ export class PersonaService {
 
   static async updateStaffPassword(name: string, newPassword: string): Promise<PersonaValidationResult> {
     try {
-      const { data, error } = await supabase.rpc('template_update_staff_password', {
+      const { data, error } = await supabase.rpc('pos_update_staff_password', {
         p_name: name,
         p_new_password: newPassword
       })
@@ -192,8 +192,8 @@ export class PersonaService {
 
   static async getStaffAccountNames(): Promise<{ success: boolean; data: string[]; message: string }> {
     try {
-      const { data, error } = await supabase.rpc('template_get_staff_account_names')
-
+      const { data, error } = await supabase.rpc('pos_get_staff_account_names')
+        console.log('getStaffAccountNames', data);
       if (error) {
         console.error('Get staff names error:', error)
         return {
