@@ -21,7 +21,7 @@ export interface SaleItemDetails {
   product_id: number
   product_name: string
   quantity: number
-  unit_price?: number | null
+  price_at_purchase?: number | null
   line_total?: number | null
 }
 
