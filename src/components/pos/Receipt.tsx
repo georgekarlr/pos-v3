@@ -37,7 +37,7 @@ const Receipt: React.FC<{ data: ReceiptData; className?: string }>
   const date = new Date(data.dateISO)
 
   return (
-    <div className={"bg-white text-gray-900 mx-auto " + (className || '')} style={{ width: 320 }}>
+    <div className={"receipt-paper bg-white text-gray-900 mx-auto " + (className || '')} style={{ width: 320 }}>
       <div className="px-4 py-3 text-center">
         <div className="font-bold text-base tracking-wide">
           {data.businessName || 'POS Receipt'}

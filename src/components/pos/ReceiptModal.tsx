@@ -37,21 +37,57 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ open, data, onClose }) => {
 
   const handlePrint = () => {
     try {
-      const node = receiptRef.current
-      if (!node) return
-      const win = window.open('', 'PRINT', 'height=600,width=400')
-      if (!win) return
-      win.document.write('<html><head><title>Receipt</title>')
-      win.document.write('<link rel="stylesheet" href="/tailwind.css" />')
-      win.document.write('</head><body>')
-      win.document.write(node.outerHTML)
-      win.document.write('</body></html>')
-      win.document.close()
-      win.focus()
-      setTimeout(() => {
-        win.print()
-        win.close()
-      }, 300)
+      const container = receiptRef.current
+      if (!container) return
+
+      const printWindow = window.open('', 'PRINT', 'height=800,width=420')
+      if (!printWindow) return
+
+      const doc = printWindow.document
+      doc.open()
+      doc.write('<!doctype html><html><head><meta charset="utf-8"><title>Receipt</title></head><body></body></html>')
+      doc.close()
+
+      // Clone current styles (Tailwind is injected via <style> in dev and <link> in prod)
+      const head = doc.head
+      const styleNodes = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
+      styleNodes.forEach((n) => head.appendChild(n.cloneNode(true)))
+
+      // Add print-specific CSS to match POS printer width
+      const extraStyle = doc.createElement('style')
+      extraStyle.type = 'text/css'
+      extraStyle.textContent = `
+        :root { --receipt-width: 80mm; }
+        @media print {
+          @page { size: var(--receipt-width) auto; margin: 0; }
+          html, body { margin: 0; padding: 0; background: #ffffff; }
+          .receipt-paper { width: var(--receipt-width) !important; }
+        }
+        /* On screen inside the print window, center the receipt */
+        body { display: flex; justify-content: center; }
+      `
+      head.appendChild(extraStyle)
+
+      // Clone the receipt DOM
+      const sourceNode = container.cloneNode(true) as HTMLElement
+      doc.body.appendChild(sourceNode)
+
+      // Ensure styles are applied before printing (wait for stylesheets to load)
+      const waitForLinks = Array.from(head.querySelectorAll('link[rel="stylesheet"]'))
+        .map((lnk) => new Promise<void>((resolve) => {
+          if ((lnk as HTMLLinkElement).sheet) return resolve()
+          lnk.addEventListener('load', () => resolve())
+          lnk.addEventListener('error', () => resolve())
+        }))
+
+      Promise.all(waitForLinks).then(() => {
+        printWindow.focus()
+        // Short delay to allow layout to settle
+        setTimeout(() => {
+          printWindow.print()
+          printWindow.close()
+        }, 200)
+      })
     } catch (e) {
       console.error('Print error', e)
       alert('Failed to open print dialog')
