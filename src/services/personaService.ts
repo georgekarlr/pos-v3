@@ -14,7 +14,7 @@ export interface PersonaValidationResult {
 export class PersonaService {
   static async validateAdminPersona(password: string): Promise<PersonaValidationResult> {
     try {
-      const { data, error } = await supabase.rpc('pos_template_account_password', {
+      const { data, error } = await supabase.rpc('validate_validate_account_password', {
         p_account_password: password
       })
 
