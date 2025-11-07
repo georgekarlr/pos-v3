@@ -193,7 +193,6 @@ export class PersonaService {
   static async getStaffAccountNames(): Promise<{ success: boolean; data: string[]; message: string }> {
     try {
       const { data, error } = await supabase.rpc('pos_get_staff_account_names')
-        console.log('getStaffAccountNames', data);
       if (error) {
         console.error('Get staff names error:', error)
         return {

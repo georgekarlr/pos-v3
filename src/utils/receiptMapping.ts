@@ -7,12 +7,11 @@ export function mapSaleDetailsToReceipt(details: SaleDetailsResponse): ReceiptDa
   const payments = details.payments || []
 
   const lines: ReceiptLine[] = items.map((it) => {
-    const unit = (it.unit_price ?? (it.line_total && it.quantity ? it.line_total / it.quantity : 0)) || 0
-    const total = (it.line_total ?? (it.quantity && it.unit_price ? it.quantity * it.unit_price : 0)) || 0
+    const total = (it.line_total ?? (it.quantity && it.price_at_purchase ? it.quantity * it.price_at_purchase : 0)) || 0
     return {
       name: it.product_name,
       qty: it.quantity,
-      unitPrice: Number(unit),
+      unitPrice: Number(it.price_at_purchase),
       lineTotal: Number(total)
     }
   })
