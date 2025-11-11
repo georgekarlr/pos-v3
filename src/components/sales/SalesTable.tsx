@@ -1,11 +1,13 @@
 import React from 'react'
 import { SalesHistoryRow } from '../../types/sales'
-import { Eye, Loader2 } from 'lucide-react'
+import { Eye, Loader2, RotateCcw, History } from 'lucide-react'
 
 interface SalesTableProps {
   rows: SalesHistoryRow[]
   loading: boolean
   onView: (orderId: number) => void
+  onRefund?: (orderId: number) => void
+  onViewRefunds?: (orderId: number) => void
 }
 
 function formatCurrency(n: number) {
@@ -13,7 +15,7 @@ function formatCurrency(n: number) {
   return `\u20b1${n.toFixed(2)}`
 }
 
-const SalesTable: React.FC<SalesTableProps> = ({ rows, loading, onView }) => {
+const SalesTable: React.FC<SalesTableProps> = ({ rows, loading, onView, onRefund, onViewRefunds }) => {
   return (
     <div className="overflow-x-auto bg-white border border-gray-200 rounded-lg">
       <table className="min-w-full divide-y divide-gray-200">
@@ -59,13 +61,36 @@ const SalesTable: React.FC<SalesTableProps> = ({ rows, loading, onView }) => {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <button
-                      onClick={() => onView(r.order_id)}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm"
-                    >
-                      <Eye className="h-4 w-4" />
-                      <span className="hidden sm:inline">View</span>
-                    </button>
+                    <div className="inline-flex items-center gap-2">
+                      <button
+                        onClick={() => onView(r.order_id)}
+                        title="View receipt"
+                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm"
+                      >
+                        <Eye className="h-4 w-4" />
+                        <span className="sr-only sm:not-sr-only sm:inline">View</span>
+                      </button>
+                      {onRefund && (
+                        <button
+                          onClick={() => onRefund(r.order_id)}
+                          title="Refund"
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md border border-emerald-300 text-emerald-700 hover:bg-emerald-50 text-sm"
+                        >
+                          <RotateCcw className="h-4 w-4" />
+                          <span className="sr-only sm:not-sr-only sm:inline">Refund</span>
+                        </button>
+                      )}
+                      {onViewRefunds && (
+                        <button
+                          onClick={() => onViewRefunds(r.order_id)}
+                          title="View refunds for this order"
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md border border-blue-300 text-blue-700 hover:bg-blue-50 text-sm"
+                        >
+                          <History className="h-4 w-4" />
+                          <span className="sr-only sm:not-sr-only sm:inline">Refunds</span>
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               )

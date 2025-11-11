@@ -141,7 +141,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onCancel, 
                     Base Price <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">{'\u20b1'}</span>
                     <input
                       type="number"
                       id="base_price"
@@ -186,7 +186,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onCancel, 
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium text-gray-700">Display Price (with tax)</span>
                   <span className="text-lg font-semibold text-blue-600">
-                    ${calculateDisplayPrice().toFixed(2)}
+                    {'\u20b1'} {calculateDisplayPrice().toFixed(2)}
                   </span>
                 </div>
               </div>
