@@ -18,11 +18,13 @@ export interface SaleOrderDetails {
 }
 
 export interface SaleItemDetails {
+  id: number
   product_id: number
   product_name: string
   quantity: number
   price_at_purchase?: number | null
   line_total?: number | null
+  refunded_quantity: number | null
 }
 
 export interface SalePaymentDetails {
@@ -35,4 +37,19 @@ export interface SaleDetailsResponse {
   order: SaleOrderDetails
   items: SaleItemDetails[]
   payments: SalePaymentDetails[]
+}
+
+// Refund details row returned by pos_get_refund_details
+export interface RefundDetailRow {
+  refund_id: number
+  refunded_at: string
+  order_id: number
+  product_id: number
+  product_name: string
+  product_sku: string | null
+  price_at_purchase: number
+  refunded_quantity: number
+  total_refund_amount: number
+  account_name: string
+  reason: string | null
 }

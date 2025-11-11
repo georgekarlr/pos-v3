@@ -8,6 +8,9 @@ import { ReceiptData } from '../components/pos/Receipt'
 import { salesService } from '../services/salesService'
 import { mapSaleDetailsToReceipt } from '../utils/receiptMapping'
 import { SalesHistoryRow } from '../types/sales'
+import RefundModal from '../components/sales/RefundModal'
+import RefundListModal from '../components/sales/RefundListModal'
+import { useAuth } from '../contexts/AuthContext'
 
 const PAGE_SIZE = 20
 
@@ -22,6 +25,7 @@ function toEndOfDayISO(dateStr: string): string {
 }
 
 const SalesHistory: React.FC = () => {
+  const { persona } = useAuth()
   const [filters, setFilters] = useState<SalesFiltersValue>({ search: '', startDate: null, endDate: null })
   const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(false)
@@ -31,6 +35,11 @@ const SalesHistory: React.FC = () => {
 
   const [receiptOpen, setReceiptOpen] = useState(false)
   const [receiptData, setReceiptData] = useState<ReceiptData | null>(null)
+
+  const [refundOpen, setRefundOpen] = useState(false)
+  const [refundOrderId, setRefundOrderId] = useState<number | null>(null)
+  const [refundListOpen, setRefundListOpen] = useState(false)
+  const [refundListOrderId, setRefundListOrderId] = useState<number | null>(null)
 
   const offset = useMemo(() => (page - 1) * PAGE_SIZE, [page])
 
@@ -86,17 +95,37 @@ const SalesHistory: React.FC = () => {
     }
   }
 
+  const openRefund = (orderId: number) => {
+    setRefundOrderId(orderId)
+    setRefundOpen(true)
+  }
+
+  const openRefundsForOrder = (orderId: number) => {
+    setRefundListOrderId(orderId)
+    setRefundListOpen(true)
+  }
+
+  const openAllRefunds = () => {
+    setRefundListOrderId(null)
+    setRefundListOpen(true)
+  }
+
+  const requestingAccountId = persona?.id ?? null
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         <div className="mb-4 sm:mb-6">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center justify-between gap-3">
             <div className="h-10 w-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
               <History className="h-5 w-5" />
             </div>
-            <div>
+            <div className="flex-1">
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Sales History</h1>
               <p className="mt-1 text-sm text-gray-500">View and search past transactions. Click an order to view the receipt.</p>
+            </div>
+            <div>
+              <button onClick={openAllRefunds} className="inline-flex items-center gap-2 px-3 py-2 rounded-md border border-blue-300 text-blue-700 hover:bg-blue-50 text-sm">View All Refunds</button>
             </div>
           </div>
 
@@ -119,7 +148,7 @@ const SalesHistory: React.FC = () => {
         />
 
         <div className="mt-4">
-          <SalesTable rows={rows} loading={loading} onView={openReceipt} />
+          <SalesTable rows={rows} loading={loading} onView={openReceipt} onRefund={openRefund} onViewRefunds={openRefundsForOrder} />
           <PaginationControls
             page={page}
             pageSize={PAGE_SIZE}
@@ -131,6 +160,22 @@ const SalesHistory: React.FC = () => {
       </div>
 
       <ReceiptModal open={receiptOpen} data={receiptData} onClose={() => setReceiptOpen(false)} />
+      <RefundModal
+        open={refundOpen}
+        orderId={refundOrderId}
+        requestingAccountId={requestingAccountId}
+        onClose={() => setRefundOpen(false)}
+        onSuccess={() => {
+          // refresh rows after refund
+          fetchRows()
+        }}
+      />
+      <RefundListModal
+        open={refundListOpen}
+        onClose={() => setRefundListOpen(false)}
+        requestingAccountId={requestingAccountId}
+        orderId={refundListOrderId}
+      />
     </div>
   )
 }
