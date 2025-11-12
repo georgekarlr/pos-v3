@@ -23,10 +23,10 @@ const SalesTable: React.FC<SalesTableProps> = ({ rows, loading, onView, onRefund
           <tr>
             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order #</th>
             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+            {/*<th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>*/}
             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cashier</th>
             <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Refund Amount</th>
             <th className="px-4 py-3"></th>
           </tr>
         </thead>
@@ -52,12 +52,12 @@ const SalesTable: React.FC<SalesTableProps> = ({ rows, loading, onView, onRefund
                 <tr key={r.order_id} className="hover:bg-gray-50">
                   <td className="px-4 py-3 text-sm text-gray-900">#{r.order_id}</td>
                   <td className="px-4 py-3 text-sm text-gray-700">{dateStr}</td>
-                  <td className="px-4 py-3 text-sm text-gray-700">{r.customer_name}</td>
+                  {/*<td className="px-4 py-3 text-sm text-gray-700">{r.customer_name}</td>*/}
                   <td className="px-4 py-3 text-sm text-gray-700">{r.account_name}</td>
                   <td className="px-4 py-3 text-sm text-gray-900 text-right">{formatCurrency(Number(r.total_amount))}</td>
                   <td className="px-4 py-3 text-sm">
                     <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">
-                      {r.status}
+                      {formatCurrency(r.refund_amount ?? 0)}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right">

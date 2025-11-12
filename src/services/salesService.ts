@@ -12,6 +12,10 @@ export interface GetSalesHistoryParams {
 export interface BulkRefundItemInput {
   order_item_id: number
   quantity: number
+  // Per-line base refund amount (pre-tax)
+  refund_amount: number
+  // Per-line tax component for the refunded quantity
+  tax_component: number
 }
 
 export interface BulkRefundResult {
@@ -30,7 +34,7 @@ export const salesService = {
       p_start_date: startDate || null,
       p_end_date: endDate || null
     })
-
+      console.log(data);
     if (error) {
       console.error('Error fetching sales history:', error)
       throw new Error(error.message)
@@ -58,7 +62,7 @@ export const salesService = {
       p_start_date: startDate ?? null,
       p_end_date: endDate ?? null
     })
-
+      console.log(data);
     if (error) {
       console.error('Error fetching refund details:', error)
       throw new Error(error.message)
@@ -71,6 +75,7 @@ export const salesService = {
     const { data, error } = await supabase.rpc('pos_get_sale_details_by_id', {
       p_order_id: orderId
     })
+      console.log(data);
     if (error) {
       console.error('Error fetching sale details:', error)
       throw new Error(error.message)

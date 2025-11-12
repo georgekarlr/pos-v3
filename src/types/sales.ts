@@ -4,6 +4,8 @@ export interface SalesHistoryRow {
   customer_name: string
   account_name: string
   total_amount: number
+    refund_amount?: number | 0
+  net_amount: number | 0
   status: string
 }
 
@@ -15,6 +17,7 @@ export interface SaleOrderDetails {
   subtotal_amount?: number | null
   notes?: string | null
   account_person_name?: string | null
+  total_tendered?: number | null
 }
 
 export interface SaleItemDetails {
@@ -22,6 +25,10 @@ export interface SaleItemDetails {
   product_id: number
   product_name: string
   quantity: number
+    order_id: number
+    base_price_at_purchase: number | null
+    tax_rate_at_purchase: number | null
+
   price_at_purchase?: number | null
   line_total?: number | null
   refunded_quantity: number | null

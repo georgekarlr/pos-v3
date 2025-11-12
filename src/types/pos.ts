@@ -1,11 +1,15 @@
 export interface CartItemInput {
   product_id: number
   quantity: number
+  price: number
+  base_price: number
+  tax_rate: number
 }
 
 export interface PaymentInput {
   amount: number
   method: string
+  tendered: number
   transaction_ref?: string | null
 }
 

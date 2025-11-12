@@ -34,6 +34,7 @@ const RefundModal: React.FC<RefundModalProps> = ({ open, orderId, requestingAcco
       setLoading(true)
       try {
         const d = await salesService.getSaleDetailsById(orderId)
+          console.log('d: ', d)
         setDetails(d)
         // initialize quantities to 0
         const initial: Record<number, number> = {}
@@ -83,8 +84,23 @@ const RefundModal: React.FC<RefundModalProps> = ({ open, orderId, requestingAcco
     e.preventDefault()
     if (!orderId || !requestingAccountId) return
 
+      console.log('itemsWithAvail: ', itemsWithAvail)
     const items: BulkRefundItemInput[] = itemsWithAvail
-      .map((it) => ({ order_item_id: it.id, quantity: quantities[it.id] || 0 }))
+      .map((it) => {
+        const qty = quantities[it.id] || 0
+        const priceAtPurchase = Number((it as any).price_at_purchase ?? it.price_at_purchase ?? 0)
+        const basePrice = Number((it as any).base_price_at_purchase ?? 0)
+        const rate = Number((it as any).tax_rate_at_purchase ?? 0)
+        const taxPerUnit = basePrice * (rate/100)
+        const refund_amount = priceAtPurchase * qty
+        const tax_component = taxPerUnit * qty
+        return {
+          order_item_id: it.id,
+          quantity: qty,
+          refund_amount,
+          tax_component
+        }
+      })
       .filter((x) => x.quantity > 0)
 
     if (items.length === 0) {
