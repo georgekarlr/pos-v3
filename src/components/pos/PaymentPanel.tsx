@@ -12,7 +12,7 @@ interface PaymentPanelProps {
     onRemovePayment: (index: number) => void
     notes: string
     onNotesChange: (notes: string) => void
-    onSubmit: () => void
+    onSubmit: (totalPaid: number) => void
     submitting?: boolean
     disabled?: boolean
 }
@@ -34,20 +34,20 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
                                                        submitting,
                                                        disabled,
                                                    }) => {
-    const { totalPaid, totalChangeDue } = useMemo(() => {
+    const { totalPaid, totalChangeDue, totalTendered } = useMemo(() => {
         let paid = 0
         let change = 0
+        let tendered = 0
         payments.forEach(p => {
             const amount = Number(p.amount) || 0
+            const tenderedA = Number(p.tendered) || 0
+            tendered += tenderedA
             paid += amount
-            if (p.method === 'Cash') {
-                const tendered = Number(p.tendered) || 0
-                if (tendered > amount) {
-                    change += tendered - amount
-                }
+            if (tenderedA > amount) {
+                change += tenderedA - amount
             }
         })
-        return { totalPaid: paid, totalChangeDue: change }
+        return { totalPaid: paid, totalChangeDue: change, totalTendered: tendered }
     }, [payments])
 
     const diff = total - totalPaid
@@ -110,7 +110,7 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
                                         />
                                     </div>
                                     {/* "Amount Applied" input now takes up a quarter of the width */}
-                                    <div className="sm:col-span-3">
+                                    {/**<div className="sm:col-span-3">
                                         <label htmlFor={`amount-applied-${idx}`} className="block text-xs font-medium text-gray-600 mb-1">Applied</label>
                                         <input
                                             id={`amount-applied-${idx}`} type="text" value={formatAsCurrency(Number(p.amount) || 0)} readOnly
@@ -118,12 +118,12 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
                                         />
                                     </div>
                                     {/* "Change Due" also takes up a quarter of the width */}
-                                    <div className="sm:col-span-3">
+                                    {/**<div className="sm:col-span-3">
                                         <label className="block text-xs font-medium text-gray-600 mb-1">Change</label>
                                         <div className="p-2 rounded-md bg-gray-200 text-gray-800 font-medium text-sm">
                                             {formatAsCurrency(Math.max(0, (Number(p.tendered) || 0) - (Number(p.amount) || 0)))}
                                         </div>
-                                    </div>
+                                    </div>**/}
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -180,7 +180,7 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
                 {/* ... Notes and Submit Button sections are unchanged ... */}
 
                 <button
-                    onClick={onSubmit}
+                    onClick={() => onSubmit(totalTendered)}
                     disabled={!canSubmit}
                     className="w-full mt-2 inline-flex items-center justify-center px-4 py-3 rounded-md text-white font-semibold text-base transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
                 >

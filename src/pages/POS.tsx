@@ -144,18 +144,20 @@ const POS: React.FC = () => {
     setPayments(prev => prev.filter((_, i) => i !== index))
   }
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (totalPaidFromUI: number) => {
     if (!persona?.id) {
       setError('Account ID missing')
       return
     }
+    console.log('totalss', totalPaidFromUI)
     if (cartLines.length === 0) return
 
     setSubmitting(true)
     setError(null)
     try {
-      const cartPayload = cartLines.map(l => ({ product_id: l.product.id, quantity: l.qty, price: l.product.display_price }))
-      const result = await import('../services/posService').then(m => m.posService.createSale(persona.id!, cartPayload, payments, notes || null, total, tax))
+      const cartPayload = cartLines.map(l => ({ product_id: l.product.id, quantity: l.qty, price: l.product.display_price, base_price: l.product.base_price, tax_rate: l.product.tax_rate }))
+        console.log(cartPayload)
+      const result = await import('../services/posService').then(m => m.posService.createSale(persona.id!, cartPayload, payments, notes || null, total, tax, totalPaidFromUI))
       if (!result.success) {
         setError(result.message || 'Failed to create sale')
       } else {
@@ -168,7 +170,7 @@ const POS: React.FC = () => {
           unitPrice: l.product.base_price,
           lineTotal: l.product.base_price * l.qty,
         }))
-        const totalPaidLocal = payments.reduce((s, p) => s + (Number(p.amount) || 0), 0)
+        const totalPaidLocal = totalPaidFromUI
         const change = Math.max(0, totalPaidLocal - total)
         const receipt: ReceiptData = {
           orderId: result.order_id,
