@@ -17,6 +17,7 @@ import {
   Settings
 } from 'lucide-react'
 import Reports from './pages/Reports'
+import ReceiptPrinter from './pages/ReceiptPrinter'
 
 function App() {
   return (
@@ -121,6 +122,16 @@ function App() {
                     description="Configure your application settings and preferences."
                     icon={Settings}
                   />
+                </Layout>
+              </PersonaProtectedRoute>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/settings/receipt-printer" element={
+            <ProtectedRoute>
+              <PersonaProtectedRoute>
+                <Layout>
+                  <ReceiptPrinter />
                 </Layout>
               </PersonaProtectedRoute>
             </ProtectedRoute>
