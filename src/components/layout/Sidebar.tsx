@@ -10,7 +10,8 @@ import {
   ShoppingCart,
   Package,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  Printer
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -38,6 +39,7 @@ const adminNavigation: NavigationItem[] = [
     ]
   },
   { name: 'Analytics Reports', href: '/analytics-reports', icon: BarChart3 },
+  { name: 'Receipt Printer', href: '/settings/receipt-printer', icon: Printer },
   { name: 'Settings', href: '/settings', icon: Settings },
   { name: 'Persona Management', href: '/persona-management', icon: Shield },
 
@@ -53,6 +55,7 @@ const staffNavigation: NavigationItem[] = [
       { name: 'Sales History', href: '/management/sales-history' },
     ]
   },
+  { name: 'Receipt Printer', href: '/settings/receipt-printer', icon: Printer },
   { name: 'Settings', href: '/settings', icon: Settings },
 ]
 

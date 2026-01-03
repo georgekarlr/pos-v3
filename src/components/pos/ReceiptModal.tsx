@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Receipt, { ReceiptData } from './Receipt'
+import { loadPrinterConfig } from '../../services/printer/types'
+import { printReceiptWithConfig } from '../../services/printer'
 
 interface ReceiptModalProps {
   open: boolean
@@ -10,6 +12,7 @@ interface ReceiptModalProps {
 
 const ReceiptModal: React.FC<ReceiptModalProps> = ({ open, data, onClose }) => {
   const [show, setShow] = useState(false)
+  const [deviceBusy, setDeviceBusy] = useState(false)
   const receiptRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -94,6 +97,28 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ open, data, onClose }) => {
     }
   }
 
+  const handleDevicePrint = async () => {
+    if (!data) return
+    const cfg = loadPrinterConfig()
+    if (!cfg) {
+      const go = confirm('No receipt printer configured. Open the Receipt Printer settings now?')
+      if (go) {
+        window.location.href = '/settings/receipt-printer'
+      }
+      return
+    }
+    try {
+      setDeviceBusy(true)
+      await printReceiptWithConfig(cfg, data)
+      alert('Receipt sent to printer.')
+    } catch (e: any) {
+      console.error(e)
+      alert('Device print failed: ' + (e?.message || e))
+    } finally {
+      setDeviceBusy(false)
+    }
+  }
+
   const modal = (
     <div className="fixed inset-0 z-[1000] flex items-end sm:items-center justify-center p-0 sm:p-4" role="dialog" aria-modal="true">
       <div className={`absolute inset-0 bg-gray-900/60 transition-opacity duration-300 ${show ? 'opacity-100' : 'opacity-0'}`} onClick={onClose} />
@@ -114,6 +139,7 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ open, data, onClose }) => {
 
         <div className="px-4 pb-4 flex flex-col sm:flex-row gap-2 sm:justify-end">
           <button onClick={handlePrint} className="w-full sm:w-auto px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700">Print</button>
+          <button disabled={deviceBusy} onClick={handleDevicePrint} className="w-full sm:w-auto px-4 py-2 rounded-md bg-green-600 text-white hover:bg-green-700 disabled:opacity-60">Send to Printer</button>
           <button onClick={handleSaveImage} className="w-full sm:w-auto px-4 py-2 rounded-md border border-gray-300 bg-white hover:bg-gray-50">Save Image</button>
         </div>
       </div>
