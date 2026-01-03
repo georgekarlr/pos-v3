@@ -34,41 +34,32 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
                                                        submitting,
                                                        disabled,
                                                    }) => {
-    const { totalPaid, totalChangeDue, totalTendered } = useMemo(() => {
+    const { totalPaid, totalChangeDue } = useMemo(() => {
         let paid = 0
-        let change = 0
-        let tendered = 0
         payments.forEach(p => {
-            const amount = Number(p.amount) || 0
-            const tenderedA = Number(p.tendered) || 0
-            tendered += tenderedA
-            paid += amount
-            if (tenderedA > amount) {
-                change += tenderedA - amount
-            }
+            paid += Number(p.amount) || 0
         })
-        return { totalPaid: paid, totalChangeDue: change, totalTendered: tendered }
-    }, [payments])
+        const change = Math.max(0, paid - total)
+        return { totalPaid: paid, totalChangeDue: change }
+    }, [payments, total])
 
     const diff = total - totalPaid
-    const canSubmit = !disabled && Math.abs(diff) < 0.01 && total > 0 && payments.length > 0 && !submitting
+    const canSubmit = !disabled && (totalPaid >= total - 0.01) && total > 0 && payments.length > 0 && !submitting
 
     const handleCashTenderedChange = (index: number, tenderedValue: string) => {
         const tendered = Number(tenderedValue) || 0
-        const currentPaymentAmount = Number(payments[index].amount) || 0
-        const remainingDueBeforeThisPayment = total - (totalPaid - currentPaymentAmount)
-        const amountToApply = Math.min(tendered, remainingDueBeforeThisPayment)
-
+        // We now allow the amount applied to be the full tendered value for Cash.
+        // This ensures "Total Paid" reflects the cash received.
         onUpdatePayment(index, {
             tendered: tenderedValue,
-            amount: amountToApply > 0 ? amountToApply.toFixed(2) : ''
+            amount: tendered > 0 ? tendered.toFixed(2) : ''
         })
     }
 
     return (
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm max-w-2xl mx-auto">
+        <div className="bg-white max-w-2xl mx-auto">
             <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900">Payment</h3>
+                <h3 className="text-lg font-semibold text-gray-900 italic">Order Total</h3>
                 <div className="text-right">
                     <div className="text-sm text-gray-500">Amount Due</div>
                     <div className="text-xl font-bold text-gray-800">{formatAsCurrency(total)}</div>
@@ -132,7 +123,7 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
                                         <label htmlFor={`payment-amount-${idx}`} className="block text-xs font-medium text-gray-600 mb-1">Amount</label>
                                         <input
                                             id={`payment-amount-${idx}`} type="number" min="0" step="0.01" placeholder="0.00"
-                                            value={p.amount}
+                                            value={p.amount || ''}
                                             onChange={e => onUpdatePayment(idx, { amount: e.target.value })}
                                             className="w-full rounded-md border-gray-300 shadow-sm text-sm focus:border-blue-500 focus:ring-blue-500"
                                         />
@@ -180,7 +171,7 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
                 {/* ... Notes and Submit Button sections are unchanged ... */}
 
                 <button
-                    onClick={() => onSubmit(totalTendered)}
+                    onClick={() => onSubmit(totalPaid)}
                     disabled={!canSubmit}
                     className="w-full mt-2 inline-flex items-center justify-center px-4 py-3 rounded-md text-white font-semibold text-base transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
                 >

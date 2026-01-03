@@ -1,16 +1,28 @@
 import { supabase } from '../lib/supabase'
 import { Product, CreateProductInput, UpdateProductInput, ProductResponse } from '../types/product'
+import { offlineDB } from '../db/offlineDB'
 
 export const productService = {
   async getAllProducts(): Promise<Product[]> {
-    const { data, error } = await supabase.rpc('pos_get_all_products')
+    // If online, try to fetch from server and update cache
+    if (navigator.onLine) {
+      try {
+        const { data, error } = await supabase.rpc('pos_get_all_products')
+        if (error) throw error
 
-    if (error) {
-      console.error('Error fetching products:', error)
-      throw new Error(error.message)
+        if (data) {
+          // Update offline cache
+          await offlineDB.saveProducts(data)
+          return data
+        }
+      } catch (err) {
+        console.error('Error fetching products from server, falling back to cache:', err)
+      }
     }
 
-    return data || []
+    // Fallback to offline cache
+    const cachedProducts = await offlineDB.getProducts()
+    return cachedProducts || []
   },
 
   async createProduct(input: CreateProductInput): Promise<ProductResponse> {

@@ -7,12 +7,14 @@ import ProductGrid from '../components/pos/ProductGrid'
 import CartPanel, { CartLine } from '../components/pos/CartPanel'
 import PaymentPanel from '../components/pos/PaymentPanel'
 import BundleModal from '../components/pos/BundleModal'
-import { AlertCircle, RefreshCw, Search } from 'lucide-react'
+import { AlertCircle, RefreshCw, Search, WifiOff } from 'lucide-react'
 import { PaymentInput, PosAction, PosViewMode } from '../types/pos'
 import ActionModeBar from '../components/pos/ActionModeBar'
 import ViewModeSwitcher from '../components/pos/ViewModeSwitcher'
 import ReceiptModal from '../components/pos/ReceiptModal'
+import PaymentModal from '../components/pos/PaymentModal'
 import { ReceiptData } from '../components/pos/Receipt'
+import { offlineDB } from '../db/offlineDB'
 
 const POS: React.FC = () => {
   const { persona } = useAuth()
@@ -20,6 +22,8 @@ const POS: React.FC = () => {
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isOnline, setIsOnline] = useState(navigator.onLine)
+  const [pendingSalesCount, setPendingSalesCount] = useState(0)
 
   const [orderQtyById, setOrderQtyById] = useState<Record<number, number>>({})
   const [bundleOpenFor, setBundleOpenFor] = useState<number | null>(null)
@@ -29,8 +33,9 @@ const POS: React.FC = () => {
   const [submitting, setSubmitting] = useState(false)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
-  // Receipt modal state
+  // Receipt & Payment modal state
   const [receiptOpen, setReceiptOpen] = useState(false)
+  const [paymentOpen, setPaymentOpen] = useState(false)
   const [receiptData, setReceiptData] = useState<ReceiptData | null>(null)
 
   const [query, setQuery] = useState('')
@@ -55,6 +60,29 @@ const POS: React.FC = () => {
 
   useEffect(() => {
     loadProducts()
+
+    const handleOnline = () => {
+      setIsOnline(true)
+      checkPendingSales()
+    }
+    const handleOffline = () => setIsOnline(false)
+
+    const checkPendingSales = async () => {
+      const sales = await offlineDB.getAllSales()
+      setPendingSalesCount(sales.length)
+    }
+
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+    checkPendingSales()
+
+    const interval = setInterval(checkPendingSales, 5000)
+
+    return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+      clearInterval(interval)
+    }
   }, [])
 
   // Filtering by name or barcode
@@ -133,7 +161,7 @@ const POS: React.FC = () => {
   }
 
   const handleAddPayment = () => {
-    setPayments(prev => [...prev, { amount: Math.max(0, total - prev.reduce((s, p) => s + (Number(p.amount) || 0), 0)), method: 'Cash', transaction_ref: '' }])
+    setPayments(prev => [...prev, { amount: '', method: 'Cash', transaction_ref: '', tendered: '' }])
   }
 
   const handleUpdatePayment = (index: number, patch: Partial<PaymentInput>) => {
@@ -162,6 +190,7 @@ const POS: React.FC = () => {
         setError(result.message || 'Failed to create sale')
       } else {
         setSuccessMessage('Sale created successfully')
+        setPaymentOpen(false) // Close payment modal on success
 
         // Build receipt data BEFORE clearing local state
         const lines = cartLines.map(l => ({
@@ -173,7 +202,8 @@ const POS: React.FC = () => {
         const totalPaidLocal = totalPaidFromUI
         const change = Math.max(0, totalPaidLocal - total)
         const receipt: ReceiptData = {
-          orderId: result.order_id,
+          orderId: result.is_offline ? undefined : result.order_id,
+          offlineId: result.is_offline ? result.order_id : undefined,
           businessName: 'Point of Sale',
           businessAddress1: '',
           businessAddress2: '',
@@ -219,6 +249,18 @@ const POS: React.FC = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
           <div className="mb-4 flex flex-col items-center gap-3">
+              {!isOnline && (
+                <div className="w-full bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-center justify-center gap-2 text-amber-800 text-sm">
+                  <WifiOff className="h-4 w-4" />
+                  <span>You are currently offline. Sales will be saved locally and synced when online.</span>
+                </div>
+              )}
+              {pendingSalesCount > 0 && isOnline && (
+                <div className="w-full bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center justify-center gap-2 text-blue-800 text-sm">
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                  <span>Syncing {pendingSalesCount} offline sales...</span>
+                </div>
+              )}
               <ActionModeBar value={selectedAction} onChange={setSelectedAction} />
               <ViewModeSwitcher value={viewMode} onChange={setViewMode} />
           </div>
@@ -299,19 +341,7 @@ const POS: React.FC = () => {
                 onDeduct={(id) => deduct(id, 1)}
                 onClear={clear}
                 onClearAll={clearAll}
-              />
-
-              <PaymentPanel
-                total={total}
-                payments={payments}
-                onAddPayment={handleAddPayment}
-                onUpdatePayment={handleUpdatePayment}
-                onRemovePayment={handleRemovePayment}
-                notes={notes}
-                onNotesChange={setNotes}
-                onSubmit={handleSubmit}
-                submitting={submitting}
-                disabled={cartLines.length === 0}
+                onCheckout={() => setPaymentOpen(true)}
               />
             </div>
           </div>
@@ -340,19 +370,7 @@ const POS: React.FC = () => {
                 onDeduct={(id) => deduct(id, 1)}
                 onClear={clear}
                 onClearAll={clearAll}
-              />
-
-              <PaymentPanel
-                total={total}
-                payments={payments}
-                onAddPayment={handleAddPayment}
-                onUpdatePayment={handleUpdatePayment}
-                onRemovePayment={handleRemovePayment}
-                notes={notes}
-                onNotesChange={setNotes}
-                onSubmit={handleSubmit}
-                submitting={submitting}
-                disabled={cartLines.length === 0}
+                onCheckout={() => setPaymentOpen(true)}
               />
             </div>
           </div>
@@ -371,6 +389,22 @@ const POS: React.FC = () => {
         open={receiptOpen}
         data={receiptData}
         onClose={() => setReceiptOpen(false)}
+      />
+
+      {/* Payment modal */}
+      <PaymentModal
+        open={paymentOpen}
+        onClose={() => setPaymentOpen(false)}
+        total={total}
+        payments={payments}
+        onAddPayment={handleAddPayment}
+        onUpdatePayment={handleUpdatePayment}
+        onRemovePayment={handleRemovePayment}
+        notes={notes}
+        onNotesChange={setNotes}
+        onSubmit={handleSubmit}
+        submitting={submitting}
+        disabled={cartLines.length === 0}
       />
     </div>
   )

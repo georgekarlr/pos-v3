@@ -18,6 +18,7 @@ export interface ReceiptPayment {
 
 export interface ReceiptData {
     orderId?: number
+    offlineId?: number
     businessName?: string
     businessAddress1?: string
     businessAddress2?: string
@@ -55,8 +56,8 @@ const Receipt: React.FC<{ data: ReceiptData; className?: string }>
 
             <div className="px-4 text-[11px] text-gray-700">
                 <div className="flex justify-between">
-                    <span>Order</span>
-                    <span>#{data.orderId ?? '—'}</span>
+                    <span>{data.offlineId ? 'Offline Ref' : 'Order'}</span>
+                    <span>#{data.offlineId ?? data.orderId ?? '—'}</span>
                 </div>
                 <div className="flex justify-between">
                     <span>Date</span>

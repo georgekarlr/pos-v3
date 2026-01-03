@@ -7,9 +7,9 @@ export interface CartItemInput {
 }
 
 export interface PaymentInput {
-  amount: number
+  amount: string | number
   method: string
-  tendered: number
+  tendered: string | number
   transaction_ref?: string | null
 }
 
@@ -25,6 +25,7 @@ export interface SaleResult {
   success: boolean
   message: string
   order_id?: number
+  is_offline?: boolean
 }
 
 // POS UI types
