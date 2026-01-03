@@ -127,8 +127,9 @@ const AdjustQuantityDialog: React.FC<AdjustQuantityDialogProps> = ({ product, on
                             id="adjustment"
                             ref={inputRef}
                             type="number"
+                            step="any"
                             value={value}
-                            onChange={(e) => setValue(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
+                            onChange={(e) => setValue(e.target.value === '' ? '' : parseFloat(e.target.value))}
                             placeholder="e.g., 10 to add, -5 to remove"
                             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             disabled={status === 'submitting' || status === 'success'}

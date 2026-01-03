@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { Product } from '../types/product'
-import { productService } from '../services/productService'
 import ProductList from '../components/products/ProductList'
 import ProductForm, { ProductFormData } from '../components/products/ProductForm'
 import LoadingSpinner from '../components/LoadingSpinner'
 import { Plus, AlertCircle, RefreshCw } from 'lucide-react'
+import {productService} from "../services/productService.ts";
 
 const Products: React.FC = () => {
   const { persona } = useAuth()
@@ -22,8 +22,12 @@ const Products: React.FC = () => {
     setIsLoading(true)
     setError(null)
     try {
-      const data = await productService.getAllProducts()
-      setProducts(data)
+      const response = await productService.getAllProducts()
+      if (response.error) {
+        setError(response.error)
+      } else {
+        setProducts(response.data || [])
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load products')
     } finally {
@@ -58,24 +62,50 @@ const Products: React.FC = () => {
 
       if (selectedProduct) {
         const result = await productService.updateProduct({
-          product_id: selectedProduct.id,
-          account_id: persona.id,
-          ...formData
+          p_product_id: selectedProduct.id,
+          p_account_id: persona.id,
+          p_name: formData.name,
+          p_description: formData.description,
+          p_base_price: formData.base_price,
+          p_tax_rate: formData.tax_rate,
+          p_sku: formData.sku,
+          p_barcode: formData.barcode,
+          p_image_url: formData.image_url,
+          p_quantity: formData.quantity,
+          p_selling_method: formData.selling_method,
+          p_unit_type: formData.unit_type
         })
 
-        if (!result.success) {
-          throw new Error(result.message)
+        if (result.error) {
+          throw new Error(result.error)
+        }
+
+        if (result.data && !result.data.success) {
+          throw new Error(result.data.message)
         }
 
         setSuccessMessage('Product updated successfully!')
       } else {
         const result = await productService.createProduct({
-          account_id: persona.id,
-          ...formData
+          p_account_id: persona.id,
+          p_name: formData.name,
+          p_description: formData.description,
+          p_base_price: formData.base_price,
+          p_tax_rate: formData.tax_rate,
+          p_sku: formData.sku,
+          p_barcode: formData.barcode,
+          p_image_url: formData.image_url,
+          p_quantity: formData.quantity,
+          p_selling_method: formData.selling_method,
+          p_unit_type: formData.unit_type
         })
 
-        if (!result.success) {
-          throw new Error(result.message)
+        if (result.error) {
+          throw new Error(result.error)
+        }
+
+        if (result.data && !result.data.success) {
+          throw new Error(result.data.message)
         }
 
         setSuccessMessage('Product created successfully!')

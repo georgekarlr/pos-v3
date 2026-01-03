@@ -1,5 +1,5 @@
 import React from 'react'
-import { Product } from '../../types/product'
+import { Product, PRODUCT_UNIT_LABELS } from '../../types/product'
 import { PosAction } from '../../types/pos'
 // Import icons for a cleaner, more visual UI
 import { PlusCircle, MinusCircle, Package, Trash2 } from 'lucide-react'
@@ -57,8 +57,8 @@ const ProductTile: React.FC<ProductTileProps> = ({ product, orderQty, action, on
         >
             {/* --- Quantity Badge --- */}
             {isSelected && (
-                <div className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-blue-500 text-white shadow-lg text-sm font-bold">
-                    {orderQty}
+                <div className="absolute -top-2 -right-2 flex h-auto min-h-[1.5rem] min-w-[1.5rem] items-center justify-center rounded-full bg-blue-500 text-white shadow-lg text-sm font-bold px-1">
+                    {product.selling_method === 'measured' ? orderQty.toFixed(2).replace(/\.?0+$/, '') : orderQty}
                 </div>
             )}
 
@@ -87,7 +87,16 @@ const ProductTile: React.FC<ProductTileProps> = ({ product, orderQty, action, on
                         <p className="text-sm text-gray-500">Available</p>
                         <div className={`flex items-center justify-center gap-1 font-semibold ${stockStatus.color}`}>
                             <span className={`h-2 w-2 rounded-full ${stockStatus.dot}`}></span>
-                            <span>{product.quantity}</span>
+                            <span>
+                                {product.quantity}{' '}
+                                <span className="text-xs font-normal">
+                                    {product.unit_type
+                                        ? PRODUCT_UNIT_LABELS[product.unit_type] || product.unit_type
+                                        : product.selling_method === 'unit'
+                                        ? 'units'
+                                        : ''}
+                                </span>
+                            </span>
                         </div>
                     </div>
                 </div>

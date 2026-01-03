@@ -1,56 +1,85 @@
-import { supabase } from '../lib/supabase'
-import { CartItemInput, PaymentInput, SaleResult, SaleResultRow } from '../types/pos'
-import { offlineDB } from '../db/offlineDB'
+import { supabase } from '../lib/supabase';
+import { offlineDB } from '../db/offlineDB';
+import type {
+  CreatePosSaleParams,
+  CreateSaleResult,
+  ServiceResponse
+} from '../types/pos.ts';
 
-export const posService = {
-  async createSale(accountId: number, cart: CartItemInput[], payments: PaymentInput[], notes: string, total: number, tax: number | null, total_tendered: number): Promise<SaleResult> {
+export class posService {
+
+  /**
+   * Creates a new POS sale transaction.
+   * Handles server-side validation of totals and taxes.
+   */
+  static async createSale(params: CreatePosSaleParams): Promise<ServiceResponse<CreateSaleResult & { is_offline?: boolean }>> {
     // Check if online
     if (!navigator.onLine) {
       try {
         const offlineSaleId = await offlineDB.saveSale({
-          accountId,
-          cart,
-          payments,
-          notes,
-          total,
-          tax,
-          total_tendered,
+          accountId: params.p_account_id,
+          cart: params.p_cart_items,
+          payments: params.p_payments,
+          notes: params.p_notes || null,
+          total: params.p_total,
+          tax: params.p_tax,
+          total_tendered: params.p_total_tendered,
           createdAt: new Date().toISOString()
         });
-        return { success: true, message: 'Sale saved offline. Will sync when online.', order_id: offlineSaleId, is_offline: true };
-      } catch (err) {
+
+        const result: CreateSaleResult & { is_offline: boolean } = {
+          success: true,
+          message: 'Sale saved offline. Will sync when online.',
+          data: { order_id: offlineSaleId },
+          is_offline: true
+        };
+
+        return { data: result, error: null };
+      } catch (err: any) {
         console.error('Error saving offline sale:', err);
-        return { success: false, message: 'Failed to save sale offline' };
+        return { data: null, error: 'Failed to save sale offline' };
       }
     }
 
-    const { data, error } = await supabase.rpc('pos_create_sale', {
-      p_account_id: accountId,
-      p_customer_id: null,
-      p_cart_items: cart,
-      p_payments: payments,
-      p_notes: notes || null,
-      p_total: total,
-        p_tax: tax || 0,
-        p_total_tendered: total_tendered
-    })
-      console.log('cart',cart);
-    console.log('payments',payments);
-    console.log('total',total);
+    try {
+      const { data, error } = await supabase.rpc('pos_create_sale', {
+        p_account_id: params.p_account_id,
+        p_customer_id: params.p_customer_id,
+        p_cart_items: params.p_cart_items,
+        p_payments: params.p_payments,
+        p_notes: params.p_notes ?? null,
+        p_total: params.p_total,
+        p_tax: params.p_tax,
+        p_total_tendered: params.p_total_tendered
+      });
 
+      if (error) {
+        console.error('Error creating sale:', error);
+        return { data: null, error: error.message };
+      }
 
-    if (error) {
-      console.error('Error creating sale:', error)
-      return { success: false, message: error.message }
-    }
+      // The function returns a TABLE, so data is an array.
+      if (!data || data.length === 0) {
+        return { data: null, error: 'Failed to create sale.' };
+      }
 
-    const row: SaleResultRow | undefined = data?.[0]
-    if (!row) return { success: false, message: 'Unknown response from server' }
-    return {
-      success: row.success,
-      message: row.message,
-      order_id: row.data?.order_id,
-      is_offline: false
+      // The RPC returns { success, message, data (jsonb) }
+      // We map this to our TypeScript interface
+      const result = data[0] as CreateSaleResult;
+
+      // If the RPC internally caught an exception and returned success: false
+      if (!result.success) {
+        return { data: null, error: result.message };
+      }
+
+      return { data: { ...result, is_offline: false }, error: null };
+
+    } catch (err: any) {
+      console.error('Unexpected error during sale:', err);
+      return {
+        data: null,
+        error: err.message || 'An unexpected error occurred while processing the sale.'
+      };
     }
   }
 }

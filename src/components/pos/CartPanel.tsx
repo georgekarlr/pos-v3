@@ -1,5 +1,5 @@
 import React from 'react'
-import { Product } from '../../types/product'
+import { Product, PRODUCT_UNIT_LABELS } from '../../types/product'
 import { Trash2, Plus, Minus, ShoppingCart } from 'lucide-react'
 
 // --- INTERFACES AND PROPS ARE UNCHANGED ---
@@ -17,13 +17,14 @@ interface CartPanelProps {
     onDeduct: (productId: number) => void
     onClear: (productId: number) => void
     onClearAll: () => void
+    onQtyClick?: (productId: number) => void
     onCheckout?: () => void
 }
 
 const currency = (n: number) => `\u20b1${n.toFixed(2)}`
 
 // --- THE COMPONENT WITH A CONSISTENT, STACKED LAYOUT ---
-const CartPanel: React.FC<CartPanelProps> = ({ lines, subtotal, tax, total, onAdd, onDeduct, onClear, onClearAll, onCheckout }) => {
+const CartPanel: React.FC<CartPanelProps> = ({ lines, subtotal, tax, total, onAdd, onDeduct, onClear, onClearAll, onQtyClick, onCheckout }) => {
     return (
         <div className="bg-white rounded-xl border border-gray-200 shadow-md flex flex-col h-full">
             <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
@@ -54,7 +55,15 @@ const CartPanel: React.FC<CartPanelProps> = ({ lines, subtotal, tax, total, onAd
                                 <div>
                                     <div className="text-base font-semibold text-gray-800 truncate">{product.name}</div>
                                     <div className="text-sm text-gray-500">
-                                        {currency(product.display_price)} • <span className="text-xs">Stock: {product.quantity}</span>
+                                        {currency(product.display_price)} •{' '}
+                                        <span className="text-xs">
+                                            Stock: {product.quantity}{' '}
+                                            {product.unit_type
+                                                ? PRODUCT_UNIT_LABELS[product.unit_type] || product.unit_type
+                                                : product.selling_method === 'unit'
+                                                ? 'units'
+                                                : ''}
+                                        </span>
                                     </div>
                                 </div>
 
@@ -66,7 +75,20 @@ const CartPanel: React.FC<CartPanelProps> = ({ lines, subtotal, tax, total, onAd
                                             <button onClick={() => onDeduct(product.id)} className="p-2 text-gray-600 hover:bg-gray-100 rounded-l-md transition-colors">
                                                 <Minus className="h-4 w-4" />
                                             </button>
-                                            <div className="w-10 text-center font-medium text-gray-800 border-x border-gray-300">{qty}</div>
+                                            <button
+                                                onClick={() => onQtyClick?.(product.id)}
+                                                disabled={!onQtyClick}
+                                                className="min-w-[2.5rem] px-2 text-center font-medium text-gray-800 border-x border-gray-300 text-sm hover:bg-gray-50 disabled:hover:bg-transparent transition-colors"
+                                            >
+                                                {product.selling_method === 'measured' ? qty.toFixed(2).replace(/\.?0+$/, '') : qty}{' '}
+                                                <span className="text-[10px] text-gray-500 font-normal">
+                                                    {product.unit_type
+                                                        ? PRODUCT_UNIT_LABELS[product.unit_type] || product.unit_type
+                                                        : product.selling_method === 'unit'
+                                                        ? 'units'
+                                                        : ''}
+                                                </span>
+                                            </button>
                                             <button onClick={() => onAdd(product.id)} className="p-2 text-gray-600 hover:bg-gray-100 rounded-r-md transition-colors">
                                                 <Plus className="h-4 w-4" />
                                             </button>

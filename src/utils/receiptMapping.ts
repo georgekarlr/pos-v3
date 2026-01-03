@@ -14,6 +14,7 @@ export function mapSaleDetailsToReceipt(details: SaleDetailsResponse): ReceiptDa
         return {
             name: it.product_name,
             qty: it.quantity,
+            unitType: it.unit_type,
             unitPrice: unit,
             lineTotal: Number(total),
             refundedQty,

@@ -1,45 +1,77 @@
+// types/posProducts.ts
+
+// --- Generic Response Wrapper ---
+export interface ServiceResponse<T> {
+  data: T | null;
+  error: string | null;
+}
+
+// --- Enum Types ---
+export type ProductSellingMethod = 'unit' | 'measured';
+export type ProductUnitType = 'pieces' | 'box' | 'pack' | 'set' | 'pair' | 'dozen' | 'kg' | 'g' | 'l' | 'ml' | 'm' | 'cm' | 'sq_m' | 'roll';
+
+export const PRODUCT_UNIT_LABELS: Record<ProductUnitType, string> = {
+  pieces: 'pieces',
+  box: 'box',
+  pack: 'pack',
+  set: 'set',
+  pair: 'pair',
+  dozen: 'dozen',
+  kg: 'kg',
+  g: 'g',
+  l: 'l',
+  ml: 'ml',
+  m: 'm',
+  cm: 'cm',
+  sq_m: 'sq_m',
+  roll: 'roll',
+};
+
+// --- Entity Types ---
+
 export interface Product {
-  id: number
-  user_id: string
-  name: string
-  description: string | null
-  base_price: number
-  tax_rate: number
-  display_price: number
-  sku: string | null
-  barcode: string | null
-  image_url: string | null
-  quantity: number
-  is_active: boolean
-  created_at: string
-  updated_at: string
+  id: number;
+  user_id: string; // UUID
+  name: string;
+  description: string | null;
+  base_price: number;
+  tax_rate: number;
+  display_price: number;
+  sku: string | null;
+  barcode: string | null;
+  image_url: string | null;
+  is_active: boolean;
+  created_at: string; // ISO Timestamp
+  updated_at: string; // ISO Timestamp
+  quantity: number;
+  selling_method: ProductSellingMethod;
+  unit_type: ProductUnitType | null;
 }
 
-export interface CreateProductInput {
-  account_id: number
-  name: string
-  description: string
-  base_price: number
-  tax_rate: number
-  sku: string
-  barcode: string
-  image_url: string
+// --- Parameter Interfaces ---
+
+export interface CreatePosProductParams {
+  p_account_id: number;
+  p_name: string;
+  p_description: string | null;
+  p_base_price: number;
+  p_tax_rate: number;
+  p_sku: string | null;
+  p_barcode: string | null;
+  p_image_url: string | null;
+  p_quantity: number;
+  p_selling_method: ProductSellingMethod;
+  p_unit_type: ProductUnitType | null;
 }
 
-export interface UpdateProductInput {
-  product_id: number
-  account_id: number
-  name: string
-  description: string
-  base_price: number
-  tax_rate: number
-  sku: string
-  barcode: string
-  image_url: string
+export interface UpdatePosProductParams extends CreatePosProductParams {
+  p_product_id: number;
 }
 
-export interface ProductResponse {
-  success: boolean
-  message: string
-  data: Product | null
+// --- Result Interface ---
+
+export interface PosProductOperationResult {
+  success: boolean;
+  message: string;
+  data: Product | null; // The JSONB data returned is cast to the PosProduct type
 }

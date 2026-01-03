@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Product } from '../../types/product'
+import { Product, ProductUnitType, PRODUCT_UNIT_LABELS } from '../../types/product'
 import { X } from 'lucide-react'
 
 interface ProductFormProps {
@@ -17,6 +17,9 @@ export interface ProductFormData {
   sku: string
   barcode: string
   image_url: string
+  quantity: number
+  selling_method: 'unit' | 'measured'
+  unit_type: ProductUnitType | null
 }
 
 const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onCancel, isAdmin }) => {
@@ -27,7 +30,10 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onCancel, 
     tax_rate: 0,
     sku: '',
     barcode: '',
-    image_url: ''
+    image_url: '',
+    quantity: 0,
+    selling_method: 'unit',
+    unit_type: null
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -41,16 +47,19 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onCancel, 
         tax_rate: product.tax_rate,
         sku: product.sku || '',
         barcode: product.barcode || '',
-        image_url: product.image_url || ''
+        image_url: product.image_url || '',
+        quantity: product.quantity || 0,
+        selling_method: product.selling_method || 'unit',
+        unit_type: product.unit_type || null
       })
     }
   }, [product])
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'base_price' || name === 'tax_rate' ? parseFloat(value) || 0 : value
+      [name]: name === 'base_price' || name === 'tax_rate' || name === 'quantity' ? (value === '' ? 0 : parseFloat(value)) : value
     }))
   }
 
@@ -223,6 +232,66 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onCancel, 
                     placeholder="Enter barcode"
                   />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="selling_method" className="block text-sm font-medium text-gray-700 mb-1">
+                    Selling Method <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    id="selling_method"
+                    name="selling_method"
+                    value={formData.selling_method}
+                    onChange={handleChange}
+                    disabled={!isAdmin}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500"
+                  >
+                    <option value="unit">By Unit (Countable)</option>
+                    <option value="measured">By Weight/Volume/Length (Measured)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="unit_type" className="block text-sm font-medium text-gray-700 mb-1">
+                    Unit Type {formData.selling_method === 'measured' && <span className="text-red-500">*</span>}
+                  </label>
+                  <select
+                    id="unit_type"
+                    name="unit_type"
+                    value={formData.unit_type || ''}
+                    onChange={handleChange}
+                    required={formData.selling_method === 'measured'}
+                    disabled={!isAdmin}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500"
+                  >
+                    <option value="">Select unit type</option>
+                    {(Object.entries(PRODUCT_UNIT_LABELS) as [ProductUnitType, string][]).map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 mb-1">
+                  Current Quantity <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="number"
+                  id="quantity"
+                  name="quantity"
+                  value={formData.quantity}
+                  onChange={handleChange}
+                  required
+                  disabled={!isAdmin}
+                  step={formData.selling_method === 'measured' ? '0.01' : '1'}
+                  min="0"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500"
+                  placeholder="0.00"
+                />
               </div>
 
               <div>
