@@ -1,5 +1,5 @@
 import React from 'react'
-import { Product } from '../../types/product'
+import { Product, PRODUCT_UNIT_LABELS } from '../../types/product'
 import { Edit, Eye, Package } from 'lucide-react'
 
 interface ProductListProps {
@@ -61,6 +61,9 @@ const ProductList: React.FC<ProductListProps> = ({ products, onEdit, isAdmin }) 
                 Display Price
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Inventory
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Status
               </th>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -104,6 +107,19 @@ const ProductList: React.FC<ProductListProps> = ({ products, onEdit, isAdmin }) 
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                   {formatCurrency(product.display_price)}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <div className="font-medium">
+                    {product.quantity}{' '}
+                    {product.unit_type
+                      ? PRODUCT_UNIT_LABELS[product.unit_type] || product.unit_type
+                      : product.selling_method === 'unit'
+                      ? 'units'
+                      : ''}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {product.selling_method === 'unit' ? 'Sold by unit' : 'Sold by weight/volume'}
+                  </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span
@@ -193,6 +209,20 @@ const ProductList: React.FC<ProductListProps> = ({ products, onEdit, isAdmin }) 
               <div>
                 <p className="text-gray-500">Tax Rate</p>
                 <p className="font-medium text-gray-900">{product.tax_rate}%</p>
+              </div>
+              <div className="col-span-2">
+                <p className="text-gray-500">Inventory</p>
+                <p className="font-medium text-gray-900">
+                  {product.quantity}{' '}
+                  {product.unit_type
+                    ? PRODUCT_UNIT_LABELS[product.unit_type] || product.unit_type
+                    : product.selling_method === 'unit'
+                    ? 'units'
+                    : ''}
+                  <span className="text-xs text-gray-500 ml-2">
+                    ({product.selling_method === 'unit' ? 'Unit' : 'Measured'})
+                  </span>
+                </p>
               </div>
               <div className="col-span-2">
                 <p className="text-gray-500">Display Price</p>

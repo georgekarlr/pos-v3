@@ -31,6 +31,7 @@ export interface SaleItemDetails {
 
   price_at_purchase?: number | null
   line_total?: number | null
+  unit_type?: string | null
   refunded_quantity: number | null
 }
 

@@ -11,6 +11,7 @@ interface BundleModalProps {
     confirmText?: string
     onConfirm: (quantity: number) => void
     onClose: () => void
+    isDecimal?: boolean
 }
 
 const BundleModal: React.FC<BundleModalProps> = ({
@@ -21,6 +22,7 @@ const BundleModal: React.FC<BundleModalProps> = ({
                                                      confirmText = "Add", // Default confirm button text
                                                      onConfirm,
                                                      onClose,
+                                                     isDecimal = false,
                                                  }) => {
     const [qty, setQty] = useState<number>(initialQuantity)
     // NEW: State to control the visibility for animations
@@ -52,8 +54,16 @@ const BundleModal: React.FC<BundleModalProps> = ({
     // We render null only after the closing animation is potentially complete
     if (!open) return null
 
-    const handleIncrement = () => setQty((prevQty) => prevQty + 1)
-    const handleDecrement = () => setQty((prevQty) => Math.max(1, prevQty - 1))
+    const handleIncrement = () => setQty((prevQty) => {
+        const step = isDecimal ? 0.01 : 1
+        const next = prevQty + step
+        return Math.round(next * 100) / 100
+    })
+    const handleDecrement = () => setQty((prevQty) => {
+        const step = isDecimal ? 0.01 : 1
+        const next = prevQty - step
+        return Math.max(step, Math.round(next * 100) / 100)
+    })
 
     return (
         // The `role` and `aria-modal` attributes are for accessibility
@@ -97,19 +107,20 @@ const BundleModal: React.FC<BundleModalProps> = ({
                         <button
                             onClick={handleDecrement}
                             className="p-2 rounded-full text-gray-500 bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
-                            disabled={qty <= 1}
+                            disabled={qty <= (isDecimal ? 0.01 : 1)}
                             aria-label="Decrease quantity"
                         >
                             <MinusIcon className="h-5 w-5" />
                         </button>
                         <input
-                            type="text" // Using text to have more control over styling
+                            type="number"
+                            step={isDecimal ? "0.01" : "1"}
                             value={qty}
                             onChange={(e) => {
-                                const value = parseInt(e.target.value, 10)
-                                setQty(isNaN(value) || value < 1 ? 1 : value)
+                                const value = isDecimal ? parseFloat(e.target.value) : parseInt(e.target.value, 10)
+                                setQty(isNaN(value) || value < (isDecimal ? 0.01 : 1) ? (isDecimal ? 0.01 : 1) : value)
                             }}
-                            className="w-20 rounded-md border-gray-300 text-center text-lg font-medium shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                            className="w-24 rounded-md border-gray-300 text-center text-lg font-medium shadow-sm focus:border-blue-500 focus:ring-blue-500"
                             aria-live="polite" // Announces changes to screen readers
                         />
                         <button

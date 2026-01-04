@@ -40,8 +40,12 @@ const Inventory: React.FC = () => {
         setLoading(true)
         setError(null)
         try {
-            const data = await productService.getAllProducts()
-            setProducts(data)
+            const { data, error } = await productService.getAllProducts()
+            if (error) {
+                setError(error)
+            } else {
+                setProducts(data || [])
+            }
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to load products')
         } finally {

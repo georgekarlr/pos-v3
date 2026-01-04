@@ -3,6 +3,7 @@ import React from 'react'
 export interface ReceiptLine {
     name: string
     qty: number
+    unitType?: string | null
     unitPrice: number
     lineTotal: number
     // Optional refund info per item (shown on Sales History receipts)
@@ -87,13 +88,16 @@ const Receipt: React.FC<{ data: ReceiptData; className?: string }>
                                     <div className="truncate">{l.name}</div>
                                     <div className="text-[10px] text-gray-500">@ {format(l.unitPrice)}</div>
                                 </div>
-                                <div className="text-right">{l.qty}</div>
+                                <div className="text-right">
+                                    {l.unitType ? l.qty.toFixed(2).replace(/\.?0+$/, '') : l.qty}
+                                    {l.unitType && <span className="text-[9px] ml-0.5">{l.unitType}</span>}
+                                </div>
                                 <div className="text-right">{format(l.lineTotal)}</div>
                             </div>
                             {l.refundedAmount && l.refundedAmount > 0 && (
                                 <div className="grid grid-cols-4 mt-0.5">
                                     <div className="col-span-2 pr-2 text-[10px] text-red-600">
-                                        Refunded{typeof l.refundedQty === 'number' && l.refundedQty > 0 ? ` x${l.refundedQty} @ ${format(l.unitPrice)}` : ''}
+                                        Refunded{typeof l.refundedQty === 'number' && l.refundedQty > 0 ? ` x${l.unitType ? l.refundedQty.toFixed(2).replace(/\.?0+$/, '') : l.refundedQty} @ ${format(l.unitPrice)}` : ''}
                                     </div>
                                     <div className="col-span-1" />
                                     <div className="text-right text-[10px] text-red-600">-{format(l.refundedAmount)}</div>

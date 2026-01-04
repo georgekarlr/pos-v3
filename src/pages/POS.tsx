@@ -5,7 +5,6 @@ import { Product } from '../types/product'
 import LoadingSpinner from '../components/LoadingSpinner'
 import ProductGrid from '../components/pos/ProductGrid'
 import CartPanel, { CartLine } from '../components/pos/CartPanel'
-import PaymentPanel from '../components/pos/PaymentPanel'
 import BundleModal from '../components/pos/BundleModal'
 import { AlertCircle, RefreshCw, Search, WifiOff } from 'lucide-react'
 import { PaymentInput, PosAction, PosViewMode } from '../types/pos'
@@ -48,9 +47,13 @@ const POS: React.FC = () => {
     if (!silent) setIsLoading(true)
     setError(null)
     try {
-      const data = await productService.getAllProducts()
-      setProducts(data)
-      setFilteredProducts(data)
+      const { data, error } = await productService.getAllProducts()
+      if (error) {
+        setError(error)
+      } else {
+        setProducts(data || [])
+        setFilteredProducts(data || [])
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load products')
     } finally {
@@ -183,27 +186,51 @@ const POS: React.FC = () => {
     setSubmitting(true)
     setError(null)
     try {
-      const cartPayload = cartLines.map(l => ({ product_id: l.product.id, quantity: l.qty, price: l.product.display_price, base_price: l.product.base_price, tax_rate: l.product.tax_rate }))
-        console.log(cartPayload)
-      const result = await import('../services/posService').then(m => m.posService.createSale(persona.id!, cartPayload, payments, notes || null, total, tax, totalPaidFromUI))
-      if (!result.success) {
-        setError(result.message || 'Failed to create sale')
+      const cartPayload = cartLines.map(l => ({
+        product_id: l.product.id,
+        quantity: l.qty,
+        price: l.product.display_price,
+        base_price: l.product.base_price,
+        tax_rate: l.product.tax_rate
+      }));
+
+      const { data: serviceData, error: serviceError } = await import('../services/posService').then(m =>
+        m.posService.createSale({
+          p_account_id: persona.id!,
+          p_customer_id: null,
+          p_cart_items: cartPayload,
+          p_payments: payments.map(p => ({
+            amount: Number(p.amount),
+            method: p.method,
+            transaction_ref: p.transaction_ref
+          })),
+          p_notes: notes || null,
+          p_total: total,
+          p_tax: tax,
+          p_total_tendered: totalPaidFromUI
+        })
+      );
+
+      if (serviceError || !serviceData) {
+        setError(serviceError || 'Failed to create sale');
       } else {
-        setSuccessMessage('Sale created successfully')
-        setPaymentOpen(false) // Close payment modal on success
+        const result = serviceData;
+        setSuccessMessage('Sale created successfully');
+        setPaymentOpen(false); // Close payment modal on success
 
         // Build receipt data BEFORE clearing local state
         const lines = cartLines.map(l => ({
           name: l.product.name,
           qty: l.qty,
+          unitType: l.product.unit_type,
           unitPrice: l.product.base_price,
           lineTotal: l.product.base_price * l.qty,
-        }))
-        const totalPaidLocal = totalPaidFromUI
-        const change = Math.max(0, totalPaidLocal - total)
+        }));
+        const totalPaidLocal = totalPaidFromUI;
+        const change = Math.max(0, totalPaidLocal - total);
         const receipt: ReceiptData = {
-          orderId: result.is_offline ? undefined : result.order_id,
-          offlineId: result.is_offline ? result.order_id : undefined,
+          orderId: result.is_offline ? undefined : result.data?.order_id,
+          offlineId: result.is_offline ? result.data?.order_id : undefined,
           businessName: 'Point of Sale',
           businessAddress1: '',
           businessAddress2: '',
@@ -217,7 +244,7 @@ const POS: React.FC = () => {
           totalPaid: totalPaidLocal,
           change,
           notes: notes || null,
-        }
+        };
         setReceiptData(receipt)
         setReceiptOpen(true)
 
@@ -341,6 +368,7 @@ const POS: React.FC = () => {
                 onDeduct={(id) => deduct(id, 1)}
                 onClear={clear}
                 onClearAll={clearAll}
+                onQtyClick={(id) => setBundleOpenFor(id)}
                 onCheckout={() => setPaymentOpen(true)}
               />
             </div>
@@ -370,6 +398,7 @@ const POS: React.FC = () => {
                 onDeduct={(id) => deduct(id, 1)}
                 onClear={clear}
                 onClearAll={clearAll}
+                onQtyClick={(id) => setBundleOpenFor(id)}
                 onCheckout={() => setPaymentOpen(true)}
               />
             </div>
@@ -380,8 +409,10 @@ const POS: React.FC = () => {
       {/* Bundle modal */}
       <BundleModal
         open={bundleOpenFor !== null}
+        isDecimal={products.find(p => p.id === bundleOpenFor)?.selling_method === 'measured'}
+        initialQuantity={bundleOpenFor !== null ? orderQtyById[bundleOpenFor] || 1 : 1}
         onClose={() => setBundleOpenFor(null)}
-        onConfirm={(qty) => { if (bundleOpenFor !== null) add(bundleOpenFor, qty) }}
+        onConfirm={(qty) => { if (bundleOpenFor !== null) setOrderQtyById(prev => ({ ...prev, [bundleOpenFor]: qty })) }}
       />
 
       {/* Receipt modal */}
