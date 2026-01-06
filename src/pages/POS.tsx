@@ -14,6 +14,7 @@ import ReceiptModal from '../components/pos/ReceiptModal'
 import PaymentModal from '../components/pos/PaymentModal'
 import { ReceiptData } from '../components/pos/Receipt'
 import { offlineDB } from '../db/offlineDB'
+import {posService} from "../services/posService.ts";
 
 const POS: React.FC = () => {
   const { persona } = useAuth()
@@ -194,8 +195,7 @@ const POS: React.FC = () => {
         tax_rate: l.product.tax_rate
       }));
 
-      const { data: serviceData, error: serviceError } = await import('../services/posService').then(m =>
-        m.posService.createSale({
+      const { data: serviceData, error: serviceError } = await posService.createSale({
           p_account_id: persona.id!,
           p_customer_id: null,
           p_cart_items: cartPayload,
@@ -209,7 +209,7 @@ const POS: React.FC = () => {
           p_tax: tax,
           p_total_tendered: totalPaidFromUI
         })
-      );
+
 
       if (serviceError || !serviceData) {
         setError(serviceError || 'Failed to create sale');
