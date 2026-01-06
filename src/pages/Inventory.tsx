@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { Product } from '../types/product'
-import { productService } from '../services/productService'
-import { inventoryService } from '../services/inventoryService'
+import { ProductService } from '../services/productService'
+import { InventoryService } from '../services/inventoryService'
 import ProductCard from '../components/inventory/ProductCard'
 import AdjustQuantityDialog from '../components/inventory/AdjustQuantityDialog'
 import ActivityModal from '../components/inventory/ActivityModal'
@@ -40,7 +40,7 @@ const Inventory: React.FC = () => {
         setLoading(true)
         setError(null)
         try {
-            const { data, error } = await productService.getAllProducts()
+            const { data, error } = await ProductService.getAllProducts()
             if (error) {
                 setError(error)
             } else {
@@ -63,7 +63,7 @@ const Inventory: React.FC = () => {
             throw new Error('Account ID not found')
         }
 
-        const result = await inventoryService.adjustProductQuantity({
+        const result = await InventoryService.adjustProductQuantity({
             product_id: adjustProduct.id,
             account_id: persona.id,
             adjustment_value,

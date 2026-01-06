@@ -5,7 +5,7 @@ import ProductList from '../components/products/ProductList'
 import ProductForm, { ProductFormData } from '../components/products/ProductForm'
 import LoadingSpinner from '../components/LoadingSpinner'
 import { Plus, AlertCircle, RefreshCw } from 'lucide-react'
-import {productService} from "../services/productService.ts";
+import {ProductService} from "../services/productService.ts";
 
 const Products: React.FC = () => {
   const { persona } = useAuth()
@@ -22,7 +22,7 @@ const Products: React.FC = () => {
     setIsLoading(true)
     setError(null)
     try {
-      const response = await productService.getAllProducts()
+      const response = await ProductService.getAllProducts()
       if (response.error) {
         setError(response.error)
       } else {
@@ -61,7 +61,7 @@ const Products: React.FC = () => {
       }
 
       if (selectedProduct) {
-        const result = await productService.updateProduct({
+        const result = await ProductService.updateProduct({
           p_product_id: selectedProduct.id,
           p_account_id: persona.id,
           p_name: formData.name,
@@ -86,7 +86,7 @@ const Products: React.FC = () => {
 
         setSuccessMessage('Product updated successfully!')
       } else {
-        const result = await productService.createProduct({
+        const result = await ProductService.createProduct({
           p_account_id: persona.id,
           p_name: formData.name,
           p_description: formData.description,

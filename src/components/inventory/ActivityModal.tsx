@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { X, History, UserRound, Package, ArrowDownRight, ArrowUpRight } from 'lucide-react'
 import { Product } from '../../types/product'
-import { inventoryService, ProductActivityItem } from '../../services/inventoryService'
+import { InventoryService, ProductActivityItem } from '../../services/inventoryService'
 
 interface ActivityModalProps {
   open: boolean
@@ -31,9 +31,9 @@ const ActivityModal: React.FC<ActivityModalProps> = ({ open, onClose, mode, prod
       const nextPage = reset ? 0 : page
       let data: ProductActivityItem[] = []
       if (mode === 'all') {
-        data = await inventoryService.getAllProductActivity(limit, nextPage * limit, 'STOCK_ADJUSTED')
+        data = await InventoryService.getAllProductActivity(limit, nextPage * limit, 'STOCK_ADJUSTED')
       } else if (mode === 'product' && product) {
-        data = await inventoryService.getProductActivityById(product.id, limit, nextPage * limit, 'STOCK_ADJUSTED')
+        data = await InventoryService.getProductActivityById(product.id, limit, nextPage * limit, 'STOCK_ADJUSTED')
       }
 
       if (reset) {

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
-import { productService } from '../services/productService'
+import { ProductService } from '../services/productService'
 import { Product } from '../types/product'
 import LoadingSpinner from '../components/LoadingSpinner'
 import ProductGrid from '../components/pos/ProductGrid'
@@ -13,8 +13,8 @@ import ViewModeSwitcher from '../components/pos/ViewModeSwitcher'
 import ReceiptModal from '../components/pos/ReceiptModal'
 import PaymentModal from '../components/pos/PaymentModal'
 import { ReceiptData } from '../components/pos/Receipt'
-import { offlineDB } from '../db/offlineDB'
-import {posService} from "../services/posService.ts";
+import { OfflineDB } from '../db/offlineDB'
+import { PosService } from '../services/posService'
 
 const POS: React.FC = () => {
   const { persona } = useAuth()
@@ -48,7 +48,7 @@ const POS: React.FC = () => {
     if (!silent) setIsLoading(true)
     setError(null)
     try {
-      const { data, error } = await productService.getAllProducts()
+      const { data, error } = await ProductService.getAllProducts()
       if (error) {
         setError(error)
       } else {
@@ -72,7 +72,7 @@ const POS: React.FC = () => {
     const handleOffline = () => setIsOnline(false)
 
     const checkPendingSales = async () => {
-      const sales = await offlineDB.getAllSales()
+      const sales = await OfflineDB.getAllSales()
       setPendingSalesCount(sales.length)
     }
 
@@ -195,7 +195,7 @@ const POS: React.FC = () => {
         tax_rate: l.product.tax_rate
       }));
 
-      const { data: serviceData, error: serviceError } = await posService.createSale({
+      const { data: serviceData, error: serviceError } = await PosService.createSale({
           p_account_id: persona.id!,
           p_customer_id: null,
           p_cart_items: cartPayload,

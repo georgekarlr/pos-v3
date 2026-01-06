@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
-import { reportService } from '../services/reportService'
+import { ReportService } from '../services/reportService'
 import LoadingSpinner from '../components/LoadingSpinner'
 import {
   BestSellingProductRow,
@@ -100,23 +100,23 @@ const Reports: React.FC = () => {
 
     try {
       const [overTime, byStaff, topProducts, low] = await Promise.all([
-        reportService.getSalesOverTime({
+        ReportService.getSalesOverTime({
           requesting_account_id,
           start_date: dateParams.startISO,
           end_date: dateParams.endISO
         }),
-        reportService.getSalesByStaff({
+        ReportService.getSalesByStaff({
           requesting_account_id,
           start_date: dateParams.startISO,
           end_date: dateParams.endISO
         }),
-        reportService.getBestSellingProducts({
+        ReportService.getBestSellingProducts({
           requesting_account_id,
           start_date: dateParams.startISO,
           end_date: dateParams.endISO,
           limit: 10
         }),
-        reportService.getLowStockProducts({
+        ReportService.getLowStockProducts({
           requesting_account_id,
           threshold: lowStockThreshold
         })

@@ -10,7 +10,7 @@ import {
   SalesOverTimeRow,
 } from '../types/report'
 
-export const reportService = {
+export const ReportService = {
   async getSalesOverTime(params: GetSalesOverTimeParams): Promise<SalesOverTimeRow[]> {
     const { requesting_account_id, start_date, end_date } = params
     const { data, error } = await supabase.rpc('pos_report_sales_over_time', {

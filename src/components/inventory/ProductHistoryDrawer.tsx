@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { X, History, UserRound } from 'lucide-react'
 import { Product } from '../../types/product'
-import { inventoryService, ProductActivityItem } from '../../services/inventoryService'
+import { InventoryService, ProductActivityItem } from '../../services/inventoryService'
 
 interface ProductHistoryDrawerProps {
   product: Product | null
@@ -39,7 +39,7 @@ const ProductHistoryDrawer: React.FC<ProductHistoryDrawerProps> = ({ product, op
     setError(null)
     try {
       const nextPage = reset ? 0 : page
-      const data = await inventoryService.getProductActivityById(product.id, limit, nextPage * limit)
+      const data = await InventoryService.getProductActivityById(product.id, limit, nextPage * limit)
       if (reset) {
         setItems(data)
       } else {
