@@ -1,12 +1,12 @@
 import { supabase } from '../lib/supabase';
-import { offlineDB } from '../db/offlineDB';
+import { OfflineDB } from '../db/offlineDB';
 import type {
   CreatePosSaleParams,
   CreateSaleResult,
   ServiceResponse
 } from '../types/pos.ts';
 
-export class posService {
+export class PosService {
 
   /**
    * Creates a new POS sale transaction.
@@ -16,7 +16,7 @@ export class posService {
     // Check if online
     if (!navigator.onLine) {
       try {
-        const offlineSaleId = await offlineDB.saveSale({
+        const offlineSaleId = await OfflineDB.saveSale({
           accountId: params.p_account_id,
           cart: params.p_cart_items,
           payments: params.p_payments,

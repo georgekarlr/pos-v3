@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { inventoryService, ProductActivityItem } from '../../services/inventoryService'
+import { InventoryService, ProductActivityItem } from '../../services/inventoryService'
 import { History, UserRound, Package } from 'lucide-react'
 
 const formatDateTime = (iso: string) =>
@@ -19,7 +19,7 @@ const AllActivityList: React.FC = () => {
     setLoading(true)
     setError(null)
     try {
-      const data = await inventoryService.getAllProductActivity(limit, page * limit)
+      const data = await InventoryService.getAllProductActivity(limit, page * limit)
       setItems(prev => [...prev, ...data])
       setHasMore(data.length === limit)
       setPage(prev => prev + 1)

@@ -27,7 +27,7 @@ export interface ProductActivityItem {
   created_at: string
 }
 
-export const inventoryService = {
+export const InventoryService = {
   async adjustProductQuantity(input: AdjustQuantityInput): Promise<RpcStandardResponse> {
     const { data, error } = await supabase.rpc('pos_adjust_product_quantity', {
       p_product_id: input.product_id,

@@ -1,7 +1,7 @@
-import { offlineDB } from '../db/offlineDB';
-import { posService } from './posService';
+import { OfflineDB } from '../db/offlineDB';
+import { PosService } from './posService';
 
-export const syncService = {
+export const SyncService = {
   isSyncing: false,
 
   initialized: false,
@@ -11,7 +11,7 @@ export const syncService = {
 
     this.isSyncing = true;
     try {
-      const sales = await offlineDB.getAllSales();
+      const sales = await OfflineDB.getAllSales();
       if (sales.length === 0) return;
 
       console.log(`Starting sync of ${sales.length} offline sales...`);
@@ -19,7 +19,7 @@ export const syncService = {
       for (const sale of sales) {
         try {
           console.log(`Syncing sale ${sale.id}...`, sale);
-          const { data, error } = await posService.createSale({
+          const { data, error } = await PosService.createSale({
             p_account_id: sale.accountId,
             p_customer_id: null,
             p_cart_items: sale.cart,
@@ -36,7 +36,7 @@ export const syncService = {
           }
 
           if (data.success) {
-            await offlineDB.deleteSale(sale.id!);
+            await OfflineDB.deleteSale(sale.id!);
             console.log(`Synced and deleted offline sale ${sale.id}`);
           } else {
             console.error(`Failed to sync sale ${sale.id} (server rejected):`, data.message || 'Unknown error');

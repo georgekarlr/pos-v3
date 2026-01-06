@@ -8,7 +8,7 @@ import type {
   ServiceResponse
 } from '../types/product.ts';
 
-export class productService {
+export class ProductService {
 
   /**
    * Fetches all POS products available to the current user.

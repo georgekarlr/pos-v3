@@ -19,11 +19,11 @@ import {
 import Reports from './pages/Reports'
 import ReceiptPrinter from './pages/ReceiptPrinter'
 import { useEffect } from 'react'
-import { syncService } from './services/syncService'
+import { SyncService } from './services/syncService'
 
 function App() {
   useEffect(() => {
-    syncService.init()
+    SyncService.init()
   }, [])
 
   return (

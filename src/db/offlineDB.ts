@@ -104,4 +104,4 @@ export class IndexedDBService {
   }
 }
 
-export const offlineDB = new IndexedDBService();
+export const OfflineDB = new IndexedDBService();
