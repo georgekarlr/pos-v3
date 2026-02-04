@@ -71,8 +71,8 @@ const Products: React.FC = () => {
           p_sku: formData.sku,
           p_barcode: formData.barcode,
           p_image_url: formData.image_url,
-          p_quantity: formData.quantity,
           p_selling_method: formData.selling_method,
+          p_inventory_type: formData.inventory_type,
           p_unit_type: formData.unit_type
         })
 
@@ -95,8 +95,8 @@ const Products: React.FC = () => {
           p_sku: formData.sku,
           p_barcode: formData.barcode,
           p_image_url: formData.image_url,
-          p_quantity: formData.quantity,
           p_selling_method: formData.selling_method,
+          p_inventory_type: formData.inventory_type,
           p_unit_type: formData.unit_type
         })
 

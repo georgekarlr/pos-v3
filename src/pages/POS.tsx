@@ -108,7 +108,7 @@ const POS: React.FC = () => {
     if (!product) return
     setOrderQtyById(prev => {
       const current = prev[productId] || 0
-      const next = Math.min(product.quantity, current + inc)
+      const next = Math.min(product.total_stock, current + inc)
       return { ...prev, [productId]: next }
     })
   }

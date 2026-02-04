@@ -24,14 +24,14 @@ const LOW_STOCK_THRESHOLD = 10;
 
 const ProductTile: React.FC<ProductTileProps> = ({ product, orderQty, action, onClick }) => {
     const isSelected = orderQty > 0
-    const isDisabled = product.quantity === 0 && action === 'add'
+    const isDisabled = product.total_stock === 0 && action === 'add'
 
     // Determine stock status for visual feedback
     const getStockStatus = () => {
-        if (product.quantity === 0) {
+        if (product.total_stock === 0) {
             return { text: 'Out of Stock', color: 'text-red-600', dot: 'bg-red-500' }
         }
-        if (product.quantity <= LOW_STOCK_THRESHOLD) {
+        if (product.total_stock <= LOW_STOCK_THRESHOLD) {
             return { text: 'Low Stock', color: 'text-orange-600', dot: 'bg-orange-400' }
         }
         return { text: 'In Stock', color: 'text-green-600', dot: 'bg-green-500' }
@@ -88,7 +88,7 @@ const ProductTile: React.FC<ProductTileProps> = ({ product, orderQty, action, on
                         <div className={`flex items-center justify-center gap-1 font-semibold ${stockStatus.color}`}>
                             <span className={`h-2 w-2 rounded-full ${stockStatus.dot}`}></span>
                             <span>
-                                {product.quantity}{' '}
+                                {product.total_stock}{' '}
                                 <span className="text-xs font-normal">
                                     {product.unit_type
                                         ? PRODUCT_UNIT_LABELS[product.unit_type] || product.unit_type

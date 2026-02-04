@@ -8,6 +8,7 @@ export interface ServiceResponse<T> {
 
 // --- Enum Types ---
 export type ProductSellingMethod = 'unit' | 'measured';
+export type ProductInventoryType = 'non_perishable' | 'perishable';
 export type ProductUnitType = 'pieces' | 'box' | 'pack' | 'set' | 'pair' | 'dozen' | 'kg' | 'g' | 'l' | 'ml' | 'm' | 'cm' | 'sq_m' | 'roll';
 
 export const PRODUCT_UNIT_LABELS: Record<ProductUnitType, string> = {
@@ -29,6 +30,13 @@ export const PRODUCT_UNIT_LABELS: Record<ProductUnitType, string> = {
 
 // --- Entity Types ---
 
+export interface StockBatch {
+  batch_id: number;
+  quantity: number;
+  expiration_date: string | null;
+  received_at: string;
+}
+
 export interface Product {
   id: number;
   user_id: string; // UUID
@@ -43,8 +51,10 @@ export interface Product {
   is_active: boolean;
   created_at: string; // ISO Timestamp
   updated_at: string; // ISO Timestamp
-  quantity: number;
+  total_stock: number;
+  stock_batches: StockBatch[];
   selling_method: ProductSellingMethod;
+  inventory_type: ProductInventoryType;
   unit_type: ProductUnitType | null;
 }
 
@@ -59,8 +69,8 @@ export interface CreatePosProductParams {
   p_sku: string | null;
   p_barcode: string | null;
   p_image_url: string | null;
-  p_quantity: number;
   p_selling_method: ProductSellingMethod;
+  p_inventory_type: ProductInventoryType;
   p_unit_type: ProductUnitType | null;
 }
 

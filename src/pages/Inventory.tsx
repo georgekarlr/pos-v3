@@ -28,6 +28,7 @@ const Inventory: React.FC = () => {
     const [searchName, setSearchName] = useState('')
     const [searchBarcode, setSearchBarcode] = useState('')
     const [stockFilter, setStockFilter] = useState<'all' | 'in' | 'low' | 'out'>('all')
+    const [typeFilter, setTypeFilter] = useState<'all' | 'non_perishable' | 'perishable'>('all')
 
     const LOW_STOCK_THRESHOLD = 10
     const getStockStatus = (quantity: number): 'in' | 'low' | 'out' => {
@@ -57,25 +58,26 @@ const Inventory: React.FC = () => {
         loadProducts()
     }, [])
 
-    const handleConfirmAdjust = async (adjustment_value: number, notes: string) => {
+    const handleConfirmAdjust = async (adjustment_value: number, notes: string, expiration_date?: string | null) => {
         if (!adjustProduct) return
         if (!persona?.id) {
             throw new Error('Account ID not found')
         }
 
-        const result = await InventoryService.adjustProductQuantity({
+        const result = await InventoryService.addInventoryBatch({
             product_id: adjustProduct.id,
             account_id: persona.id,
-            adjustment_value,
+            quantity_to_add: adjustment_value,
+            expiration_date: expiration_date || null,
             notes,
         })
 
         if (!result.success) {
-            throw new Error(result.message || 'Adjustment failed')
+            throw new Error(result.message || 'Failed to adjust inventory')
         }
 
         setAdjustProduct(null)
-        setSuccessMessage('Quantity adjusted successfully!')
+        setSuccessMessage('Inventory adjusted successfully!')
         await loadProducts()
         setTimeout(() => setSuccessMessage(null), 3000)
     }
@@ -85,8 +87,9 @@ const Inventory: React.FC = () => {
         const barcodeQuery = searchBarcode.trim().toLowerCase()
         const matchesName = nameQuery === '' || p.name.toLowerCase().includes(nameQuery)
         const matchesBarcode = barcodeQuery === '' || (p.barcode ? p.barcode.toLowerCase().includes(barcodeQuery) : false)
-        const matchesStock = stockFilter === 'all' || getStockStatus(p.quantity) === stockFilter
-        return matchesName && matchesBarcode && matchesStock
+        const matchesStock = stockFilter === 'all' || getStockStatus(p.total_stock) === stockFilter
+        const matchesType = typeFilter === 'all' || p.inventory_type === typeFilter
+        return matchesName && matchesBarcode && matchesStock && matchesType
     })
 
     return (
@@ -189,10 +192,22 @@ const Inventory: React.FC = () => {
                                     <option value="out">Out of Stock</option>
                                 </select>
                             </div>
+                            <div>
+                                <label className="block text-xs font-medium text-gray-600 mb-1">Inventory Type</label>
+                                <select
+                                    value={typeFilter}
+                                    onChange={(e) => setTypeFilter(e.target.value as 'all' | 'non_perishable' | 'perishable')}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                >
+                                    <option value="all">All Types</option>
+                                    <option value="non_perishable">Non-Perishable</option>
+                                    <option value="perishable">Perishable</option>
+                                </select>
+                            </div>
                             <div className="flex items-end">
                                 <button
                                     type="button"
-                                    onClick={() => { setSearchName(''); setSearchBarcode(''); setStockFilter('all') }}
+                                    onClick={() => { setSearchName(''); setSearchBarcode(''); setStockFilter('all'); setTypeFilter('all') }}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 hover:bg-gray-100"
                                 >
                                     Clear filters
@@ -229,6 +244,29 @@ const Inventory: React.FC = () => {
                                     isAdmin={!!isAdmin}
                                     onAdjust={(prod) => setAdjustProduct(prod)}
                                     onViewHistory={(prod) => { setActivityMode('product'); setActivityProduct(prod); setShowActivityModal(true) }}
+                                    onWriteOffBatch={async (prod, batchId) => {
+                                        if (!persona?.id) {
+                                            alert('Account ID not found')
+                                            return
+                                        }
+                                        const reason = window.prompt('Enter reason for write-off (optional):', '')
+                                        if (reason === null) return
+                                        try {
+                                            const res = await InventoryService.writeOffInventoryBatch({
+                                                batch_id: batchId,
+                                                requesting_account_id: persona.id,
+                                                reason: reason || 'Write-off',
+                                            })
+                                            if (!res.success) {
+                                                throw new Error(res.message || 'Write-off failed')
+                                            }
+                                            setSuccessMessage(`Batch #${batchId} written off successfully!`)
+                                            await loadProducts()
+                                            setTimeout(() => setSuccessMessage(null), 3000)
+                                        } catch (e: any) {
+                                            alert(e?.message || 'Failed to write off batch')
+                                        }
+                                    }}
                                 />
                             ))}
                         </div>

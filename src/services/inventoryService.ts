@@ -1,10 +1,17 @@
 import { supabase } from '../lib/supabase'
 
-export interface AdjustQuantityInput {
+export interface AddInventoryBatchInput {
   product_id: number
   account_id: number
-  adjustment_value: number
-  notes: string
+  quantity_to_add: number
+  expiration_date?: string | null
+  notes?: string | null
+}
+
+export interface WriteOffInventoryBatchInput {
+  batch_id: number
+  requesting_account_id: number
+  reason: string
 }
 
 export interface RpcStandardResponse<T = any> {
@@ -28,16 +35,34 @@ export interface ProductActivityItem {
 }
 
 export const InventoryService = {
-  async adjustProductQuantity(input: AdjustQuantityInput): Promise<RpcStandardResponse> {
-    const { data, error } = await supabase.rpc('pos_adjust_product_quantity', {
+
+  async addInventoryBatch(input: AddInventoryBatchInput): Promise<RpcStandardResponse> {
+    const { data, error } = await supabase.rpc('pos2_add_inventory_batch', {
       p_product_id: input.product_id,
       p_account_id: input.account_id,
-      p_adjustment_value: input.adjustment_value,
-      p_notes: input.notes,
+      p_quantity_to_add: input.quantity_to_add,
+      p_expiration_date: input.expiration_date ?? null,
+      p_notes: input.notes ?? null,
     })
 
     if (error) {
-      console.error('Error adjusting product quantity:', error)
+      console.error('Error adding inventory batch:', error)
+      throw new Error(error.message)
+    }
+
+    const result = (Array.isArray(data) ? data[0] : data) as RpcStandardResponse
+    return result
+  },
+
+  async writeOffInventoryBatch(input: WriteOffInventoryBatchInput): Promise<RpcStandardResponse> {
+    const { data, error } = await supabase.rpc('pos2_write_off_inventory_batch', {
+      p_batch_id: input.batch_id,
+      p_requesting_account_id: input.requesting_account_id,
+      p_reason: input.reason,
+    })
+
+    if (error) {
+      console.error('Error writing off inventory batch:', error)
       throw new Error(error.message)
     }
 
@@ -53,7 +78,7 @@ export const InventoryService = {
     if (actionFilter) {
       params.p_action_filter = actionFilter
     }
-    const { data, error } = await supabase.rpc('pos_get_product_activity_history', params)
+    const { data, error } = await supabase.rpc('pos2_get_product_activity_history', params)
 
     if (error) {
       console.error('Error fetching product activity history:', error)
@@ -72,7 +97,7 @@ export const InventoryService = {
     if (actionFilter) {
       params.p_action_filter = actionFilter
     }
-    const { data, error } = await supabase.rpc('pos_get_product_activity_by_id', params)
+    const { data, error } = await supabase.rpc('pos2_get_product_activity_by_id', params)
 
     if (error) {
       console.error('Error fetching product activity by id:', error)

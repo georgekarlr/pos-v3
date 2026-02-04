@@ -5,13 +5,14 @@ import { Product } from '../../types/product'
 interface AdjustQuantityDialogProps {
     product: Product
     onClose: () => void
-    onConfirm: (adjustment_value: number, notes: string) => Promise<void>
+    onConfirm: (adjustment_value: number, notes: string, expiration_date?: string | null) => Promise<void>
 }
 
 const AdjustQuantityDialog: React.FC<AdjustQuantityDialogProps> = ({ product, onClose, onConfirm }) => {
     // State for form inputs
     const [value, setValue] = useState<number | ''>('')
     const [notes, setNotes] = useState<string>('')
+    const [expirationDate, setExpirationDate] = useState<string>('')
 
     // State for component status (more robust than multiple booleans)
     type Status = 'idle' | 'submitting' | 'success' | 'error'
@@ -26,7 +27,7 @@ const AdjustQuantityDialog: React.FC<AdjustQuantityDialogProps> = ({ product, on
 
     // --- NEW: Calculate the new quantity in real-time ---
     const adjustmentValue = typeof value === 'number' ? value : 0
-    const newQuantity = product.quantity + adjustmentValue
+    const newQuantity = product.total_stock + adjustmentValue
 
     // --- NEW: Handle closing with animation ---
     const handleClose = () => {
@@ -58,7 +59,7 @@ const AdjustQuantityDialog: React.FC<AdjustQuantityDialogProps> = ({ product, on
             if (adjustmentValue === 0) {
                 throw new Error('Enter a non-zero number to adjust the quantity.')
             }
-            await onConfirm(adjustmentValue, notes)
+            await onConfirm(adjustmentValue, notes, expirationDate || null)
             setStatus('success')
             setTimeout(handleClose, 1500) // Show success for 1.5s then close
         } catch (err) {
@@ -104,7 +105,7 @@ const AdjustQuantityDialog: React.FC<AdjustQuantityDialogProps> = ({ product, on
                         <div className="text-lg font-bold text-gray-900">{product.name}</div>
                         <div className="mt-2 flex items-center justify-between text-sm">
                             <span className="text-gray-600">Current Stock:</span>
-                            <span className="font-mono text-gray-800">{product.quantity}</span>
+                            <span className="font-mono text-gray-800">{product.total_stock}</span>
                         </div>
                         {/* --- NEW: Real-time calculation display --- */}
                         <div className="mt-1 flex items-center justify-between text-sm font-medium">
@@ -148,6 +149,26 @@ const AdjustQuantityDialog: React.FC<AdjustQuantityDialogProps> = ({ product, on
                             disabled={status === 'submitting' || status === 'success'}
                         />
                     </div>
+
+                    {(adjustmentValue > 0 || product.inventory_type === 'perishable') && (
+                        <div>
+                            <label htmlFor="expirationDate" className="block text-sm font-medium text-gray-700 mb-1.5">
+                                Expiration Date {product.inventory_type === 'perishable' && <span className="text-red-500">*</span>}
+                            </label>
+                            <input
+                                id="expirationDate"
+                                type="date"
+                                value={expirationDate}
+                                onChange={(e) => setExpirationDate(e.target.value)}
+                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                disabled={status === 'submitting' || status === 'success'}
+                                required={product.inventory_type === 'perishable' && adjustmentValue > 0}
+                            />
+                            {product.inventory_type === 'perishable' && (
+                                <p className="mt-1 text-xs text-gray-500">Required for perishable products when adding stock.</p>
+                            )}
+                        </div>
+                    )}
 
                     <div className="flex items-center justify-end gap-3 pt-2">
                         <button type="button" onClick={handleClose} className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50" disabled={status === 'submitting' || status === 'success'}>

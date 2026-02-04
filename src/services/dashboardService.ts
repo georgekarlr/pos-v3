@@ -3,7 +3,7 @@ import { DashboardData } from '../types/dashboard'
 
 export const dashboardService = {
   async getDashboardData(topLimit = 5, recentLimit = 5): Promise<DashboardData> {
-    const { data, error } = await supabase.rpc('pos_get_dashboard_data', {
+    const { data, error } = await supabase.rpc('pos2_get_dashboard_data', {
       p_top_product_limit: topLimit,
       p_recent_order_limit: recentLimit,
     })
@@ -12,6 +12,7 @@ export const dashboardService = {
       console.error('Error fetching dashboard data:', error)
       throw new Error(error.message)
     }
+    console.log(data);
 
     const d = (data as DashboardData) || ({} as DashboardData)
 

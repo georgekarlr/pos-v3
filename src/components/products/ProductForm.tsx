@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Product, ProductUnitType, PRODUCT_UNIT_LABELS } from '../../types/product'
+import { Product, ProductUnitType, PRODUCT_UNIT_LABELS, ProductInventoryType } from '../../types/product'
 import { X } from 'lucide-react'
 
 interface ProductFormProps {
@@ -17,8 +17,8 @@ export interface ProductFormData {
   sku: string
   barcode: string
   image_url: string
-  quantity: number
   selling_method: 'unit' | 'measured'
+  inventory_type: ProductInventoryType
   unit_type: ProductUnitType | null
 }
 
@@ -31,8 +31,8 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onCancel, 
     sku: '',
     barcode: '',
     image_url: '',
-    quantity: 0,
     selling_method: 'unit',
+    inventory_type: 'non_perishable',
     unit_type: null
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -48,8 +48,8 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onCancel, 
         sku: product.sku || '',
         barcode: product.barcode || '',
         image_url: product.image_url || '',
-        quantity: product.quantity || 0,
         selling_method: product.selling_method || 'unit',
+        inventory_type: product.inventory_type || 'non_perishable',
         unit_type: product.unit_type || null
       })
     }
@@ -59,7 +59,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onCancel, 
     const { name, value } = e.target
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'base_price' || name === 'tax_rate' || name === 'quantity' ? (value === '' ? 0 : parseFloat(value)) : value
+      [name]: name === 'base_price' || name === 'tax_rate' ? (value === '' ? 0 : parseFloat(value)) : value
     }))
   }
 
@@ -275,26 +275,44 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onCancel, 
                 </div>
               </div>
 
-              <div>
-                <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 mb-1">
-                  Current Quantity <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="number"
-                  id="quantity"
-                  name="quantity"
-                  value={formData.quantity}
-                  onChange={handleChange}
-                  required
-                  disabled={!isAdmin}
-                  step={formData.selling_method === 'measured' ? '0.01' : '1'}
-                  min="0"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500"
-                  placeholder="0.00"
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="inventory_type" className="block text-sm font-medium text-gray-700 mb-1">
+                    Inventory Type <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    id="inventory_type"
+                    name="inventory_type"
+                    value={formData.inventory_type}
+                    onChange={handleChange}
+                    disabled={!isAdmin}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500"
+                  >
+                    <option value="non_perishable">Non-Perishable</option>
+                    <option value="perishable">Perishable</option>
+                  </select>
+                </div>
+
+                {product && (
+                  <div>
+                    <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 mb-1">
+                      Current Quantity
+                    </label>
+                    <input
+                      type="number"
+                      id="quantity"
+                      name="quantity"
+                      value={product.total_stock}
+                      readOnly
+                      disabled
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">Use Inventory tab to adjust stock.</p>
+                  </div>
+                )}
               </div>
 
-              <div>
+              {/*<div>
                 <label htmlFor="image_url" className="block text-sm font-medium text-gray-700 mb-1">
                   Image URL
                 </label>
@@ -308,7 +326,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onCancel, 
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500"
                   placeholder="https://example.com/image.jpg"
                 />
-              </div>
+              </div>*/}
             </div>
 
             <div className="flex flex-col-reverse sm:flex-row gap-3 mt-6 pt-4 border-t border-gray-200">

@@ -11,11 +11,15 @@ import type {
 export class ProductService {
 
   /**
-   * Fetches all POS products available to the current user.
+   * Fetches POS products available to the current user with pagination and search.
    */
-  static async getAllProducts(): Promise<ServiceResponse<Product[]>> {
+  static async getAllProducts(limit: number = 50, offset: number = 0, searchTerm?: string): Promise<ServiceResponse<Product[]>> {
     try {
-      const { data, error } = await supabase.rpc('pos_get_all_products');
+      const { data, error } = await supabase.rpc('pos2_get_product_details', {
+        p_limit: limit,
+        p_offset: offset,
+        p_search_term: searchTerm || null
+      });
 
       if (error) {
         return { data: null, error: error.message };
@@ -37,7 +41,7 @@ export class ProductService {
    */
   static async createProduct(params: CreatePosProductParams): Promise<ServiceResponse<PosProductOperationResult>> {
     try {
-      const { data, error } = await supabase.rpc('pos_create_product', {
+      const { data, error } = await supabase.rpc('pos2_create_product', {
         p_account_id: params.p_account_id,
         p_name: params.p_name,
         p_description: params.p_description,
@@ -46,8 +50,8 @@ export class ProductService {
         p_sku: params.p_sku,
         p_barcode: params.p_barcode,
         p_image_url: params.p_image_url,
-        p_quantity: params.p_quantity,
         p_selling_method: params.p_selling_method,
+        p_inventory_type: params.p_inventory_type,
         p_unit_type: params.p_unit_type
       });
 
@@ -75,7 +79,7 @@ export class ProductService {
    */
   static async updateProduct(params: UpdatePosProductParams): Promise<ServiceResponse<PosProductOperationResult>> {
     try {
-      const { data, error } = await supabase.rpc('pos_update_product', {
+      const { data, error } = await supabase.rpc('pos2_update_product', {
         p_product_id: params.p_product_id,
         p_account_id: params.p_account_id,
         p_name: params.p_name,
@@ -85,8 +89,8 @@ export class ProductService {
         p_sku: params.p_sku,
         p_barcode: params.p_barcode,
         p_image_url: params.p_image_url,
-        p_quantity: params.p_quantity,
         p_selling_method: params.p_selling_method,
+        p_inventory_type: params.p_inventory_type,
         p_unit_type: params.p_unit_type
       });
 

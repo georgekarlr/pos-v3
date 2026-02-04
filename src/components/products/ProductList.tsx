@@ -110,7 +110,7 @@ const ProductList: React.FC<ProductListProps> = ({ products, onEdit, isAdmin }) 
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   <div className="font-medium">
-                    {product.quantity}{' '}
+                    {product.total_stock}{' '}
                     {product.unit_type
                       ? PRODUCT_UNIT_LABELS[product.unit_type] || product.unit_type
                       : product.selling_method === 'unit'
@@ -120,6 +120,13 @@ const ProductList: React.FC<ProductListProps> = ({ products, onEdit, isAdmin }) 
                   <div className="text-xs text-gray-500">
                     {product.selling_method === 'unit' ? 'Sold by unit' : 'Sold by weight/volume'}
                   </div>
+                  {product.inventory_type && (
+                    <div className={`text-[10px] mt-1 font-bold uppercase ${
+                      product.inventory_type === 'perishable' ? 'text-orange-600' : 'text-blue-600'
+                    }`}>
+                      {product.inventory_type.replace('_', '-')}
+                    </div>
+                  )}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span
@@ -213,7 +220,7 @@ const ProductList: React.FC<ProductListProps> = ({ products, onEdit, isAdmin }) 
               <div className="col-span-2">
                 <p className="text-gray-500">Inventory</p>
                 <p className="font-medium text-gray-900">
-                  {product.quantity}{' '}
+                  {product.total_stock}{' '}
                   {product.unit_type
                     ? PRODUCT_UNIT_LABELS[product.unit_type] || product.unit_type
                     : product.selling_method === 'unit'
@@ -223,6 +230,13 @@ const ProductList: React.FC<ProductListProps> = ({ products, onEdit, isAdmin }) 
                     ({product.selling_method === 'unit' ? 'Unit' : 'Measured'})
                   </span>
                 </p>
+                {product.inventory_type && (
+                  <p className={`text-[10px] font-bold uppercase mt-0.5 ${
+                    product.inventory_type === 'perishable' ? 'text-orange-600' : 'text-blue-600'
+                  }`}>
+                    {product.inventory_type.replace('_', '-')}
+                  </p>
+                )}
               </div>
               <div className="col-span-2">
                 <p className="text-gray-500">Display Price</p>
