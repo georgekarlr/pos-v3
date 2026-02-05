@@ -55,15 +55,7 @@ const CartPanel: React.FC<CartPanelProps> = ({ lines, subtotal, tax, total, onAd
                                 <div>
                                     <div className="text-base font-semibold text-gray-800 truncate">{product.name}</div>
                                     <div className="text-sm text-gray-500">
-                                        {currency(product.display_price)} •{' '}
-                                        <span className="text-xs">
-                                            Stock: {product.total_stock}{' '}
-                                            {product.unit_type
-                                                ? PRODUCT_UNIT_LABELS[product.unit_type] || product.unit_type
-                                                : product.selling_method === 'unit'
-                                                ? 'units'
-                                                : ''}
-                                        </span>
+                                        {currency(product.display_price)}
                                     </div>
                                 </div>
 

@@ -326,6 +326,7 @@ const Reports: React.FC = () => {
               <thead>
                 <tr className="text-left text-gray-600">
                   <th className="py-2 pr-4">Product</th>
+                  <th className="py-2 pr-4">Unit</th>
                   <th className="py-2 pr-4 text-right">Units Sold</th>
                   <th className="py-2 pr-4 text-right">Revenue</th>
                 </tr>
@@ -334,6 +335,7 @@ const Reports: React.FC = () => {
                 {bestSellers.map((r) => (
                   <tr key={r.product_id} className="border-t odd:bg-white even:bg-gray-50 hover:bg-gray-50/80">
                     <td className="py-2 pr-4">{r.product_name}</td>
+                    <td className="py-2 pr-4 text-gray-500">{r.unit_type}</td>
                     <td className="py-2 pr-4 text-right tabular-nums">
                       <div className="flex items-center gap-2 justify-end">
                         <div className="w-32 h-1.5 bg-gray-200 rounded overflow-hidden">
@@ -346,13 +348,13 @@ const Reports: React.FC = () => {
                   </tr>
                 ))}
                 {bestSellers.length === 0 && (
-                  <tr><td colSpan={3} className="py-4 text-gray-500">No data for selected range.</td></tr>
+                  <tr><td colSpan={4} className="py-4 text-gray-500">No data for selected range.</td></tr>
                 )}
               </tbody>
               {bestSellers.length > 0 && (
                 <tfoot className="border-t">
                   <tr>
-                    <td className="py-2 pr-4 font-medium text-gray-700">Total</td>
+                    <td colSpan={2} className="py-2 pr-4 font-medium text-gray-700">Total</td>
                     <td className="py-2 pr-4 text-right tabular-nums">{bestSellers.reduce((s, r) => s + (r.total_units_sold || 0), 0).toLocaleString()}</td>
                     <td className="py-2 pr-4 text-right tabular-nums">{formatCurrency(bestSellers.reduce((s, r) => s + (Number(r.total_revenue) || 0), 0))}</td>
                   </tr>
@@ -371,7 +373,8 @@ const Reports: React.FC = () => {
                 <tr className="text-left text-gray-600">
                   <th className="py-2 pr-4">Product</th>
                   <th className="py-2 pr-4">SKU</th>
-                  <th className="py-2 pr-4">Qty</th>
+                  <th className="py-2 pr-4">Unit</th>
+                  <th className="py-2 pr-4">Stock</th>
                 </tr>
               </thead>
               <tbody>
@@ -379,11 +382,12 @@ const Reports: React.FC = () => {
                   <tr key={r.product_id} className="border-t">
                     <td className="py-2 pr-4">{r.product_name}</td>
                     <td className="py-2 pr-4">{r.sku || '-'}</td>
-                    <td className="py-2 pr-4">{r.current_quantity}</td>
+                    <td className="py-2 pr-4 text-gray-500">{r.unit_type}</td>
+                    <td className="py-2 pr-4 font-medium text-orange-600">{r.current_stock}</td>
                   </tr>
                 ))}
                 {lowStock.length === 0 && (
-                  <tr><td colSpan={3} className="py-4 text-gray-500">No low stock items.</td></tr>
+                  <tr><td colSpan={4} className="py-4 text-gray-500">No low stock items.</td></tr>
                 )}
               </tbody>
             </table>

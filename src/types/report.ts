@@ -15,6 +15,7 @@ export interface BestSellingProductRow {
   product_id: number
   product_name: string
   total_units_sold: number
+  unit_type: string
   total_revenue: string
 }
 
@@ -22,7 +23,8 @@ export interface LowStockProductRow {
   product_id: number
   product_name: string
   sku: string | null
-  current_quantity: number
+  unit_type: string
+  current_stock: number
 }
 
 export interface GetSalesOverTimeParams {

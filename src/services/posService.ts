@@ -24,7 +24,7 @@ export class PosService {
           total: params.p_total,
           tax: params.p_tax,
           total_tendered: params.p_total_tendered,
-          createdAt: new Date().toISOString()
+          createdAt: params.p_occurred_at || new Date().toISOString()
         });
 
         const result: CreateSaleResult & { is_offline: boolean } = {
@@ -42,7 +42,7 @@ export class PosService {
     }
 
     try {
-      const { data, error } = await supabase.rpc('pos_create_sale', {
+      const { data, error } = await supabase.rpc('pos2_create_sale', {
         p_account_id: params.p_account_id,
         p_customer_id: params.p_customer_id,
         p_cart_items: params.p_cart_items,
@@ -50,7 +50,8 @@ export class PosService {
         p_notes: params.p_notes ?? null,
         p_total: params.p_total,
         p_tax: params.p_tax,
-        p_total_tendered: params.p_total_tendered
+        p_total_tendered: params.p_total_tendered,
+        p_occurred_at: params.p_occurred_at ?? null
       });
 
       if (error) {

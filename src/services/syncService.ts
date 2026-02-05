@@ -27,7 +27,8 @@ export const SyncService = {
             p_notes: sale.notes || null,
             p_total: sale.total,
             p_tax: sale.tax || 0,
-            p_total_tendered: sale.total_tendered
+            p_total_tendered: sale.total_tendered,
+            p_occurred_at: sale.createdAt
           });
 
           if (error || !data) {

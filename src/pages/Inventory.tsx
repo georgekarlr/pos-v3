@@ -5,6 +5,9 @@ import { ProductService } from '../services/productService'
 import { InventoryService } from '../services/inventoryService'
 import ProductCard from '../components/inventory/ProductCard'
 import AdjustQuantityDialog from '../components/inventory/AdjustQuantityDialog'
+import AdjustBatchModal from '../components/inventory/AdjustBatchModal'
+import WriteOffBatchModal from '../components/inventory/WriteOffBatchModal'
+import ProductDetailsModal from '../components/inventory/ProductDetailsModal'
 import ActivityModal from '../components/inventory/ActivityModal'
 import { RefreshCw, Boxes, History } from 'lucide-react'
 
@@ -17,6 +20,9 @@ const Inventory: React.FC = () => {
     const [error, setError] = useState<string | null>(null)
 
     const [adjustProduct, setAdjustProduct] = useState<Product | null>(null)
+    const [viewProduct, setViewProduct] = useState<Product | null>(null)
+    const [adjustBatchInfo, setAdjustBatchInfo] = useState<{product: Product, batchId: number, currentQty: number} | null>(null)
+    const [writeOffBatchInfo, setWriteOffBatchInfo] = useState<{product: Product, batchId: number} | null>(null)
     const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
     // Activity modal state
@@ -244,29 +250,13 @@ const Inventory: React.FC = () => {
                                     isAdmin={!!isAdmin}
                                     onAdjust={(prod) => setAdjustProduct(prod)}
                                     onViewHistory={(prod) => { setActivityMode('product'); setActivityProduct(prod); setShowActivityModal(true) }}
-                                    onWriteOffBatch={async (prod, batchId) => {
-                                        if (!persona?.id) {
-                                            alert('Account ID not found')
-                                            return
-                                        }
-                                        const reason = window.prompt('Enter reason for write-off (optional):', '')
-                                        if (reason === null) return
-                                        try {
-                                            const res = await InventoryService.writeOffInventoryBatch({
-                                                batch_id: batchId,
-                                                requesting_account_id: persona.id,
-                                                reason: reason || 'Write-off',
-                                            })
-                                            if (!res.success) {
-                                                throw new Error(res.message || 'Write-off failed')
-                                            }
-                                            setSuccessMessage(`Batch #${batchId} written off successfully!`)
-                                            await loadProducts()
-                                            setTimeout(() => setSuccessMessage(null), 3000)
-                                        } catch (e: any) {
-                                            alert(e?.message || 'Failed to write off batch')
-                                        }
+                                    onWriteOffBatch={(prod, batchId) => {
+                                        setWriteOffBatchInfo({ product: prod, batchId })
                                     }}
+                                    onAdjustBatch={(prod, batchId, currentQty) => {
+                                        setAdjustBatchInfo({ product: prod, batchId, currentQty })
+                                    }}
+                                    onViewDetails={(prod) => setViewProduct(prod)}
                                 />
                             ))}
                         </div>
@@ -279,6 +269,54 @@ const Inventory: React.FC = () => {
                         product={adjustProduct}
                         onClose={() => setAdjustProduct(null)}
                         onConfirm={handleConfirmAdjust}
+                    />
+                )}
+
+                {isAdmin && adjustBatchInfo && (
+                    <AdjustBatchModal
+                        product={adjustBatchInfo.product}
+                        batchId={adjustBatchInfo.batchId}
+                        currentQuantity={adjustBatchInfo.currentQty}
+                        onClose={() => setAdjustBatchInfo(null)}
+                        onConfirm={async (newQty, reason) => {
+                            if (!persona?.id) throw new Error('Account ID not found')
+                            const res = await InventoryService.adjustInventoryBatches({
+                                requesting_account_id: persona.id,
+                                reason,
+                                items_to_adjust: [{ batch_id: adjustBatchInfo.batchId, new_quantity: newQty }]
+                            })
+                            if (!res.success) throw new Error(res.message || 'Adjustment failed')
+                            setSuccessMessage(`Batch #${adjustBatchInfo.batchId} adjusted successfully!`)
+                            await loadProducts()
+                            setTimeout(() => setSuccessMessage(null), 3000)
+                        }}
+                    />
+                )}
+
+                {isAdmin && writeOffBatchInfo && (
+                    <WriteOffBatchModal
+                        product={writeOffBatchInfo.product}
+                        batchId={writeOffBatchInfo.batchId}
+                        onClose={() => setWriteOffBatchInfo(null)}
+                        onConfirm={async (reason) => {
+                            if (!persona?.id) throw new Error('Account ID not found')
+                            const res = await InventoryService.writeOffInventoryBatch({
+                                batch_id: writeOffBatchInfo.batchId,
+                                requesting_account_id: persona.id,
+                                reason,
+                            })
+                            if (!res.success) throw new Error(res.message || 'Write-off failed')
+                            setSuccessMessage(`Batch #${writeOffBatchInfo.batchId} written off successfully!`)
+                            await loadProducts()
+                            setTimeout(() => setSuccessMessage(null), 3000)
+                        }}
+                    />
+                )}
+
+                {viewProduct && (
+                    <ProductDetailsModal
+                        product={viewProduct}
+                        onClose={() => setViewProduct(null)}
                     />
                 )}
 

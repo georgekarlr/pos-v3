@@ -33,6 +33,7 @@ export interface CreatePosSaleParams {
   p_total: number;
   p_tax: number;
   p_total_tendered: number;
+  p_occurred_at?: string | null;
 }
 
 // --- Result Interface ---
