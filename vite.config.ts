@@ -13,8 +13,8 @@ export default defineConfig({
                 enabled: true,
             },
             manifest: {
-                name: 'POS Pro v2',
-                short_name: 'PosPro',
+                name: 'POS Pro v3',
+                short_name: 'PosProV3',
                 description: 'Online Point of Sale Application',
                 start_url: '/',
                 scope: '/',
