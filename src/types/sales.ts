@@ -3,9 +3,9 @@ export interface SalesHistoryRow {
   created_at: string
   customer_name: string
   account_name: string
-  total_amount: number
-    refund_amount?: number | 0
-  net_amount: number | 0
+  original_total_amount: number
+  total_refund_amount: number
+  net_amount: number
   status: string
 }
 
@@ -16,6 +16,7 @@ export interface SaleOrderDetails {
   tax_amount?: number | null
   subtotal_amount?: number | null
   notes?: string | null
+  customer_name?: string | null
   account_person_name?: string | null
   total_tendered?: number | null
 }
@@ -47,7 +48,7 @@ export interface SaleDetailsResponse {
   payments: SalePaymentDetails[]
 }
 
-// Refund details row returned by pos_get_refund_details
+// Refund details row returned by pos2_get_refund_details
 export interface RefundDetailRow {
   refund_id: number
   refunded_at: string

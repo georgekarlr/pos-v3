@@ -13,7 +13,7 @@ import {
 export const ReportService = {
   async getSalesOverTime(params: GetSalesOverTimeParams): Promise<SalesOverTimeRow[]> {
     const { requesting_account_id, start_date, end_date } = params
-    const { data, error } = await supabase.rpc('pos_report_sales_over_time', {
+    const { data, error } = await supabase.rpc('pos2_report_sales_over_time', {
       p_requesting_account_id: requesting_account_id,
       p_start_date: start_date,
       p_end_date: end_date
@@ -29,7 +29,7 @@ export const ReportService = {
 
   async getSalesByStaff(params: GetSalesByStaffParams): Promise<SalesByStaffRow[]> {
     const { requesting_account_id, start_date, end_date } = params
-    const { data, error } = await supabase.rpc('pos_report_sales_by_staff', {
+    const { data, error } = await supabase.rpc('pos2_report_sales_by_staff', {
       p_requesting_account_id: requesting_account_id,
       p_start_date: start_date,
       p_end_date: end_date
@@ -45,7 +45,7 @@ export const ReportService = {
 
   async getBestSellingProducts(params: GetBestSellingProductsParams): Promise<BestSellingProductRow[]> {
     const { requesting_account_id, start_date, end_date, limit } = params
-    const { data, error } = await supabase.rpc('pos_report_best_selling_products', {
+    const { data, error } = await supabase.rpc('pos2_report_best_selling_products', {
       p_requesting_account_id: requesting_account_id,
       p_start_date: start_date,
       p_end_date: end_date,
@@ -62,7 +62,7 @@ export const ReportService = {
 
   async getLowStockProducts(params: GetLowStockProductsParams): Promise<LowStockProductRow[]> {
     const { requesting_account_id, threshold } = params
-    const { data, error } = await supabase.rpc('pos_report_low_stock_products', {
+    const { data, error } = await supabase.rpc('pos2_report_low_stock_products', {
       p_requesting_account_id: requesting_account_id,
       p_threshold: threshold
     })

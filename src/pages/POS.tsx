@@ -223,8 +223,8 @@ const POS: React.FC = () => {
           name: l.product.name,
           qty: l.qty,
           unitType: l.product.unit_type,
-          unitPrice: l.product.base_price,
-          lineTotal: l.product.base_price * l.qty,
+          unitPrice: l.product.display_price,
+          lineTotal: l.product.display_price * l.qty,
         }));
         const totalPaidLocal = totalPaidFromUI;
         const change = Math.max(0, totalPaidLocal - total);

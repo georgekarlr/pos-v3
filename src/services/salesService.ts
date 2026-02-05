@@ -27,7 +27,7 @@ export interface BulkRefundResult {
 export const salesService = {
   async getSalesHistory(params: GetSalesHistoryParams): Promise<{ rows: SalesHistoryRow[] }> {
     const { limit, offset, searchTerm, startDate, endDate } = params
-    const { data, error } = await supabase.rpc('pos_get_sales_history', {
+    const { data, error } = await supabase.rpc('pos2_get_sales_history', {
       p_limit: limit,
       p_offset: offset,
       p_search_term: searchTerm || null,
@@ -53,7 +53,7 @@ export const salesService = {
     endDate?: string | null
   }): Promise<{ rows: RefundDetailRow[] }>{
     const { limit, offset, requestingAccountId, orderId, searchTerm, startDate, endDate } = params
-    const { data, error } = await supabase.rpc('pos_get_refund_details', {
+    const { data, error } = await supabase.rpc('pos2_get_refund_details', {
       p_requesting_account_id: requestingAccountId,
       p_limit: limit,
       p_offset: offset,
@@ -72,7 +72,7 @@ export const salesService = {
   },
 
   async getSaleDetailsById(orderId: number): Promise<SaleDetailsResponse> {
-    const { data, error } = await supabase.rpc('pos_get_sale_details_by_id', {
+    const { data, error } = await supabase.rpc('pos2_get_sale_details_by_id', {
       p_order_id: orderId
     })
       console.log(data);
@@ -93,7 +93,7 @@ export const salesService = {
   }): Promise<BulkRefundResult> {
     const { order_id, items_to_refund, requesting_account_id, refund_payment_method, reason } = params
 
-    const { data, error } = await supabase.rpc('pos_create_bulk_refund', {
+    const { data, error } = await supabase.rpc('pos2_create_bulk_refund', {
       p_order_id: order_id,
       p_items_to_refund: items_to_refund,
       p_requesting_account_id: requesting_account_id,

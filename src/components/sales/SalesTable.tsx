@@ -54,10 +54,10 @@ const SalesTable: React.FC<SalesTableProps> = ({ rows, loading, onView, onRefund
                   <td className="px-4 py-3 text-sm text-gray-700">{dateStr}</td>
                   {/*<td className="px-4 py-3 text-sm text-gray-700">{r.customer_name}</td>*/}
                   <td className="px-4 py-3 text-sm text-gray-700">{r.account_name}</td>
-                  <td className="px-4 py-3 text-sm text-gray-900 text-right">{formatCurrency(Number(r.total_amount))}</td>
+                  <td className="px-4 py-3 text-sm text-gray-900 text-right">{formatCurrency(Number(r.original_total_amount))}</td>
                   <td className="px-4 py-3 text-sm">
                     <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">
-                      {formatCurrency(r.refund_amount ?? 0)}
+                      {formatCurrency(r.total_refund_amount)}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right">

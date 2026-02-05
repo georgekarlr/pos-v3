@@ -19,25 +19,9 @@ const actionIcons: Record<PosAction, React.ReactElement> = {
     clear: <Trash2 className="h-5 w-5 text-red-500" />,
 }
 
-// For showing stock level urgency
-const LOW_STOCK_THRESHOLD = 10;
-
 const ProductTile: React.FC<ProductTileProps> = ({ product, orderQty, action, onClick }) => {
     const isSelected = orderQty > 0
     const isDisabled = product.total_stock === 0 && action === 'add'
-
-    // Determine stock status for visual feedback
-    const getStockStatus = () => {
-        if (product.total_stock === 0) {
-            return { text: 'Out of Stock', color: 'text-red-600', dot: 'bg-red-500' }
-        }
-        if (product.total_stock <= LOW_STOCK_THRESHOLD) {
-            return { text: 'Low Stock', color: 'text-orange-600', dot: 'bg-orange-400' }
-        }
-        return { text: 'In Stock', color: 'text-green-600', dot: 'bg-green-500' }
-    }
-
-    const stockStatus = getStockStatus();
 
     return (
         <button
@@ -74,30 +58,20 @@ const ProductTile: React.FC<ProductTileProps> = ({ product, orderQty, action, on
                     )}
                 </div>
 
-                {/* Price and Stock Details */}
-                <div className="mt-4 flex flex-col items-center gap-2">
-                    {/* Price Section */}
+                {/* Price Detail */}
+                <div className="mt-4 flex flex-col items-center">
                     <div className="text-center">
                         <p className="text-sm text-gray-500">Price</p>
-                        <p className="text-xl font-bold text-gray-900">{'\u20B1' + product.display_price.toFixed(2)}</p>
-                    </div>
-
-                    {/* Stock Section */}
-                    <div className="text-center">
-                        <p className="text-sm text-gray-500">Available</p>
-                        <div className={`flex items-center justify-center gap-1 font-semibold ${stockStatus.color}`}>
-                            <span className={`h-2 w-2 rounded-full ${stockStatus.dot}`}></span>
-                            <span>
-                                {product.total_stock}{' '}
-                                <span className="text-xs font-normal">
-                                    {product.unit_type
-                                        ? PRODUCT_UNIT_LABELS[product.unit_type] || product.unit_type
-                                        : product.selling_method === 'unit'
-                                        ? 'units'
-                                        : ''}
-                                </span>
+                        <p className="text-xl font-bold text-gray-900">
+                            {'\u20B1' + product.display_price.toFixed(2)}
+                            <span className="ml-1 text-xs font-normal text-gray-500">
+                                / {product.unit_type
+                                    ? PRODUCT_UNIT_LABELS[product.unit_type] || product.unit_type
+                                    : product.selling_method === 'unit'
+                                    ? 'unit'
+                                    : 'measure'}
                             </span>
-                        </div>
+                        </p>
                     </div>
                 </div>
             </div>

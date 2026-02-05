@@ -14,6 +14,17 @@ export interface WriteOffInventoryBatchInput {
   reason: string
 }
 
+export interface AdjustInventoryBatchItem {
+  batch_id: number
+  new_quantity: number
+}
+
+export interface AdjustInventoryBatchesInput {
+  requesting_account_id: number
+  reason: string
+  items_to_adjust: AdjustInventoryBatchItem[]
+}
+
 export interface RpcStandardResponse<T = any> {
   success: boolean
   message: string
@@ -63,6 +74,22 @@ export const InventoryService = {
 
     if (error) {
       console.error('Error writing off inventory batch:', error)
+      throw new Error(error.message)
+    }
+
+    const result = (Array.isArray(data) ? data[0] : data) as RpcStandardResponse
+    return result
+  },
+
+  async adjustInventoryBatches(input: AdjustInventoryBatchesInput): Promise<RpcStandardResponse> {
+    const { data, error } = await supabase.rpc('pos2_adjust_inventory_batches', {
+      p_requesting_account_id: input.requesting_account_id,
+      p_reason: input.reason,
+      p_items_to_adjust: input.items_to_adjust,
+    })
+
+    if (error) {
+      console.error('Error adjusting inventory batches:', error)
       throw new Error(error.message)
     }
 
