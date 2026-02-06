@@ -20,6 +20,7 @@ export class ProductService {
         p_offset: offset,
         p_search_term: searchTerm || null
       });
+      console.log(data);
 
       if (error) {
         return { data: null, error: error.message };

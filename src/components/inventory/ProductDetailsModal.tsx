@@ -203,10 +203,12 @@ const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({ product, onCl
                                                                 <span className="text-[10px] font-mono text-gray-400 bg-gray-50 px-1 rounded border">#{batch.batch_id}</span>
                                                             </div>
                                                             <div className="flex items-center gap-3">
-                                                                <div className="flex items-center gap-1 text-[11px] text-gray-500">
-                                                                    <Calendar className="h-3 w-3" />
-                                                                    Exp: {batch.expiration_date ? formatDate(batch.expiration_date) : 'N/A'}
-                                                                </div>
+                                                                {product.inventory_type === 'perishable' && batch.expiration_date && (
+                                                                    <div className="flex items-center gap-1 text-[11px] text-gray-500">
+                                                                        <Calendar className="h-3 w-3" />
+                                                                        Exp: {formatDate(batch.expiration_date)}
+                                                                    </div>
+                                                                )}
                                                                 <div className="flex items-center gap-1 text-[11px] text-gray-500">
                                                                     <Clock className="h-3 w-3" />
                                                                     Rec: {formatDate(batch.received_at)}
@@ -214,7 +216,7 @@ const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({ product, onCl
                                                             </div>
                                                         </div>
 
-                                                        {batch.expiration_date && (
+                                                        {product.inventory_type === 'perishable' && batch.expiration_date && (
                                                             <div className="text-right">
                                                                 {isExpired ? (
                                                                     <div className="flex flex-col items-end">

@@ -96,7 +96,7 @@ const AdjustBatchModal: React.FC<AdjustBatchModalProps> = ({ product, batchId, c
                                 <span className="text-gray-600">Current Batch Stock:</span>
                                 <span className="font-mono font-bold text-gray-900">{currentQuantity}</span>
                             </div>
-                            {batch?.expiration_date && (
+                            {batch?.expiration_date && product.inventory_type === 'perishable' && (
                                 <div className="flex items-center justify-between">
                                     <span className="text-sm text-gray-600">Expiration Date:</span>
                                     <span className="text-sm font-bold text-gray-900 bg-white px-2 py-1 rounded border border-blue-100 shadow-sm">

@@ -285,7 +285,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onCancel, 
                     name="inventory_type"
                     value={formData.inventory_type}
                     onChange={handleChange}
-                    disabled={!isAdmin}
+                    disabled={!isAdmin || !!product}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500"
                   >
                     <option value="non_perishable">Non-Perishable</option>
