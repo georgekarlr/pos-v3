@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { X, ArrowRight, CheckCircle2, AlertTriangle, Hash } from 'lucide-react'
+import { X, ArrowRight, CheckCircle2, AlertTriangle, Hash, Plus, Minus } from 'lucide-react'
 import { Product } from '../../types/product'
 
 interface AdjustQuantityDialogProps {
@@ -11,6 +11,7 @@ interface AdjustQuantityDialogProps {
 const AdjustQuantityDialog: React.FC<AdjustQuantityDialogProps> = ({ product, onClose, onConfirm }) => {
     // State for form inputs
     const [value, setValue] = useState<number | ''>('')
+    const [mode, setMode] = useState<'add' | 'deduct'>('add')
     const [notes, setNotes] = useState<string>('')
     const [expirationDate, setExpirationDate] = useState<string>('')
 
@@ -26,8 +27,11 @@ const AdjustQuantityDialog: React.FC<AdjustQuantityDialogProps> = ({ product, on
     const [isClosing, setIsClosing] = useState(false)
 
     // --- NEW: Calculate the new quantity in real-time ---
-    const adjustmentValue = typeof value === 'number' ? value : 0
+    const adjustmentValue = typeof value === 'number'
+        ? (mode === 'add' ? value : -Math.abs(value))
+        : 0
     const newQuantity = product.total_stock + adjustmentValue
+    const isPerishableDeduction = product.inventory_type === 'perishable' && adjustmentValue < 0
 
     // --- NEW: Handle closing with animation ---
     const handleClose = () => {
@@ -85,6 +89,15 @@ const AdjustQuantityDialog: React.FC<AdjustQuantityDialogProps> = ({ product, on
                 </div>
 
                 {/* --- UI IMPROVEMENT: Status section for success/error --- */}
+                {isPerishableDeduction && (
+                    <div className="flex items-start gap-3 p-4 mx-6 mt-4 rounded-lg bg-amber-50 text-amber-800 border border-amber-200">
+                        <AlertTriangle className="h-5 w-5 flex-shrink-0 mt-0.5" />
+                        <div className="text-sm">
+                            <p className="font-bold mb-1">Deduction Restricted</p>
+                            <p>For perishable products, please adjust specific batches directly to maintain accurate expiration records.</p>
+                        </div>
+                    </div>
+                )}
                 {status === 'error' && error && (
                     <div className="flex items-center gap-3 p-4 mx-6 mt-4 rounded-lg bg-red-50 text-red-800 border border-red-200">
                         <AlertTriangle className="h-5 w-5 flex-shrink-0" />
@@ -119,6 +132,36 @@ const AdjustQuantityDialog: React.FC<AdjustQuantityDialogProps> = ({ product, on
                         </div>
                     </div>
 
+                    {/* Mode Toggle (Segmented Button) - Only for non-perishable */}
+                    {product.inventory_type !== 'perishable' && (
+                        <div className="flex p-1 bg-gray-100 rounded-xl">
+                            <button
+                                type="button"
+                                onClick={() => setMode('add')}
+                                className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-bold rounded-lg transition-all ${
+                                    mode === 'add'
+                                        ? 'bg-white text-blue-600 shadow-sm'
+                                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50'
+                                }`}
+                            >
+                                <Plus className="h-4 w-4" />
+                                Add Stock
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setMode('deduct')}
+                                className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-bold rounded-lg transition-all ${
+                                    mode === 'deduct'
+                                        ? 'bg-white text-red-600 shadow-sm'
+                                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50'
+                                }`}
+                            >
+                                <Minus className="h-4 w-4" />
+                                Deduct Stock
+                            </button>
+                        </div>
+                    )}
+
                     <div>
                         <label htmlFor="adjustment" className="flex items-center text-sm font-medium text-gray-700 mb-1.5">
                             <Hash className="h-4 w-4 mr-2 text-gray-400" />
@@ -130,11 +173,23 @@ const AdjustQuantityDialog: React.FC<AdjustQuantityDialogProps> = ({ product, on
                             type="number"
                             step="any"
                             value={value}
-                            onChange={(e) => setValue(e.target.value === '' ? '' : parseFloat(e.target.value))}
-                            placeholder="e.g., 10 to add, -5 to remove"
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            onChange={(e) => {
+                                const val = e.target.value === '' ? '' : parseFloat(e.target.value)
+                                setValue(val)
+                            }}
+                            placeholder={mode === 'add' ? "Quantity to add" : "Quantity to deduct"}
+                            className={`w-full border rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:ring-2 ${
+                                mode === 'add' ? 'focus:ring-blue-500' : 'focus:ring-red-500'
+                            } ${
+                                isPerishableDeduction ? 'border-amber-300 bg-amber-50' : 'border-gray-300'
+                            }`}
                             disabled={status === 'submitting' || status === 'success'}
                         />
+                        {isPerishableDeduction && (
+                            <p className="mt-1.5 text-xs text-amber-700 font-medium italic">
+                                Manual deduction is only available for non-perishable items.
+                            </p>
+                        )}
                     </div>
 
                     <div>
@@ -150,10 +205,10 @@ const AdjustQuantityDialog: React.FC<AdjustQuantityDialogProps> = ({ product, on
                         />
                     </div>
 
-                    {(adjustmentValue > 0 || product.inventory_type === 'perishable') && (
+                    {adjustmentValue > 0 && product.inventory_type === 'perishable' && (
                         <div>
                             <label htmlFor="expirationDate" className="block text-sm font-medium text-gray-700 mb-1.5">
-                                Expiration Date {product.inventory_type === 'perishable' && <span className="text-red-500">*</span>}
+                                Expiration Date <span className="text-red-500">*</span>
                             </label>
                             <input
                                 id="expirationDate"
@@ -162,11 +217,9 @@ const AdjustQuantityDialog: React.FC<AdjustQuantityDialogProps> = ({ product, on
                                 onChange={(e) => setExpirationDate(e.target.value)}
                                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                 disabled={status === 'submitting' || status === 'success'}
-                                required={product.inventory_type === 'perishable' && adjustmentValue > 0}
+                                required={adjustmentValue > 0}
                             />
-                            {product.inventory_type === 'perishable' && (
-                                <p className="mt-1 text-xs text-gray-500">Required for perishable products when adding stock.</p>
-                            )}
+                            <p className="mt-1 text-xs text-gray-500">Required for perishable products when adding stock.</p>
                         </div>
                     )}
 
@@ -176,8 +229,10 @@ const AdjustQuantityDialog: React.FC<AdjustQuantityDialogProps> = ({ product, on
                         </button>
                         <button
                             type="submit"
-                            disabled={status === 'submitting' || status === 'success'}
-                            className="px-4 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center"
+                            disabled={status === 'submitting' || status === 'success' || isPerishableDeduction}
+                            className={`px-4 py-2 rounded-lg text-white font-semibold disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center transition-colors ${
+                                mode === 'add' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-red-600 hover:bg-red-700'
+                            }`}
                         >
                             {status === 'submitting' && 'Saving...'}
                             {status === 'success' && <CheckCircle2 className="h-5 w-5" />}

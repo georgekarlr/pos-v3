@@ -25,6 +25,13 @@ export interface AdjustInventoryBatchesInput {
   items_to_adjust: AdjustInventoryBatchItem[]
 }
 
+export interface DeductStockManualInput {
+  product_id: number
+  requesting_account_id: number
+  quantity_to_deduct: number
+  reason: string
+}
+
 export interface RpcStandardResponse<T = any> {
   success: boolean
   message: string
@@ -90,6 +97,23 @@ export const InventoryService = {
 
     if (error) {
       console.error('Error adjusting inventory batches:', error)
+      throw new Error(error.message)
+    }
+
+    const result = (Array.isArray(data) ? data[0] : data) as RpcStandardResponse
+    return result
+  },
+
+  async deductStockManual(input: DeductStockManualInput): Promise<RpcStandardResponse> {
+    const { data, error } = await supabase.rpc('pos2_deduct_stock_manual', {
+      p_product_id: input.product_id,
+      p_requesting_account_id: input.requesting_account_id,
+      p_quantity_to_deduct: input.quantity_to_deduct,
+      p_reason: input.reason,
+    })
+
+    if (error) {
+      console.error('Error deducting stock manual:', error)
       throw new Error(error.message)
     }
 

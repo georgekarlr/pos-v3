@@ -70,13 +70,26 @@ const Inventory: React.FC = () => {
             throw new Error('Account ID not found')
         }
 
-        const result = await InventoryService.addInventoryBatch({
-            product_id: adjustProduct.id,
-            account_id: persona.id,
-            quantity_to_add: adjustment_value,
-            expiration_date: expiration_date || null,
-            notes,
-        })
+        let result;
+        if (adjustment_value > 0) {
+            result = await InventoryService.addInventoryBatch({
+                product_id: adjustProduct.id,
+                account_id: persona.id,
+                quantity_to_add: adjustment_value,
+                expiration_date: expiration_date || null,
+                notes,
+            })
+        } else {
+            if (adjustProduct.inventory_type === 'perishable') {
+                throw new Error('Manual deduction is not allowed for perishable products. Please adjust specific batches.')
+            }
+            result = await InventoryService.deductStockManual({
+                product_id: adjustProduct.id,
+                requesting_account_id: persona.id,
+                quantity_to_deduct: Math.abs(adjustment_value),
+                reason: notes,
+            })
+        }
 
         if (!result.success) {
             throw new Error(result.message || 'Failed to adjust inventory')
