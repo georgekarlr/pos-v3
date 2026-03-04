@@ -30,7 +30,6 @@ const CameraScanner: React.FC<CameraScannerProps> = ({ onScan, onMultipleScan, o
   
   const [cameras, setCameras] = useState<CameraDevice[]>([]);
   const [activeCameraId, setActiveCameraId] = useState<string | null>(null);
-  const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [scanMode, setScanMode] = useState<'single' | 'multiple'>(isSingleOnly ? 'single' : 'single');
   const scanModeRef = useRef<'single' | 'multiple'>(isSingleOnly ? 'single' : 'single');
@@ -160,12 +159,10 @@ const CameraScanner: React.FC<CameraScannerProps> = ({ onScan, onMultipleScan, o
 
     try {
       await scannerRef.current.start(cameraId, config, successCallback, errorCallback);
-      setIsScanning(true);
       setError(null);
     } catch (err) {
       console.error("Failed to start camera", err);
       setError("Failed to start camera scan.");
-      setIsScanning(false);
     }
   };
 
