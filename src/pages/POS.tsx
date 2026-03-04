@@ -6,7 +6,7 @@ import LoadingSpinner from '../components/LoadingSpinner'
 import ProductGrid from '../components/pos/ProductGrid'
 import CartPanel, { CartLine } from '../components/pos/CartPanel'
 import BundleModal from '../components/pos/BundleModal'
-import { AlertCircle, Camera, Keyboard, RefreshCw, Search, WifiOff } from 'lucide-react'
+import { AlertCircle, Camera, RefreshCw, Search, WifiOff } from 'lucide-react'
 import { PaymentInput, PosAction, PosViewMode } from '../types/pos'
 import ActionModeBar from '../components/pos/ActionModeBar'
 import ViewModeSwitcher from '../components/pos/ViewModeSwitcher'
@@ -18,6 +18,7 @@ import { PosService } from '../services/posService'
 import { useHardwareScanner } from '../hooks/useHardwareScanner'
 import CameraScanner from '../components/pos/CameraScanner'
 import { useScannerSettings } from '../contexts/ScannerSettingsContext'
+import OfflineSalesModal from '../components/pos/OfflineSalesModal'
 
 const POS: React.FC = () => {
   const { persona } = useAuth()
@@ -50,6 +51,7 @@ const POS: React.FC = () => {
 
   const { scanMode } = useScannerSettings()
   const [isCameraOpen, setIsCameraOpen] = useState(false)
+  const [offlineSalesOpen, setOfflineSalesOpen] = useState(false)
 
   const loadProducts = async (silent = false) => {
     if (!silent) setIsLoading(true)
@@ -57,13 +59,13 @@ const POS: React.FC = () => {
     try {
       const { data, error } = await ProductService.getAllProducts()
       if (error) {
-        setError(error)
+        if (isOnline) setError(error)
       } else {
         setProducts(data || [])
         setFilteredProducts(data || [])
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load products')
+      if (isOnline) setError(err instanceof Error ? err.message : 'Failed to load products')
     } finally {
       if (!silent) setIsLoading(false)
     }
@@ -324,15 +326,31 @@ const POS: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
           <div className="mb-4 flex flex-col items-center gap-3">
               {!isOnline && (
-                <div className="w-full bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-center justify-center gap-2 text-amber-800 text-sm">
-                  <WifiOff className="h-4 w-4" />
-                  <span>You are currently offline. Sales will be saved locally and synced when online.</span>
+                <div className="w-full bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-center justify-between gap-2 text-amber-800 text-sm">
+                  <div className="flex items-center gap-2">
+                    <WifiOff className="h-4 w-4" />
+                    <span>Offline</span>
+                  </div>
+                  <button
+                    onClick={() => setOfflineSalesOpen(true)}
+                    className="px-3 py-1 bg-amber-100 hover:bg-amber-200 text-amber-900 rounded-md font-medium transition-colors border border-amber-300 whitespace-nowrap"
+                  >
+                    View Offline Sales
+                  </button>
                 </div>
               )}
               {pendingSalesCount > 0 && isOnline && (
-                <div className="w-full bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center justify-center gap-2 text-blue-800 text-sm">
-                  <RefreshCw className="h-4 w-4 animate-spin" />
-                  <span>Syncing {pendingSalesCount} offline sales...</span>
+                <div className="w-full bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center justify-between gap-2 text-blue-800 text-sm">
+                  <div className="flex items-center gap-2">
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                    <span>Syncing {pendingSalesCount} offline sales...</span>
+                  </div>
+                  <button
+                    onClick={() => setOfflineSalesOpen(true)}
+                    className="px-3 py-1 bg-blue-100 hover:bg-blue-200 text-blue-900 rounded-md font-medium transition-colors border border-blue-300 whitespace-nowrap"
+                  >
+                    View Offline Sales
+                  </button>
                 </div>
               )}
               <ActionModeBar value={selectedAction} onChange={setSelectedAction} />
@@ -516,6 +534,11 @@ const POS: React.FC = () => {
         onSubmit={handleSubmit}
         submitting={submitting}
         disabled={cartLines.length === 0}
+      />
+
+      <OfflineSalesModal
+        open={offlineSalesOpen}
+        onClose={() => setOfflineSalesOpen(false)}
       />
     </div>
   )
