@@ -1,52 +1,178 @@
-import React, { useEffect } from 'react';
-import { Html5QrcodeScanner } from 'html5-qrcode';
-import { X } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Html5Qrcode, Html5QrcodeCameraScanConfig, QrcodeErrorCallback, QrcodeSuccessCallback } from 'html5-qrcode';
+import { Camera, Image as ImageIcon, RotateCw, X, List, Hash, Check } from 'lucide-react';
+import { Product } from '../../types/product';
 
 interface CameraScannerProps {
   onScan: (decodedText: string) => void;
   onClose: () => void;
+  products: Product[];
 }
 
-const CameraScanner: React.FC<CameraScannerProps> = ({ onScan, onClose }) => {
-  useEffect(() => {
-    // Config: 10 FPS, qrbox for scanning area (250x150)
-    const scanner = new Html5QrcodeScanner("reader", { 
-      fps: 10, 
-      qrbox: { width: 250, height: 150 } 
-    }, /* verbose= */ false);
+interface CameraDevice {
+  id: string;
+  label: string;
+}
 
-    scanner.render(
-      (text) => {
-        onScan(text);
-        // Clean up and close after first success to avoid double scans
-        scanner.clear().catch(error => console.error("Failed to clear scanner", error));
-        onClose();
-      }, 
-      (err) => {
-        // Log errors but don't crash, it could just be "no QR code detected"
-        if (typeof err === 'string' && err.includes("No barcode or QR code detected")) {
-          return;
+interface ScannedItem {
+  product: Product;
+  count: number;
+}
+
+const CameraScanner: React.FC<CameraScannerProps> = ({ onScan, onClose, products }) => {
+  const scannerRef = useRef<Html5Qrcode | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const [cameras, setCameras] = useState<CameraDevice[]>([]);
+  const [activeCameraId, setActiveCameraId] = useState<string | null>(null);
+  const [isScanning, setIsScanning] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [scanMode, setScanMode] = useState<'single' | 'multiple'>('single');
+  const [scannedItems, setScannedItems] = useState<Record<number, ScannedItem>>({});
+  const lastScannedBarcode = useRef<string | null>(null);
+  const lastScanTime = useRef<number>(0);
+
+  // Initialize and start scanner
+  useEffect(() => {
+    const html5QrCode = new Html5Qrcode("reader");
+    scannerRef.current = html5QrCode;
+
+    const startScanner = async () => {
+      try {
+        const devices = await Html5Qrcode.getCameras();
+        if (devices && devices.length > 0) {
+          setCameras(devices.map(d => ({ id: d.id, label: d.label })));
+          
+          // Prefer back camera by default
+          const backCamera = devices.find(device => 
+            device.label.toLowerCase().includes('back') || 
+            device.label.toLowerCase().includes('rear') ||
+            device.label.toLowerCase().includes('environment')
+          );
+          
+          const cameraId = backCamera ? backCamera.id : devices[0].id;
+          setActiveCameraId(cameraId);
+          await startCamera(cameraId);
+        } else {
+          setError("No cameras found.");
         }
-        console.warn("Scanner error:", err);
+      } catch (err) {
+        console.error("Error getting cameras", err);
+        setError("Failed to access camera. Please check permissions.");
       }
-    );
+    };
+
+    startScanner();
 
     return () => {
-      // Best-effort cleanup
-      scanner.clear().catch(error => {
-        // Sometimes clear fails if div is already gone, but we should try.
-        if (document.getElementById('reader')) {
-            console.error("Failed to clear scanner explicitly", error);
-        }
-      });
+      if (scannerRef.current && scannerRef.current.isScanning) {
+        scannerRef.current.stop().catch(e => console.error("Failed to stop scanner", e));
+      }
     };
-  }, [onScan, onClose]);
+  }, []);
+
+  const handleScanSuccess = (decodedText: string) => {
+    // Debounce scans to avoid rapid double-scans of the same item
+    const now = Date.now();
+    if (decodedText === lastScannedBarcode.current && now - lastScanTime.current < 2000) {
+      return;
+    }
+    
+    lastScannedBarcode.current = decodedText;
+    lastScanTime.current = now;
+
+    const product = products.find(p => p.barcode === decodedText);
+    
+    if (scanMode === 'single') {
+      onScan(decodedText);
+      onClose();
+    } else {
+      if (product) {
+        setScannedItems(prev => {
+          const current = prev[product.id] || { product, count: 0 };
+          return {
+            ...prev,
+            [product.id]: { ...current, count: current.count + 1 }
+          };
+        });
+        onScan(decodedText); // Tell POS to add it too
+      } else {
+        setError(`Product with barcode ${decodedText} not found`);
+        setTimeout(() => setError(null), 3000);
+      }
+    }
+  };
+
+  const startCamera = async (cameraId: string) => {
+    if (!scannerRef.current) return;
+    
+    // Stop if already scanning
+    if (scannerRef.current.isScanning) {
+      await scannerRef.current.stop();
+    }
+
+    const config: Html5QrcodeCameraScanConfig = {
+      fps: 10,
+      qrbox: { width: 250, height: 150 },
+    };
+
+    const successCallback: QrcodeSuccessCallback = (decodedText) => {
+      handleScanSuccess(decodedText);
+    };
+
+    const errorCallback: QrcodeErrorCallback = (errorMessage) => {
+      // Ignore "No QR code found" errors to avoid log spam
+      if (errorMessage.includes("No barcode or QR code detected")) return;
+    };
+
+    try {
+      await scannerRef.current.start(cameraId, config, successCallback, errorCallback);
+      setIsScanning(true);
+      setError(null);
+    } catch (err) {
+      console.error("Failed to start camera", err);
+      setError("Failed to start camera scan.");
+      setIsScanning(false);
+    }
+  };
+
+  const handleSwitchCamera = async () => {
+    if (cameras.length < 2) return;
+    
+    const currentIndex = cameras.findIndex(c => c.id === activeCameraId);
+    const nextIndex = (currentIndex + 1) % cameras.length;
+    const nextCamera = cameras[nextIndex];
+    
+    setActiveCameraId(nextCamera.id);
+    await startCamera(nextCamera.id);
+  };
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!event.target.files || event.target.files.length === 0) return;
+    const file = event.target.files[0];
+
+    if (!scannerRef.current) return;
+
+    try {
+      const decodedText = await scannerRef.current.scanFile(file, true);
+      handleScanSuccess(decodedText);
+    } catch (err) {
+      console.error("Failed to scan file", err);
+      setError("No barcode found in image.");
+    }
+  };
+
+  const scannedList = Object.values(scannedItems);
 
   return (
-    <div className="fixed inset-0 z-[60] bg-black bg-opacity-75 flex flex-col items-center justify-center p-4">
-      <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
-        <div className="bg-blue-600 px-4 py-3 flex items-center justify-between">
-          <h3 className="text-white font-semibold">Scan Barcode</h3>
+    <div className="fixed inset-0 z-[60] bg-black bg-opacity-75 flex flex-col items-center justify-center p-4 overflow-y-auto">
+      <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
+        {/* Header */}
+        <div className="bg-blue-600 px-4 py-3 flex items-center justify-between flex-shrink-0">
+          <div className="flex items-center gap-2">
+            <Camera className="h-5 w-5 text-white" />
+            <h3 className="text-white font-semibold">Scan Barcode</h3>
+          </div>
           <button 
             onClick={onClose} 
             className="text-white hover:bg-blue-700 p-1 rounded-full transition-colors"
@@ -56,16 +182,143 @@ const CameraScanner: React.FC<CameraScannerProps> = ({ onScan, onClose }) => {
           </button>
         </div>
         
-        <div className="p-4 bg-gray-900">
-          <div id="reader" className="w-full"></div>
+        {/* Scanner View */}
+        <div className="p-4 bg-gray-900 relative flex-shrink-0">
+          <div id="reader" className="w-full overflow-hidden rounded-lg border-2 border-dashed border-gray-700 min-h-[200px] bg-black"></div>
+          
+          {error && (
+            <div className="absolute inset-0 flex items-center justify-center p-6 text-center z-10">
+              <div className="bg-red-50 p-4 rounded-lg border border-red-200 shadow-lg">
+                <p className="text-sm text-red-600 font-medium">{error}</p>
+              </div>
+            </div>
+          )}
+          
+          {/* Floating Controls */}
+          <div className="absolute bottom-6 right-6 flex flex-col gap-3">
+            {cameras.length > 1 && (
+              <button
+                onClick={handleSwitchCamera}
+                className="bg-white/90 p-3 rounded-full shadow-lg text-gray-700 hover:bg-white transition-colors"
+                title="Switch camera"
+              >
+                <RotateCw className="h-6 w-6" />
+              </button>
+            )}
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="bg-white/90 p-3 rounded-full shadow-lg text-gray-700 hover:bg-white transition-colors"
+              title="Upload image"
+            >
+              <ImageIcon className="h-6 w-6" />
+            </button>
+          </div>
+        </div>
+
+        {/* Mode Switcher */}
+        <div className="px-4 py-2 bg-gray-100 flex gap-2 flex-shrink-0">
+          <button
+            onClick={() => setScanMode('single')}
+            className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
+              scanMode === 'single' ? 'bg-blue-600 text-white shadow-sm' : 'bg-white text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            <Hash className="h-4 w-4" /> Single
+          </button>
+          <button
+            onClick={() => setScanMode('multiple')}
+            className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
+              scanMode === 'multiple' ? 'bg-blue-600 text-white shadow-sm' : 'bg-white text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            <List className="h-4 w-4" /> Multiple
+          </button>
         </div>
         
-        <div className="p-4 text-center">
-          <p className="text-sm text-gray-600">
-            Center the barcode in the camera view to scan.
-          </p>
+        {/* Content Area - Shows Scanned List or settings */}
+        <div className="flex-1 overflow-y-auto bg-gray-50 min-h-[100px]">
+          {scanMode === 'multiple' && (
+            <div className="p-4">
+              <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Scanned Items</h4>
+              {scannedList.length === 0 ? (
+                <p className="text-sm text-gray-400 italic text-center py-4">No items scanned yet in this session.</p>
+              ) : (
+                <ul className="divide-y divide-gray-200 bg-white rounded-lg border border-gray-200">
+                  {scannedList.map(({ product, count }) => (
+                    <li key={product.id} className="px-3 py-2 flex items-center justify-between">
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium text-gray-900">{product.name}</span>
+                        <span className="text-xs text-gray-500">{product.barcode}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-0.5 rounded-full">
+                          x{count}
+                        </span>
+                      </div>
+                    </li>
+                  )).reverse()}
+                </ul>
+              )}
+            </div>
+          )}
+
+          {scanMode === 'single' && (
+             <div className="p-4 flex flex-col gap-3">
+               {cameras.length > 0 && (
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Active Camera</label>
+                  <select 
+                    value={activeCameraId || ''} 
+                    onChange={(e) => {
+                      const id = e.target.value;
+                      setActiveCameraId(id);
+                      startCamera(id);
+                    }}
+                    className="block w-full text-sm rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-white"
+                  >
+                    {cameras.map(cam => (
+                      <option key={cam.id} value={cam.id}>{cam.label || `Camera ${cam.id}`}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              <p className="text-xs text-gray-500">Align barcode in frame. Scanner will close after a successful scan.</p>
+             </div>
+          )}
+        </div>
+        
+        {/* Footer */}
+        <div className="p-4 bg-white border-t border-gray-100 flex-shrink-0">
+          <div className="flex items-center justify-between gap-4">
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="text-sm font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1"
+            >
+              <ImageIcon className="h-4 w-4" />
+              Upload Image
+            </button>
+            
+            {scanMode === 'multiple' && (
+              <button
+                onClick={onClose}
+                className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-green-700 shadow-md"
+              >
+                <Check className="h-4 w-4" /> Done
+              </button>
+            )}
+          </div>
         </div>
       </div>
+      
+      {/* Hidden File Input */}
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        onChange={handleFileUpload} 
+        accept="image/*" 
+        className="hidden" 
+      />
+
       {/* Semi-transparent backdrop click also closes */}
       <div 
         className="absolute inset-0 -z-10" 
