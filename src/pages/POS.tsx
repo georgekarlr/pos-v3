@@ -126,11 +126,18 @@ const POS: React.FC = () => {
       if (selectedAction === 'add') {
         add(product.id, 1)
         setScanSuccess(`Added ${product.name}`)
-      } else {
+      } else if (selectedAction === 'deduct') {
         deduct(product.id, 1)
         setScanSuccess(`Deducted ${product.name}`)
+      } else if (selectedAction === 'bundle') {
+        setBundleOpenFor(product.id)
+      } else if (selectedAction === 'clear') {
+        clear(product.id)
+        setScanSuccess(`Cleared ${product.name} from cart`)
       }
-      setTimeout(() => setScanSuccess(null), 2000)
+      if (selectedAction !== 'bundle') {
+        setTimeout(() => setScanSuccess(null), 2000)
+      }
     } else {
       setError(`Product with barcode ${barcode} not found`)
       setTimeout(() => setError(null), 3000)
@@ -484,7 +491,7 @@ const POS: React.FC = () => {
           onMultipleScan={handleMultipleBarcodesScanned}
           onClose={() => setIsCameraOpen(false)}
           products={products}
-          currentAction={selectedAction === 'add' || selectedAction === 'deduct' ? selectedAction : 'add'}
+          currentAction={selectedAction}
         />
       )}
 

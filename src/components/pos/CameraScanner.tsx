@@ -9,7 +9,7 @@ interface CameraScannerProps {
   onMultipleScan?: (items: ScannedItem[]) => void;
   onClose: () => void;
   products: Product[];
-  currentAction?: 'add' | 'deduct';
+  currentAction?: 'add' | 'deduct' | 'bundle' | 'clear';
 }
 
 interface CameraDevice {
@@ -23,6 +23,8 @@ interface ScannedItem {
 }
 
 const CameraScanner: React.FC<CameraScannerProps> = ({ onScan, onMultipleScan, onClose, products, currentAction = 'add' }) => {
+  const isSingleOnly = currentAction === 'bundle' || currentAction === 'clear';
+  
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
@@ -30,16 +32,19 @@ const CameraScanner: React.FC<CameraScannerProps> = ({ onScan, onMultipleScan, o
   const [activeCameraId, setActiveCameraId] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [scanMode, setScanMode] = useState<'single' | 'multiple'>('single');
-  const scanModeRef = useRef<'single' | 'multiple'>('single');
+  const [scanMode, setScanMode] = useState<'single' | 'multiple'>(isSingleOnly ? 'single' : 'single');
+  const scanModeRef = useRef<'single' | 'multiple'>(isSingleOnly ? 'single' : 'single');
   const [scannedItems, setScannedItems] = useState<Record<number, ScannedItem>>({});
   const lastScannedBarcode = useRef<string | null>(null);
   const lastScanTime = useRef<number>(0);
 
   // Keep ref in sync with state
   useEffect(() => {
+    if (isSingleOnly && scanMode !== 'single') {
+      setScanMode('single');
+    }
     scanModeRef.current = scanMode;
-  }, [scanMode]);
+  }, [scanMode, isSingleOnly]);
 
   // Initialize and start scanner
   useEffect(() => {
@@ -132,7 +137,7 @@ const CameraScanner: React.FC<CameraScannerProps> = ({ onScan, onMultipleScan, o
 
     const qrboxFunction = (viewfinderWidth: number, viewfinderHeight: number) => {
       const qrboxWidth = Math.floor(viewfinderWidth * 0.65);
-      const qrboxHeight = Math.floor(viewfinderHeight * 0.35);
+      const qrboxHeight = Math.floor(viewfinderHeight * 0.50);
       return {
         width: qrboxWidth,
         height: qrboxHeight
@@ -196,11 +201,19 @@ const CameraScanner: React.FC<CameraScannerProps> = ({ onScan, onMultipleScan, o
     <div className="fixed inset-0 z-[60] bg-black bg-opacity-75 flex flex-col items-center justify-center sm:p-4 overflow-hidden">
       <div className="relative bg-white sm:rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col h-full sm:h-auto sm:max-h-[90vh]">
         {/* Header */}
-        <div className={`${currentAction === 'deduct' ? 'bg-red-600' : 'bg-blue-600'} px-4 py-3 flex items-center justify-between flex-shrink-0`}>
+        <div className={`${
+          currentAction === 'deduct' ? 'bg-red-600' : 
+          currentAction === 'bundle' ? 'bg-purple-600' :
+          currentAction === 'clear' ? 'bg-orange-600' :
+          'bg-blue-600'
+        } px-4 py-3 flex items-center justify-between flex-shrink-0`}>
           <div className="flex items-center gap-2">
             <Camera className="h-5 w-5 text-white" />
             <h3 className="text-white font-semibold text-sm sm:text-base">
-              {currentAction === 'deduct' ? 'Deduct Items' : 'Scan Barcode'}
+              {currentAction === 'deduct' ? 'Deduct Items' : 
+               currentAction === 'bundle' ? 'Bundle Mode' :
+               currentAction === 'clear' ? 'Clear Items' :
+               'Scan Barcode'}
             </h3>
           </div>
           <button 
@@ -246,24 +259,26 @@ const CameraScanner: React.FC<CameraScannerProps> = ({ onScan, onMultipleScan, o
         </div>
 
         {/* Mode Switcher */}
-        <div className="px-4 py-2 bg-gray-100 flex gap-2 flex-shrink-0">
-          <button
-            onClick={() => setScanMode('single')}
-            className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
-              scanMode === 'single' ? 'bg-blue-600 text-white shadow-sm' : 'bg-white text-gray-600 hover:bg-gray-50'
-            }`}
-          >
-            <Hash className="h-4 w-4" /> Single
-          </button>
-          <button
-            onClick={() => setScanMode('multiple')}
-            className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
-              scanMode === 'multiple' ? 'bg-blue-600 text-white shadow-sm' : 'bg-white text-gray-600 hover:bg-gray-50'
-            }`}
-          >
-            <List className="h-4 w-4" /> Multiple
-          </button>
-        </div>
+        {!isSingleOnly && (
+          <div className="px-4 py-2 bg-gray-100 flex gap-2 flex-shrink-0">
+            <button
+              onClick={() => setScanMode('single')}
+              className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
+                scanMode === 'single' ? 'bg-blue-600 text-white shadow-sm' : 'bg-white text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              <Hash className="h-4 w-4" /> Single
+            </button>
+            <button
+              onClick={() => setScanMode('multiple')}
+              className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
+                scanMode === 'multiple' ? 'bg-blue-600 text-white shadow-sm' : 'bg-white text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              <List className="h-4 w-4" /> Multiple
+            </button>
+          </div>
+        )}
         
         {/* Content Area - Shows Scanned List or settings */}
         <div className="flex-1 overflow-y-auto bg-gray-50 min-h-[100px]">
