@@ -29,9 +29,15 @@ const CameraScanner: React.FC<CameraScannerProps> = ({ onScan, onMultipleScan, o
   const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [scanMode, setScanMode] = useState<'single' | 'multiple'>('single');
+  const scanModeRef = useRef<'single' | 'multiple'>('single');
   const [scannedItems, setScannedItems] = useState<Record<number, ScannedItem>>({});
   const lastScannedBarcode = useRef<string | null>(null);
   const lastScanTime = useRef<number>(0);
+
+  // Keep ref in sync with state
+  useEffect(() => {
+    scanModeRef.current = scanMode;
+  }, [scanMode]);
 
   // Initialize and start scanner
   useEffect(() => {
@@ -84,7 +90,7 @@ const CameraScanner: React.FC<CameraScannerProps> = ({ onScan, onMultipleScan, o
 
     const product = products.find(p => p.barcode === decodedText);
     
-    if (scanMode === 'single') {
+    if (scanModeRef.current === 'single') {
       onScan(decodedText);
       onClose();
     } else {
