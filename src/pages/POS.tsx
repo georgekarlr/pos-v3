@@ -134,6 +134,17 @@ const POS: React.FC = () => {
     }
   }, [products])
 
+  const handleMultipleBarcodesScanned = useCallback((items: { product: Product, count: number }[]) => {
+    items.forEach(({ product, count }) => {
+      add(product.id, count)
+    })
+    if (items.length > 0) {
+      playScanSound()
+      setScanSuccess(`Added ${items.length} items to cart`)
+      setTimeout(() => setScanSuccess(null), 2000)
+    }
+  }, [products])
+
   useHardwareScanner(handleBarcodeScanned, scanMode === 'hardware')
 
   const deduct = (productId: number, dec = 1) => {
@@ -464,6 +475,7 @@ const POS: React.FC = () => {
       {isCameraOpen && (
         <CameraScanner
           onScan={handleBarcodeScanned}
+          onMultipleScan={handleMultipleBarcodesScanned}
           onClose={() => setIsCameraOpen(false)}
           products={products}
         />

@@ -5,6 +5,7 @@ import { Product } from '../../types/product';
 
 interface CameraScannerProps {
   onScan: (decodedText: string) => void;
+  onMultipleScan?: (items: ScannedItem[]) => void;
   onClose: () => void;
   products: Product[];
 }
@@ -19,7 +20,7 @@ interface ScannedItem {
   count: number;
 }
 
-const CameraScanner: React.FC<CameraScannerProps> = ({ onScan, onClose, products }) => {
+const CameraScanner: React.FC<CameraScannerProps> = ({ onScan, onMultipleScan, onClose, products }) => {
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
@@ -95,7 +96,7 @@ const CameraScanner: React.FC<CameraScannerProps> = ({ onScan, onClose, products
             [product.id]: { ...current, count: current.count + 1 }
           };
         });
-        onScan(decodedText); // Tell POS to add it too
+        // We don't call onScan here to allow batch commit on 'Done'
       } else {
         setError(`Product with barcode ${decodedText} not found`);
         setTimeout(() => setError(null), 3000);
@@ -300,7 +301,12 @@ const CameraScanner: React.FC<CameraScannerProps> = ({ onScan, onClose, products
             
             {scanMode === 'multiple' && (
               <button
-                onClick={onClose}
+                onClick={() => {
+                  if (onMultipleScan) {
+                    onMultipleScan(scannedList);
+                  }
+                  onClose();
+                }}
                 className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-green-700 shadow-md"
               >
                 <Check className="h-4 w-4" /> Done
