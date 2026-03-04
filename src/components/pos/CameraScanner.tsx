@@ -2,12 +2,14 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Html5Qrcode, Html5QrcodeCameraScanConfig, QrcodeErrorCallback, QrcodeSuccessCallback } from 'html5-qrcode';
 import { Camera, Image as ImageIcon, RotateCw, X, List, Hash, Check } from 'lucide-react';
 import { Product } from '../../types/product';
+import { playScanSound } from '../../utils/sound';
 
 interface CameraScannerProps {
   onScan: (decodedText: string) => void;
   onMultipleScan?: (items: ScannedItem[]) => void;
   onClose: () => void;
   products: Product[];
+  currentAction?: 'add' | 'deduct';
 }
 
 interface CameraDevice {
@@ -20,7 +22,7 @@ interface ScannedItem {
   count: number;
 }
 
-const CameraScanner: React.FC<CameraScannerProps> = ({ onScan, onMultipleScan, onClose, products }) => {
+const CameraScanner: React.FC<CameraScannerProps> = ({ onScan, onMultipleScan, onClose, products, currentAction = 'add' }) => {
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
@@ -91,15 +93,25 @@ const CameraScanner: React.FC<CameraScannerProps> = ({ onScan, onMultipleScan, o
     const product = products.find(p => p.barcode === decodedText);
     
     if (scanModeRef.current === 'single') {
+      playScanSound();
       onScan(decodedText);
       onClose();
     } else {
       if (product) {
+        playScanSound();
         setScannedItems(prev => {
           const current = prev[product.id] || { product, count: 0 };
+          const nextCount = currentAction === 'add' ? current.count + 1 : Math.max(0, current.count - 1);
+          
+          if (nextCount === 0 && currentAction === 'deduct') {
+            const copy = { ...prev };
+            delete copy[product.id];
+            return copy;
+          }
+          
           return {
             ...prev,
-            [product.id]: { ...current, count: current.count + 1 }
+            [product.id]: { ...current, count: nextCount }
           };
         });
         // We don't call onScan here to allow batch commit on 'Done'
@@ -172,26 +184,28 @@ const CameraScanner: React.FC<CameraScannerProps> = ({ onScan, onMultipleScan, o
   const scannedList = Object.values(scannedItems);
 
   return (
-    <div className="fixed inset-0 z-[60] bg-black bg-opacity-75 flex flex-col items-center justify-center p-4 overflow-y-auto">
-      <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-[60] bg-black bg-opacity-75 flex flex-col items-center justify-center sm:p-4 overflow-hidden">
+      <div className="relative bg-white sm:rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col h-full sm:h-auto sm:max-h-[90vh]">
         {/* Header */}
-        <div className="bg-blue-600 px-4 py-3 flex items-center justify-between flex-shrink-0">
+        <div className={`${currentAction === 'deduct' ? 'bg-red-600' : 'bg-blue-600'} px-4 py-3 flex items-center justify-between flex-shrink-0`}>
           <div className="flex items-center gap-2">
             <Camera className="h-5 w-5 text-white" />
-            <h3 className="text-white font-semibold">Scan Barcode</h3>
+            <h3 className="text-white font-semibold text-sm sm:text-base">
+              {currentAction === 'deduct' ? 'Deduct Items' : 'Scan Barcode'}
+            </h3>
           </div>
           <button 
             onClick={onClose} 
             className="text-white hover:bg-blue-700 p-1 rounded-full transition-colors"
-            title="Close camera"
+            aria-label="Close"
           >
             <X className="h-6 w-6" />
           </button>
         </div>
         
         {/* Scanner View */}
-        <div className="p-4 bg-gray-900 relative flex-shrink-0">
-          <div id="reader" className="w-full overflow-hidden rounded-lg border-2 border-dashed border-gray-700 min-h-[200px] bg-black"></div>
+        <div className="bg-gray-900 relative flex-shrink-0">
+          <div id="reader" className="w-full overflow-hidden sm:rounded-lg border-2 border-dashed border-gray-700 aspect-video sm:aspect-auto sm:min-h-[200px] bg-black"></div>
           
           {error && (
             <div className="absolute inset-0 flex items-center justify-center p-6 text-center z-10">
@@ -202,22 +216,22 @@ const CameraScanner: React.FC<CameraScannerProps> = ({ onScan, onMultipleScan, o
           )}
           
           {/* Floating Controls */}
-          <div className="absolute bottom-6 right-6 flex flex-col gap-3">
+          <div className="absolute top-4 right-4 flex flex-col gap-3">
             {cameras.length > 1 && (
               <button
                 onClick={handleSwitchCamera}
-                className="bg-white/90 p-3 rounded-full shadow-lg text-gray-700 hover:bg-white transition-colors"
+                className="bg-white/90 p-3 rounded-full shadow-lg text-gray-700 hover:bg-white transition-colors active:scale-90"
                 title="Switch camera"
               >
-                <RotateCw className="h-6 w-6" />
+                <RotateCw className="h-5 w-5" />
               </button>
             )}
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="bg-white/90 p-3 rounded-full shadow-lg text-gray-700 hover:bg-white transition-colors"
+              className="bg-white/90 p-3 rounded-full shadow-lg text-gray-700 hover:bg-white transition-colors active:scale-90"
               title="Upload image"
             >
-              <ImageIcon className="h-6 w-6" />
+              <ImageIcon className="h-5 w-5" />
             </button>
           </div>
         </div>
@@ -258,8 +272,8 @@ const CameraScanner: React.FC<CameraScannerProps> = ({ onScan, onMultipleScan, o
                         <span className="text-xs text-gray-500">{product.barcode}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-0.5 rounded-full">
-                          x{count}
+                        <span className={`${currentAction === 'deduct' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'} text-xs font-bold px-2.5 py-0.5 rounded-full`}>
+                          {currentAction === 'deduct' ? '-' : 'x'}{count}
                         </span>
                       </div>
                     </li>
@@ -295,7 +309,7 @@ const CameraScanner: React.FC<CameraScannerProps> = ({ onScan, onMultipleScan, o
         </div>
         
         {/* Footer */}
-        <div className="p-4 bg-white border-t border-gray-100 flex-shrink-0">
+        <div className="p-4 bg-white border-t border-gray-100 flex-shrink-0 mb-safe sm:mb-0">
           <div className="flex items-center justify-between gap-4">
             <button
               onClick={() => fileInputRef.current?.click()}
@@ -313,7 +327,7 @@ const CameraScanner: React.FC<CameraScannerProps> = ({ onScan, onMultipleScan, o
                   }
                   onClose();
                 }}
-                className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-green-700 shadow-md"
+                className="bg-green-600 text-white px-6 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-green-700 shadow-md active:scale-95 transition-transform"
               >
                 <Check className="h-4 w-4" /> Done
               </button>
