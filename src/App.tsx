@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
+import { ScannerSettingsProvider } from './contexts/ScannerSettingsContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import PersonaProtectedRoute from './components/PersonaProtectedRoute'
 import Layout from './components/layout/Layout'
@@ -11,10 +12,10 @@ import PersonaManagement from './pages/PersonaManagement'
 import Products from './pages/Products'
 import Inventory from './pages/Inventory'
 import POS from './pages/POS'
+import Settings from './pages/Settings'
 import SalesHistory from './pages/SalesHistory'
 import {
-  Users,
-  Settings
+  Users
 } from 'lucide-react'
 import Reports from './pages/Reports'
 import ReceiptPrinter from './pages/ReceiptPrinter'
@@ -28,8 +29,9 @@ function App() {
 
   return (
     <AuthProvider>
-      <Router>
-        <Routes>
+      <ScannerSettingsProvider>
+        <Router>
+          <Routes>
           {/* Public routes */}
           <Route path="/login" element={<LoginForm />} />
           <Route path="/signup" element={<SignupForm />} />
@@ -123,11 +125,7 @@ function App() {
             <ProtectedRoute>
               <PersonaProtectedRoute>
                 <Layout>
-                  <PlaceholderPage
-                    title="Settings"
-                    description="Configure your application settings and preferences."
-                    icon={Settings}
-                  />
+                  <Settings />
                 </Layout>
               </PersonaProtectedRoute>
             </ProtectedRoute>
@@ -147,6 +145,7 @@ function App() {
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </Router>
+      </ScannerSettingsProvider>
     </AuthProvider>
   )
 }

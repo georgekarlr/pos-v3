@@ -17,6 +17,8 @@ import { OfflineDB } from '../db/offlineDB'
 import { PosService } from '../services/posService'
 import { useHardwareScanner } from '../hooks/useHardwareScanner'
 import CameraScanner from '../components/pos/CameraScanner'
+import { playScanSound } from '../utils/sound'
+import { useScannerSettings } from '../contexts/ScannerSettingsContext'
 
 const POS: React.FC = () => {
   const { persona } = useAuth()
@@ -47,7 +49,7 @@ const POS: React.FC = () => {
   const [selectedAction, setSelectedAction] = useState<PosAction>('add')
   const [viewMode, setViewMode] = useState<PosViewMode>('everything')
 
-  const [scanMode, setScanMode] = useState<'hardware' | 'camera'>('hardware')
+  const { scanMode } = useScannerSettings()
   const [isCameraOpen, setIsCameraOpen] = useState(false)
 
   const loadProducts = async (silent = false) => {
@@ -123,6 +125,7 @@ const POS: React.FC = () => {
     const product = products.find(p => p.barcode === barcode)
     if (product) {
       add(product.id, 1)
+      playScanSound()
       setScanSuccess(`Added ${product.name}`)
       setTimeout(() => setScanSuccess(null), 2000)
     } else {
@@ -309,31 +312,16 @@ const POS: React.FC = () => {
                 </div>
               )}
               <ActionModeBar value={selectedAction} onChange={setSelectedAction} />
-              <div className="inline-flex rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden">
+              {scanMode === 'camera' && (
                 <button
-                  onClick={() => setScanMode('hardware')}
-                  className={`px-4 py-2 text-sm font-medium flex items-center gap-2 transition-colors ${
-                    scanMode === 'hardware' ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'
-                  }`}
-                  title="Use Hardware Scanner (Keyboard Wedge)"
-                >
-                  <Keyboard className="h-4 w-4" />
-                  <span className="hidden xs:inline">Hardware</span>
-                </button>
-                <button
-                  onClick={() => {
-                    setScanMode('camera');
-                    setIsCameraOpen(true);
-                  }}
-                  className={`px-4 py-2 text-sm font-medium flex items-center gap-2 border-l border-gray-200 transition-colors ${
-                    scanMode === 'camera' ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'
-                  }`}
-                  title="Use Camera Scanner"
+                  onClick={() => setIsCameraOpen(true)}
+                  className="px-4 py-2 text-sm font-medium flex items-center gap-2 rounded-lg border border-gray-200 bg-white shadow-sm text-blue-700 hover:bg-gray-50 transition-colors"
+                  title="Open Camera Scanner"
                 >
                   <Camera className="h-4 w-4" />
-                  <span className="hidden xs:inline">Camera</span>
+                  <span>Open Scanner</span>
                 </button>
-              </div>
+              )}
               <ViewModeSwitcher value={viewMode} onChange={setViewMode} />
           </div>
           {/**<TotalsBar items={itemsCount} subtotal={subtotal} tax={tax} total={total} paid={totalPaid} />**/}
@@ -476,10 +464,8 @@ const POS: React.FC = () => {
       {isCameraOpen && (
         <CameraScanner
           onScan={handleBarcodeScanned}
-          onClose={() => {
-            setIsCameraOpen(false);
-            setScanMode('hardware');
-          }}
+          onClose={() => setIsCameraOpen(false)}
+          products={products}
         />
       )}
 
