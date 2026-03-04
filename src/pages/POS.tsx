@@ -17,7 +17,6 @@ import { OfflineDB } from '../db/offlineDB'
 import { PosService } from '../services/posService'
 import { useHardwareScanner } from '../hooks/useHardwareScanner'
 import CameraScanner from '../components/pos/CameraScanner'
-import { playScanSound } from '../utils/sound'
 import { useScannerSettings } from '../contexts/ScannerSettingsContext'
 
 const POS: React.FC = () => {
@@ -124,26 +123,33 @@ const POS: React.FC = () => {
   const handleBarcodeScanned = useCallback((barcode: string) => {
     const product = products.find(p => p.barcode === barcode)
     if (product) {
-      add(product.id, 1)
-      playScanSound()
-      setScanSuccess(`Added ${product.name}`)
+      if (selectedAction === 'add') {
+        add(product.id, 1)
+        setScanSuccess(`Added ${product.name}`)
+      } else {
+        deduct(product.id, 1)
+        setScanSuccess(`Deducted ${product.name}`)
+      }
       setTimeout(() => setScanSuccess(null), 2000)
     } else {
       setError(`Product with barcode ${barcode} not found`)
       setTimeout(() => setError(null), 3000)
     }
-  }, [products])
+  }, [products, selectedAction])
 
   const handleMultipleBarcodesScanned = useCallback((items: { product: Product, count: number }[]) => {
     items.forEach(({ product, count }) => {
-      add(product.id, count)
+      if (selectedAction === 'add') {
+        add(product.id, count)
+      } else {
+        deduct(product.id, count)
+      }
     })
     if (items.length > 0) {
-      playScanSound()
-      setScanSuccess(`Added ${items.length} items to cart`)
+      setScanSuccess(`${selectedAction === 'add' ? 'Added' : 'Deducted'} ${items.length} items ${selectedAction === 'add' ? 'to' : 'from'} cart`)
       setTimeout(() => setScanSuccess(null), 2000)
     }
-  }, [products])
+  }, [products, selectedAction])
 
   useHardwareScanner(handleBarcodeScanned, scanMode === 'hardware')
 
@@ -478,6 +484,7 @@ const POS: React.FC = () => {
           onMultipleScan={handleMultipleBarcodesScanned}
           onClose={() => setIsCameraOpen(false)}
           products={products}
+          currentAction={selectedAction === 'add' || selectedAction === 'deduct' ? selectedAction : 'add'}
         />
       )}
 

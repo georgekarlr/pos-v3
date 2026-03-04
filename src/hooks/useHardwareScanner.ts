@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { playScanSound } from '../utils/sound';
 
 export const useHardwareScanner = (onScan: (barcode: string) => void, enabled: boolean) => {
   const buffer = useRef('');
@@ -24,6 +25,7 @@ export const useHardwareScanner = (onScan: (barcode: string) => void, enabled: b
 
       if (e.key === 'Enter') {
         if (buffer.current.length > 2) {
+          playScanSound();
           onScan(buffer.current);
           buffer.current = '';
         }
