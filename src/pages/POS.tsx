@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { ProductService } from '../services/productService'
 import { Product } from '../types/product'
@@ -6,7 +6,7 @@ import LoadingSpinner from '../components/LoadingSpinner'
 import ProductGrid from '../components/pos/ProductGrid'
 import CartPanel, { CartLine } from '../components/pos/CartPanel'
 import BundleModal from '../components/pos/BundleModal'
-import { AlertCircle, RefreshCw, Search, WifiOff } from 'lucide-react'
+import { AlertCircle, Camera, Keyboard, RefreshCw, Search, WifiOff } from 'lucide-react'
 import { PaymentInput, PosAction, PosViewMode } from '../types/pos'
 import ActionModeBar from '../components/pos/ActionModeBar'
 import ViewModeSwitcher from '../components/pos/ViewModeSwitcher'
@@ -15,6 +15,8 @@ import PaymentModal from '../components/pos/PaymentModal'
 import { ReceiptData } from '../components/pos/Receipt'
 import { OfflineDB } from '../db/offlineDB'
 import { PosService } from '../services/posService'
+import { useHardwareScanner } from '../hooks/useHardwareScanner'
+import CameraScanner from '../components/pos/CameraScanner'
 
 const POS: React.FC = () => {
   const { persona } = useAuth()
@@ -32,6 +34,7 @@ const POS: React.FC = () => {
   const [notes, setNotes] = useState<string>('')
   const [submitting, setSubmitting] = useState(false)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [scanSuccess, setScanSuccess] = useState<string | null>(null)
 
   // Receipt & Payment modal state
   const [receiptOpen, setReceiptOpen] = useState(false)
@@ -43,6 +46,9 @@ const POS: React.FC = () => {
   // New UI state
   const [selectedAction, setSelectedAction] = useState<PosAction>('add')
   const [viewMode, setViewMode] = useState<PosViewMode>('everything')
+
+  const [scanMode, setScanMode] = useState<'hardware' | 'camera'>('hardware')
+  const [isCameraOpen, setIsCameraOpen] = useState(false)
 
   const loadProducts = async (silent = false) => {
     if (!silent) setIsLoading(true)
@@ -112,6 +118,20 @@ const POS: React.FC = () => {
       return { ...prev, [productId]: next }
     })
   }
+
+  const handleBarcodeScanned = useCallback((barcode: string) => {
+    const product = products.find(p => p.barcode === barcode)
+    if (product) {
+      add(product.id, 1)
+      setScanSuccess(`Added ${product.name}`)
+      setTimeout(() => setScanSuccess(null), 2000)
+    } else {
+      setError(`Product with barcode ${barcode} not found`)
+      setTimeout(() => setError(null), 3000)
+    }
+  }, [products])
+
+  useHardwareScanner(handleBarcodeScanned, scanMode === 'hardware')
 
   const deduct = (productId: number, dec = 1) => {
     setOrderQtyById(prev => {
@@ -289,6 +309,31 @@ const POS: React.FC = () => {
                 </div>
               )}
               <ActionModeBar value={selectedAction} onChange={setSelectedAction} />
+              <div className="inline-flex rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden">
+                <button
+                  onClick={() => setScanMode('hardware')}
+                  className={`px-4 py-2 text-sm font-medium flex items-center gap-2 transition-colors ${
+                    scanMode === 'hardware' ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'
+                  }`}
+                  title="Use Hardware Scanner (Keyboard Wedge)"
+                >
+                  <Keyboard className="h-4 w-4" />
+                  <span className="hidden xs:inline">Hardware</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setScanMode('camera');
+                    setIsCameraOpen(true);
+                  }}
+                  className={`px-4 py-2 text-sm font-medium flex items-center gap-2 border-l border-gray-200 transition-colors ${
+                    scanMode === 'camera' ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'
+                  }`}
+                  title="Use Camera Scanner"
+                >
+                  <Camera className="h-4 w-4" />
+                  <span className="hidden xs:inline">Camera</span>
+                </button>
+              </div>
               <ViewModeSwitcher value={viewMode} onChange={setViewMode} />
           </div>
           {/**<TotalsBar items={itemsCount} subtotal={subtotal} tax={tax} total={total} paid={totalPaid} />**/}
@@ -329,6 +374,19 @@ const POS: React.FC = () => {
                 </div>
               </div>
               <p className="text-sm text-green-800 font-medium">{successMessage}</p>
+            </div>
+          )}
+
+          {scanSuccess && (
+            <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+              <div className="flex-shrink-0">
+                <div className="h-5 w-5 bg-blue-500 rounded-full flex items-center justify-center">
+                  <svg className="h-3 w-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              </div>
+              <p className="text-sm text-blue-800 font-medium">{scanSuccess}</p>
             </div>
           )}
 
@@ -414,6 +472,16 @@ const POS: React.FC = () => {
         onClose={() => setBundleOpenFor(null)}
         onConfirm={(qty) => { if (bundleOpenFor !== null) setOrderQtyById(prev => ({ ...prev, [bundleOpenFor]: qty })) }}
       />
+
+      {isCameraOpen && (
+        <CameraScanner
+          onScan={handleBarcodeScanned}
+          onClose={() => {
+            setIsCameraOpen(false);
+            setScanMode('hardware');
+          }}
+        />
+      )}
 
       {/* Receipt modal */}
       <ReceiptModal
