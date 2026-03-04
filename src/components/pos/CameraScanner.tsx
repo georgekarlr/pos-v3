@@ -131,8 +131,8 @@ const CameraScanner: React.FC<CameraScannerProps> = ({ onScan, onMultipleScan, o
     }
 
     const qrboxFunction = (viewfinderWidth: number, viewfinderHeight: number) => {
-      const qrboxWidth = Math.floor(viewfinderWidth * 0.7);
-      const qrboxHeight = Math.floor(viewfinderHeight * 0.25);
+      const qrboxWidth = Math.floor(viewfinderWidth * 0.65);
+      const qrboxHeight = Math.floor(viewfinderHeight * 0.35);
       return {
         width: qrboxWidth,
         height: qrboxHeight
