@@ -130,9 +130,19 @@ const CameraScanner: React.FC<CameraScannerProps> = ({ onScan, onMultipleScan, o
       await scannerRef.current.stop();
     }
 
+    const qrboxFunction = (viewfinderWidth: number, viewfinderHeight: number) => {
+      const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+      const qrboxSize = Math.floor(minEdge * 0.4);
+      return {
+        width: qrboxSize,
+        height: qrboxSize
+      };
+    };
+
     const config: Html5QrcodeCameraScanConfig = {
       fps: 10,
-      qrbox: { width: 250, height: 150 },
+      qrbox: qrboxFunction,
+      aspectRatio: 1.0,
     };
 
     const successCallback: QrcodeSuccessCallback = (decodedText) => {
