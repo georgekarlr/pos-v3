@@ -15,10 +15,13 @@ import POS from './pages/POS'
 import Settings from './pages/Settings'
 import SalesHistory from './pages/SalesHistory'
 import {
-  Users
+  Users,
+  Wallet
 } from 'lucide-react'
 import Reports from './pages/Reports'
 import ReceiptPrinter from './pages/ReceiptPrinter'
+import DebtWizard from './pages/DebtWizard'
+import Customers from './pages/Customers'
 import { useEffect } from 'react'
 import { SyncService } from './services/syncService'
 
@@ -101,11 +104,27 @@ function App() {
             <ProtectedRoute>
               <PersonaProtectedRoute>
                 <Layout>
-                  <PlaceholderPage
-                    title="Customers"
-                    description="Manage customer information and relationships."
-                    icon={Users}
-                  />
+                  <Customers />
+                </Layout>
+              </PersonaProtectedRoute>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/debt-management/wizard" element={
+            <ProtectedRoute>
+              <PersonaProtectedRoute>
+                <Layout>
+                  <DebtWizard />
+                </Layout>
+              </PersonaProtectedRoute>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/debt-management/debts" element={
+            <ProtectedRoute>
+              <PersonaProtectedRoute>
+                <Layout>
+                  <Customers />
                 </Layout>
               </PersonaProtectedRoute>
             </ProtectedRoute>

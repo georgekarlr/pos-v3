@@ -9,7 +9,7 @@ interface TotalsBarProps {
   className?: string
 }
 
-const currency = (n: number) => `$${n.toFixed(2)}`
+const currency = (n: number) => `\u20b1${n.toFixed(2)}`
 
 const TotalsBar: React.FC<TotalsBarProps> = ({ items, subtotal, tax, total, paid, className }) => {
   const remaining = Math.max(0, total - paid)
