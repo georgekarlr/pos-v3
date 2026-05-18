@@ -30,7 +30,7 @@ export interface CreateCustomerDebtParams {
 export interface ManageDebtAccountParams {
   p_requesting_account_id: number;
   p_customer_id: number;
-  p_action_type: 'PAYMENT' | 'DEPOSIT' | 'SETTLE';
+  p_action_type: 'PAYMENT' | 'DEPOSIT' | 'WITHDRAW_DEPOSIT' | 'SETTLE';
   p_amount?: number;
   p_payment_method?: string;
   p_notes?: string | null;
