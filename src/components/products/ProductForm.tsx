@@ -20,6 +20,7 @@ export interface ProductFormData {
   selling_method: 'unit' | 'measured'
   inventory_type: ProductInventoryType
   unit_type: ProductUnitType | null
+  is_for_sale: boolean
 }
 
 const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onCancel, isAdmin }) => {
@@ -33,7 +34,8 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onCancel, 
     image_url: '',
     selling_method: 'unit',
     inventory_type: 'non_perishable',
-    unit_type: null
+    unit_type: null,
+    is_for_sale: true
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -50,7 +52,8 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onCancel, 
         image_url: product.image_url || '',
         selling_method: product.selling_method || 'unit',
         inventory_type: product.inventory_type || 'non_perishable',
-        unit_type: product.unit_type || null
+        unit_type: product.unit_type || null,
+        is_for_sale: product.is_for_sale ?? true
       })
     }
   }, [product])
@@ -273,6 +276,23 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onCancel, 
                     ))}
                   </select>
                 </div>
+              </div>
+
+              <div>
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="is_for_sale"
+                    checked={formData.is_for_sale}
+                    onChange={(e) => setFormData(prev => ({ ...prev, is_for_sale: e.target.checked }))}
+                    disabled={!isAdmin}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <span className="text-sm font-medium text-gray-700">Available for Sale</span>
+                </label>
+                <p className="mt-1 text-xs text-gray-500 ml-6">
+                  If disabled, this product will not appear in the POS for sale.
+                </p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

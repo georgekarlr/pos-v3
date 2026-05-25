@@ -64,6 +64,9 @@ const ProductList: React.FC<ProductListProps> = ({ products, onEdit, isAdmin }) 
                 Inventory
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Sale Status
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Status
               </th>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -131,6 +134,17 @@ const ProductList: React.FC<ProductListProps> = ({ products, onEdit, isAdmin }) 
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span
                     className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                      product.is_for_sale
+                        ? 'bg-blue-100 text-blue-800'
+                        : 'bg-orange-100 text-orange-800'
+                    }`}
+                  >
+                    {product.is_for_sale ? 'For Sale' : 'Not for Sale'}
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span
+                    className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                       product.is_active
                         ? 'bg-green-100 text-green-800'
                         : 'bg-gray-100 text-gray-800'
@@ -189,15 +203,26 @@ const ProductList: React.FC<ProductListProps> = ({ products, onEdit, isAdmin }) 
                   <p className="text-sm text-gray-500 line-clamp-2">{product.description || 'No description'}</p>
                 </div>
               </div>
-              <span
-                className={`ml-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full flex-shrink-0 ${
-                  product.is_active
-                    ? 'bg-green-100 text-green-800'
-                    : 'bg-gray-100 text-gray-800'
-                }`}
-              >
-                {product.is_active ? 'Active' : 'Inactive'}
-              </span>
+              <div className="flex flex-col items-end gap-1 ml-2">
+                <span
+                  className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full flex-shrink-0 ${
+                    product.is_active
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-gray-100 text-gray-800'
+                  }`}
+                >
+                  {product.is_active ? 'Active' : 'Inactive'}
+                </span>
+                <span
+                  className={`inline-flex px-2 py-1 text-[10px] font-bold uppercase rounded-full flex-shrink-0 ${
+                    product.is_for_sale
+                      ? 'bg-blue-100 text-blue-800'
+                      : 'bg-orange-100 text-orange-800 border border-orange-200'
+                  }`}
+                >
+                  {product.is_for_sale ? 'For Sale' : 'Not for Sale'}
+                </span>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3 text-sm mb-3">

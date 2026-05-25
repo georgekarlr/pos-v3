@@ -13,12 +13,18 @@ export class ProductService {
   /**
    * Fetches POS products available to the current user with pagination and search.
    */
-  static async getAllProducts(limit: number = 50, offset: number = 0, searchTerm?: string): Promise<ServiceResponse<Product[]>> {
+  static async getAllProducts(
+    limit: number = 50,
+    offset: number = 0,
+    searchTerm?: string,
+    filterForSale?: boolean
+  ): Promise<ServiceResponse<Product[]>> {
     try {
       const { data, error } = await supabase.rpc('pos2_get_product_details', {
         p_limit: limit,
         p_offset: offset,
-        p_search_term: searchTerm || null
+        p_search_term: searchTerm || null,
+        p_filter_for_sale: filterForSale ?? null
       });
       console.log(data);
 
@@ -53,7 +59,8 @@ export class ProductService {
         p_image_url: params.p_image_url,
         p_selling_method: params.p_selling_method,
         p_inventory_type: params.p_inventory_type,
-        p_unit_type: params.p_unit_type
+        p_unit_type: params.p_unit_type,
+        p_is_for_sale: params.p_is_for_sale
       });
 
       if (error) {
@@ -92,7 +99,8 @@ export class ProductService {
         p_image_url: params.p_image_url,
         p_selling_method: params.p_selling_method,
         p_inventory_type: params.p_inventory_type,
-        p_unit_type: params.p_unit_type
+        p_unit_type: params.p_unit_type,
+        p_is_for_sale: params.p_is_for_sale
       });
 
       if (error) {
