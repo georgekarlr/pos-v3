@@ -35,6 +35,7 @@ const Inventory: React.FC = () => {
     const [searchBarcode, setSearchBarcode] = useState('')
     const [stockFilter, setStockFilter] = useState<'all' | 'in' | 'low' | 'out'>('all')
     const [typeFilter, setTypeFilter] = useState<'all' | 'non_perishable' | 'perishable'>('all')
+    const [forSaleFilter, setForSaleFilter] = useState<'all' | 'for_sale' | 'not_for_sale'>('all')
 
     const LOW_STOCK_THRESHOLD = 10
     const getStockStatus = (quantity: number): 'in' | 'low' | 'out' => {
@@ -108,7 +109,8 @@ const Inventory: React.FC = () => {
         const matchesBarcode = barcodeQuery === '' || (p.barcode ? p.barcode.toLowerCase().includes(barcodeQuery) : false)
         const matchesStock = stockFilter === 'all' || getStockStatus(p.total_stock) === stockFilter
         const matchesType = typeFilter === 'all' || p.inventory_type === typeFilter
-        return matchesName && matchesBarcode && matchesStock && matchesType
+        const matchesForSale = forSaleFilter === 'all' || (forSaleFilter === 'for_sale' ? p.is_for_sale : !p.is_for_sale)
+        return matchesName && matchesBarcode && matchesStock && matchesType && matchesForSale
     })
 
     return (
@@ -223,10 +225,22 @@ const Inventory: React.FC = () => {
                                     <option value="perishable">Perishable</option>
                                 </select>
                             </div>
+                            <div>
+                                <label className="block text-xs font-medium text-gray-600 mb-1">Status</label>
+                                <select
+                                    value={forSaleFilter}
+                                    onChange={(e) => setForSaleFilter(e.target.value as 'all' | 'for_sale' | 'not_for_sale')}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                >
+                                    <option value="all">All Status</option>
+                                    <option value="for_sale">For Sale</option>
+                                    <option value="not_for_sale">Not For Sale</option>
+                                </select>
+                            </div>
                             <div className="flex items-end">
                                 <button
                                     type="button"
-                                    onClick={() => { setSearchName(''); setSearchBarcode(''); setStockFilter('all'); setTypeFilter('all') }}
+                                    onClick={() => { setSearchName(''); setSearchBarcode(''); setStockFilter('all'); setTypeFilter('all'); setForSaleFilter('all') }}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 hover:bg-gray-100"
                                 >
                                     Clear filters

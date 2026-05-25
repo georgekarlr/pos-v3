@@ -43,7 +43,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, isAdmin, onAdjust, o
                             <h3 className="text-lg font-bold text-gray-900 truncate" title={product.name}>
                                 {product.name}
                             </h3>
-                            <StockStatusBadge quantity={product.total_stock} />
+                            <div className="flex flex-col items-end gap-1">
+                                <StockStatusBadge quantity={product.total_stock} />
+                                {!product.is_for_sale && (
+                                    <span className="text-[10px] font-bold bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded border border-gray-200 uppercase">
+                                        Not for Sale
+                                    </span>
+                                )}
+                            </div>
                         </div>
                         <div className="mt-1 text-xs text-gray-500 flex items-center justify-between">
                             <span>SKU: {product.sku || 'N/A'}</span>

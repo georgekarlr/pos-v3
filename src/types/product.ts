@@ -56,6 +56,7 @@ export interface Product {
   selling_method: ProductSellingMethod;
   inventory_type: ProductInventoryType;
   unit_type: ProductUnitType | null;
+  is_for_sale: boolean;
 }
 
 // --- Parameter Interfaces ---
@@ -72,6 +73,7 @@ export interface CreatePosProductParams {
   p_selling_method: ProductSellingMethod;
   p_inventory_type: ProductInventoryType;
   p_unit_type: ProductUnitType | null;
+  p_is_for_sale: boolean;
 }
 
 export interface UpdatePosProductParams extends CreatePosProductParams {

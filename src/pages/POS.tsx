@@ -57,7 +57,7 @@ const POS: React.FC = () => {
     if (!silent) setIsLoading(true)
     setError(null)
     try {
-      const { data, error } = await ProductService.getAllProducts()
+      const { data, error } = await ProductService.getAllProducts(1000, 0, undefined, true)
       if (error) {
         if (isOnline) setError(error)
       } else {

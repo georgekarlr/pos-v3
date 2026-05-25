@@ -73,7 +73,8 @@ const Products: React.FC = () => {
           p_image_url: formData.image_url,
           p_selling_method: formData.selling_method,
           p_inventory_type: formData.inventory_type,
-          p_unit_type: formData.unit_type
+          p_unit_type: formData.unit_type,
+          p_is_for_sale: formData.is_for_sale
         })
 
         if (result.error) {
@@ -97,7 +98,8 @@ const Products: React.FC = () => {
           p_image_url: formData.image_url,
           p_selling_method: formData.selling_method,
           p_inventory_type: formData.inventory_type,
-          p_unit_type: formData.unit_type
+          p_unit_type: formData.unit_type,
+          p_is_for_sale: formData.is_for_sale
         })
 
         if (result.error) {
