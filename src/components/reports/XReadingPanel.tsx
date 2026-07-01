@@ -2,67 +2,129 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { ScanLine, RefreshCw } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { ReportService } from '../../services/reportService'
-import { SettingsService } from '../../services/settingsService'
-import { Terminal } from '../../types/settings'
+import { Terminal, BusinessSettings } from '../../types/settings'
 import { XReadingResult } from '../../types/report'
 import ReportCard from './ReportCard'
 import LoadingSpinner from '../LoadingSpinner'
 
-const fmt = (n: number) =>
-  new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(n)
-
 const todayISO = () => new Date().toISOString().slice(0, 10)
 
-// ─── Composable sub-sections ──────────────────────────────────────────────────
+const generateXReadingText = (
+  report: XReadingResult,
+  businessSettings: BusinessSettings | null,
+  persona: any
+) => {
+  const line = '='.repeat(40);
+  const center = (text: string) => {
+    if (text.length >= 40) return text.slice(0, 40);
+    const left = Math.floor((40 - text.length) / 2);
+    const right = 40 - text.length - left;
+    return ' '.repeat(left) + text + ' '.repeat(right);
+  };
+  const align = (left: string, right: string) => {
+    const spaces = Math.max(1, 40 - left.length - right.length);
+    return left + ' '.repeat(spaces) + right;
+  };
+  const fmtVal = (n: number) => {
+    const val = new Intl.NumberFormat('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+    return val.padStart(9);
+  };
+  const fmtAmt = (n: number) => `PHP ${fmtVal(n)}`;
+  
+  const formatDate = (dateStr: string) => {
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr;
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    } catch {
+      return dateStr;
+    }
+  };
 
-const ReceiptRow: React.FC<{ label: string; value: string; bold?: boolean; indent?: boolean }> = ({
-  label, value, bold, indent,
-}) => (
-  <div className={`flex justify-between text-sm py-0.5 ${bold ? 'font-semibold' : ''} ${indent ? 'pl-4 text-gray-600' : ''}`}>
-    <span>{label}</span>
-    <span className="tabular-nums">{value}</span>
-  </div>
-)
+  const formatTime = (dateStr: string) => {
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return '';
+      return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+    } catch {
+      return '';
+    }
+  };
 
-const Divider = () => <div className="border-t border-dashed border-gray-300 my-2" />
+  const bName = businessSettings?.business_name || (report as any).Business?.Name || '[Business Name]';
+  const bAddress = businessSettings?.address || '';
+  const addrLines = bAddress ? bAddress.split('\n').map(s => s.trim()).filter(Boolean) : [];
+  if (addrLines.length === 0) {
+    addrLines.push('[Business Address Line 1]');
+    addrLines.push('[Business Address Line 2]');
+  }
+  const bTIN = businessSettings?.tin || (report as any).Business?.TIN || '123-456-789-00000';
+  const bMIN = businessSettings?.min || report.Terminal?.MIN || '2401234567890123';
+
+  let text = '';
+  text += `${line}\n`;
+  text += `${center('X-READING')}\n`;
+  text += `${center('(MID-DAY SNAPSHOT)')}\n`;
+  text += `${line}\n`;
+  text += `${center(bName)}\n`;
+  addrLines.forEach(l => {
+    text += `${center(l)}\n`;
+  });
+  text += `${center(`VAT REG TIN: ${bTIN}`)}\n`;
+  text += `${center(`MIN: ${bMIN}`)}\n`;
+  text += `${line}\n`;
+  text += `${align('Terminal:', report.Terminal?.Name || 'Register 01')}\n`;
+  text += `${align('Cashier:', persona?.personName || 'Juan Dela Cruz')}\n`;
+  text += `${align('Date:', formatDate(report.GeneratedAt))}\n`;
+  text += `${align('Time Printed:', formatTime(report.GeneratedAt))}\n`;
+  text += `${line}\n`;
+  text += `TRANSACTION RANGE (So far today)\n`;
+  text += `${align('Beginning Inv No:', report.TransactionRange?.Start || 'N/A')}\n`;
+  text += `${align('Current Inv No:', report.TransactionRange?.End || 'N/A')}\n`;
+  text += `${line}\n`;
+  text += `SALES BREAKDOWN (So far today)\n\n`;
+  text += `${align('Gross Sales:', fmtAmt(report.GrossSales))}\n\n`;
+  text += `Less Deductions:\n`;
+  text += `${align('  Regular Discounts:', fmtAmt(report.Deductions?.Regular || 0))}\n`;
+  text += `${align('  SC/PWD Discounts:', fmtAmt(report.Deductions?.SC_PWD || 0))}\n`;
+  text += `${align('  Refunds/Returns:', fmtAmt(report.Deductions?.Refunds || 0))}\n`;
+  const voidsVal = (report.Deductions as any)?.Voids || (report.Deductions as any)?.voids || 0;
+  text += `${align('  Voids:', fmtAmt(voidsVal))}\n`;
+  text += `                            ---------------\n`;
+  const totalDeductions = (report.Deductions?.Regular || 0) + (report.Deductions?.SC_PWD || 0) + (report.Deductions?.Refunds || 0) + voidsVal;
+  text += `${align('Total Deductions:', fmtAmt(totalDeductions))}\n\n`;
+  text += `${align('NET SALES:', fmtAmt(report.NetSales))}\n`;
+  text += `${line}\n`;
+  text += `VAT DETAILS (So far today)\n\n`;
+  text += `${align('VATable Sales:', fmtAmt(report.VAT?.VATable || 0))}\n`;
+  text += `${align('VAT Amount (12%):', fmtAmt(report.VAT?.VATAmount || 0))}\n`;
+  text += `${align('VAT-Exempt Sales:', fmtAmt(report.VAT?.Exempt || 0))}\n`;
+  const zeroRatedVal = (report.VAT as any)?.ZeroRated || (report.VAT as any)?.zero_rated || 0;
+  text += `${align('Zero-Rated Sales:', fmtAmt(zeroRatedVal))}\n`;
+  text += `${line}\n`;
+  text += `${center('*** THIS IS NOT AN OFFICIAL RECEIPT ***')}\n`;
+  text += `${center('*** FOR INTERNAL USE ONLY ***')}\n`;
+  text += `${line}`;
+  
+  return text;
+};
 
 interface XReadingDisplayProps {
   report: XReadingResult
+  businessSettings: BusinessSettings | null
+  persona: any
 }
 
 /** Pure presentational component – renders an X-Reading as a BIR-style receipt */
-export const XReadingDisplay: React.FC<XReadingDisplayProps> = ({ report }) => (
-  <div id="x-reading-printout" className="font-mono text-xs space-y-1 max-w-sm mx-auto">
-    <div className="text-center space-y-0.5 mb-3">
-      <div className="text-base font-bold uppercase tracking-wide">{report.ReportType}</div>
-      <div className="text-gray-500">Terminal: {report.Terminal.Name}</div>
-      <div className="text-gray-500">MIN: {report.Terminal.MIN}</div>
-      <div className="text-gray-500">Generated: {new Date(report.GeneratedAt).toLocaleString()}</div>
-    </div>
-    <Divider />
-    <ReceiptRow label="Starting Invoice" value={report.TransactionRange.Start ?? 'N/A'} />
-    <ReceiptRow label="Ending Invoice" value={report.TransactionRange.End ?? 'N/A'} />
-    <Divider />
-    <ReceiptRow label="Gross Sales" value={fmt(report.GrossSales)} bold />
-    <Divider />
-    <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mt-1">Deductions</div>
-    <ReceiptRow label="SC / PWD Discount" value={`(${fmt(report.Deductions.SC_PWD)})`} indent />
-    <ReceiptRow label="Regular Discount" value={`(${fmt(report.Deductions.Regular)})`} indent />
-    <ReceiptRow label="Refunds" value={`(${fmt(report.Deductions.Refunds)})`} indent />
-    <Divider />
-    <ReceiptRow label="NET SALES" value={fmt(report.NetSales)} bold />
-    <Divider />
-    <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mt-1">VAT Breakdown</div>
-    <ReceiptRow label="VATable Sales" value={fmt(report.VAT.VATable)} indent />
-    <ReceiptRow label="VAT Amount (12%)" value={fmt(report.VAT.VATAmount)} indent />
-    <ReceiptRow label="VAT-Exempt Sales" value={fmt(report.VAT.Exempt)} indent />
-    <ReceiptRow label="Zero-Rated Sales" value={fmt(report.VAT.ZeroRated)} indent />
-    <Divider />
-    <div className="text-center text-gray-400 text-xs pt-1">*** END OF X-READING ***</div>
+export const XReadingDisplay: React.FC<XReadingDisplayProps> = ({ report, businessSettings, persona }) => (
+  <div id="x-reading-printout" className="font-mono text-xs whitespace-pre bg-gray-50 border border-gray-200 p-4 rounded-lg leading-relaxed max-w-sm mx-auto shadow-inner select-all">
+    {generateXReadingText(report, businessSettings, persona)}
   </div>
 )
 
 // ─── Main Panel ───────────────────────────────────────────────────────────────
+
+import { SettingsService } from '../../services/settingsService'
 
 /**
  * XReadingPanel — composable panel for generating mid-day X-Reading snapshots.
@@ -78,8 +140,9 @@ const XReadingPanel: React.FC = () => {
   const [terminalLoading, setTerminalLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [report, setReport] = useState<XReadingResult | null>(null)
+  const [businessSettings, setBusinessSettings] = useState<BusinessSettings | null>(null)
 
-  // Fetch terminal list on mount
+  // Fetch terminal list and settings on mount
   useEffect(() => {
     SettingsService.getTerminals().then(({ data }) => {
       if (data && data.length > 0) {
@@ -87,6 +150,9 @@ const XReadingPanel: React.FC = () => {
         setTerminalId(data[0].terminal_id)
       }
       setTerminalLoading(false)
+    })
+    SettingsService.getBusinessSettings().then(({ data }) => {
+      if (data) setBusinessSettings(data)
     })
   }, [])
 
@@ -189,7 +255,7 @@ const XReadingPanel: React.FC = () => {
           badgeVariant="emerald"
           printTargetId="x-reading-printout"
         >
-          <XReadingDisplay report={report} />
+          <XReadingDisplay report={report} businessSettings={businessSettings} persona={persona} />
         </ReportCard>
       )}
     </div>

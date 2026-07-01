@@ -12,8 +12,6 @@ export const dashboardService = {
       console.error('Error fetching dashboard data:', error)
       throw new Error(error.message)
     }
-    console.log(data);
-
     const d = (data as DashboardData) || ({} as DashboardData)
 
     return {

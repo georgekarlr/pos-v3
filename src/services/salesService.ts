@@ -79,7 +79,6 @@ export const salesService = {
     const { data, error } = await supabase.rpc('pos2_get_sale_details_by_id', {
       p_order_id: orderId
     })
-    console.log(data);
     if (error) {
       console.error('Error fetching sale details:', error)
       throw new Error(error.message)

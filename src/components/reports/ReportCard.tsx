@@ -31,15 +31,77 @@ const ReportCard: React.FC<ReportCardProps> = ({
 
   const handlePrint = () => {
     if (printTargetId) {
-      const el = document.getElementById(printTargetId)
-      if (el) {
-        const w = window.open('', '_blank')
-        if (!w) return
-        w.document.write(`<html><head><title>${title}</title></head><body>${el.innerHTML}</body></html>`)
-        w.document.close()
-        w.focus()
-        w.print()
-        w.close()
+      const container = document.getElementById(printTargetId)
+      if (container) {
+        try {
+          const printWindow = window.open('', 'PRINT', 'height=800,width=420')
+          if (!printWindow) return
+
+          const doc = printWindow.document
+          doc.open()
+          doc.write(`<!doctype html><html><head><meta charset="utf-8"><title>${title}</title></head><body></body></html>`)
+          doc.close()
+
+          // Clone current styles (Tailwind is injected via <style> in dev and <link> in prod)
+          const head = doc.head
+          const styleNodes = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
+          styleNodes.forEach((n) => head.appendChild(n.cloneNode(true)))
+
+          // Add print-specific CSS to match POS printer width (80mm is thermal print paper standard)
+          const extraStyle = doc.createElement('style')
+          extraStyle.type = 'text/css'
+          extraStyle.textContent = `
+            :root { --receipt-width: 80mm; }
+            @media print {
+              @page { size: var(--receipt-width) auto; margin: 0; }
+              html, body { margin: 0; padding: 0; background: #ffffff; }
+              #${printTargetId} {
+                width: var(--receipt-width) !important;
+                max-width: var(--receipt-width) !important;
+                padding: 4mm !important;
+                box-sizing: border-box !important;
+                margin: 0 !important;
+                display: block !important;
+              }
+            }
+            /* On screen inside the print window, center the receipt */
+            body { display: flex; justify-content: center; background: #f3f4f6; padding: 20px; }
+            #${printTargetId} {
+              background: #ffffff;
+              padding: 20px;
+              box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+              width: var(--receipt-width);
+              max-width: var(--receipt-width);
+              box-sizing: border-box;
+              display: block !important;
+            }
+          `
+          head.appendChild(extraStyle)
+
+          // Clone the target DOM element
+          const sourceNode = container.cloneNode(true) as HTMLElement
+          doc.body.appendChild(sourceNode)
+
+          // Ensure styles are applied before printing (wait for stylesheets to load)
+          const waitForLinks = Array.from(head.querySelectorAll('link[rel="stylesheet"]'))
+            .map((lnk) => new Promise<void>((resolve) => {
+              if ((lnk as HTMLLinkElement).sheet) return resolve()
+              lnk.addEventListener('load', () => resolve())
+              lnk.addEventListener('error', () => resolve())
+            }))
+
+          Promise.all(waitForLinks).then(() => {
+            printWindow.focus()
+            // Short delay to allow layout to settle
+            setTimeout(() => {
+              printWindow.print()
+              printWindow.close()
+            }, 200)
+          })
+        } catch (e) {
+          console.error('Print error', e)
+          alert('Failed to open print dialog')
+        }
         return
       }
     }

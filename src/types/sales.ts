@@ -1,9 +1,11 @@
 export interface SalesHistoryRow {
   order_id: number
+  invoice_number: string | null
   created_at: string
   customer_name: string
   account_name: string
   original_total_amount: number
+  total_discount: number
   total_refund_amount: number
   net_amount: number
   status: string

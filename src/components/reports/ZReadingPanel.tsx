@@ -3,70 +3,164 @@ import { AlertTriangle, FileCheck, RefreshCw } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { ReportService } from '../../services/reportService'
 import { SettingsService } from '../../services/settingsService'
-import { Terminal } from '../../types/settings'
+import { Terminal, BusinessSettings } from '../../types/settings'
 import { ZReadingResult } from '../../types/report'
 import ReportCard from './ReportCard'
 import LoadingSpinner from '../LoadingSpinner'
 
-const fmt = (n: number) =>
-  new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(n)
-
 const todayISO = () => new Date().toISOString().slice(0, 10)
 
-// ─── Composable sub-sections ──────────────────────────────────────────────────
+const generateZReadingText = (
+  report: ZReadingResult,
+  businessSettings: BusinessSettings | null,
+  persona: any
+) => {
+  const line = '='.repeat(40);
+  const center = (text: string) => {
+    if (text.length >= 40) return text.slice(0, 40);
+    const left = Math.floor((40 - text.length) / 2);
+    const right = 40 - text.length - left;
+    return ' '.repeat(left) + text + ' '.repeat(right);
+  };
+  const align = (left: string, right: string) => {
+    const spaces = Math.max(1, 40 - left.length - right.length);
+    return left + ' '.repeat(spaces) + right;
+  };
+  const fmtVal = (n: number) => {
+    const val = new Intl.NumberFormat('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+    return val.padStart(9);
+  };
+  const fmtAmt = (n: number) => `PHP ${fmtVal(n)}`;
+  
+  const formatDate = (dateStr: string) => {
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr;
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    } catch {
+      return dateStr;
+    }
+  };
 
-const ReceiptRow: React.FC<{ label: string; value: string; bold?: boolean; indent?: boolean; highlight?: boolean }> = ({
-  label, value, bold, indent, highlight,
-}) => (
-  <div className={`flex justify-between text-sm py-0.5 ${bold ? 'font-semibold' : ''} ${indent ? 'pl-4 text-gray-600' : ''} ${highlight ? 'text-blue-700' : ''}`}>
-    <span>{label}</span>
-    <span className="tabular-nums">{value}</span>
-  </div>
-)
+  const formatTime = (dateStr: string) => {
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return '';
+      return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+    } catch {
+      return '';
+    }
+  };
 
-const Divider = () => <div className="border-t border-dashed border-gray-300 my-2" />
+  const bName = businessSettings?.business_name || report.Business?.Name || '[Business Name]';
+  const bAddress = businessSettings?.address || '';
+  const addrLines = bAddress ? bAddress.split('\n').map(s => s.trim()).filter(Boolean) : [];
+  if (addrLines.length === 0) {
+    addrLines.push('[Business Address Line 1]');
+    addrLines.push('[Business Address Line 2]');
+  }
+  const bTIN = businessSettings?.tin || report.Business?.TIN || '123-456-789-00000';
+  const bMIN = businessSettings?.min || report.Terminal?.MIN || '2401234567890123';
+
+  // PTU details
+  const ptuNo = report.Terminal?.PTU || businessSettings?.ptu_issued_by || '[Subscriber\'s PTU Number]';
+
+  // software provider details
+  const providerName = businessSettings?.software_provider_name || '[Your SaaS Company Name]';
+  const providerAddress = businessSettings?.software_provider_address || '[Your Address]';
+  const providerTIN = businessSettings?.software_provider_tin || '[Your TIN]';
+  const providerAccredNo = businessSettings?.software_provider_accreditation_no || '045-123456789-000000';
+  const providerDateIssued = businessSettings?.software_provider_date_issued ? formatDate(businessSettings.software_provider_date_issued) : 'Jan 01, 2024';
+  
+  // Calculate Valid Until: 5 years after software_provider_date_issued
+  let providerValidUntil = 'Jan 01, 2029';
+  if (businessSettings?.software_provider_date_issued) {
+    try {
+      const issueDate = new Date(businessSettings.software_provider_date_issued);
+      const validDate = new Date(issueDate.setFullYear(issueDate.getFullYear() + 5));
+      providerValidUntil = validDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    } catch {}
+  }
+
+  const zCounter = (report as any).z_counter || (report as any).id || (report as any).z_reading_id || 142;
+  const zCounterStr = String(zCounter).padStart(6, '0');
+
+  let text = '';
+  text += `${line}\n`;
+  text += `${center('Z-READING')}\n`;
+  text += `${line}\n`;
+  text += `${center(bName)}\n`;
+  addrLines.forEach(l => {
+    text += `${center(l)}\n`;
+  });
+  text += `${center(`VAT REG TIN: ${bTIN}`)}\n`;
+  text += `${center(`MIN: ${bMIN}`)}\n`;
+  text += `${line}\n`;
+  text += `${align('Terminal:', report.Terminal?.Name || 'Register 01')}\n`;
+  text += `${align('Cashier/Admin:', persona?.personName || 'Maria Santos')}\n`;
+  text += `${align('Date:', formatDate(report.ReadingDate || report.GeneratedAt))}\n`;
+  text += `${align('Time Printed:', formatTime(report.GeneratedAt))}\n`;
+  text += `${align('Z-Counter:', zCounterStr)}\n`;
+  text += `${line}\n`;
+  text += `TRANSACTION RANGE\n`;
+  text += `${align('Beginning Inv No:', report.Invoices?.Start || 'N/A')}\n`;
+  text += `${align('Ending Inv No:', report.Invoices?.End || 'N/A')}\n`;
+  text += `${line}\n`;
+  text += `SALES BREAKDOWN\n\n`;
+  text += `${align('Gross Sales:', fmtAmt(report.GrossSales))}\n`;
+  text += `  (Total of all items rung up)\n\n`;
+  text += `Less Deductions:\n`;
+  text += `${align('  Regular Discounts:', fmtAmt(report.Deductions?.Regular || 0))}\n`;
+  text += `${align('  SC/PWD Discounts:', fmtAmt(report.Deductions?.SC_PWD || 0))}\n`;
+  text += `${align('  Refunds/Returns:', fmtAmt(report.Deductions?.Refunds || 0))}\n`;
+  const voidsVal = (report.Deductions as any)?.Voids || (report.Deductions as any)?.voids || 0;
+  text += `${align('  Voids:', fmtAmt(voidsVal))}\n`;
+  text += `                            ---------------\n`;
+  const totalDeductions = (report.Deductions?.Regular || 0) + (report.Deductions?.SC_PWD || 0) + (report.Deductions?.Refunds || 0) + voidsVal;
+  text += `${align('Total Deductions:', fmtAmt(totalDeductions))}\n\n`;
+  text += `${align('NET SALES:', fmtAmt(report.NetSales))}\n`;
+  text += `${line}\n`;
+  text += `VAT DETAILS (Based on Net Sales)\n\n`;
+  text += `${align('VATable Sales:', fmtAmt(report.VAT?.VATable || 0))}\n`;
+  text += `${align('VAT Amount (12%):', fmtAmt(report.VAT?.VATAmount || 0))}\n`;
+  text += `${align('VAT-Exempt Sales:', fmtAmt(report.VAT?.Exempt || 0))}\n`;
+  const zeroRatedVal = (report.VAT as any)?.ZeroRated || (report.VAT as any)?.zero_rated || 0;
+  text += `${align('Zero-Rated Sales:', fmtAmt(zeroRatedVal))}\n`;
+  text += `${line}\n`;
+  text += `ACCUMULATED GRAND TOTALS\n`;
+  text += `(Non-Resettable)\n\n`;
+  text += `${align('Old Grand Total:', fmtAmt(report.GrandTotals?.OldCumulative || 0))}\n`;
+  text += `${align('Net Sales (Today):', fmtAmt(report.GrandTotals?.TodaysSales || 0))}\n`;
+  text += `                            ---------------\n`;
+  text += `${align('NEW GRAND TOTAL:', fmtAmt(report.GrandTotals?.NewCumulative || 0))}\n`;
+  text += `${line}\n`;
+  text += `SOFTWARE PROVIDER DETAILS\n`;
+  text += `${align('Provider:', providerName)}\n`;
+  text += `${align('Address:', providerAddress)}\n`;
+  text += `${align('TIN:', providerTIN)}\n`;
+  text += `${align('Accred. No:', providerAccredNo)}\n`;
+  text += `${align('Date Issued:', providerDateIssued)}\n`;
+  text += `${align('Valid Until:', providerValidUntil)}\n`;
+  text += `${align('PTU No:', ptuNo)}\n`;
+  text += `${line}\n`;
+  text += `${center('THIS RECEIPT SHALL BE VALID')}\n`;
+  text += `${center('FOR 5 YEARS FROM THE DATE OF')}\n`;
+  text += `${center('THE PERMIT TO USE.')}\n`;
+  text += `${line}`;
+  
+  return text;
+};
 
 interface ZReadingDisplayProps {
   report: ZReadingResult
+  businessSettings: BusinessSettings | null
+  persona: any
 }
 
 /** Pure presentational component – renders a Z-Reading as a BIR-style receipt */
-export const ZReadingDisplay: React.FC<ZReadingDisplayProps> = ({ report }) => (
-  <div id="z-reading-printout" className="font-mono text-xs space-y-1 max-w-sm mx-auto">
-    <div className="text-center space-y-0.5 mb-3">
-      <div className="text-base font-bold uppercase tracking-wide">{report.ReportType}</div>
-      <div className="font-semibold">{report.Business.Name}</div>
-      <div className="text-gray-500">TIN: {report.Business.TIN}</div>
-      <div className="text-gray-500">Terminal: {report.Terminal.Name}</div>
-      <div className="text-gray-500">MIN: {report.Terminal.MIN}</div>
-      <div className="text-gray-500">PTU: {report.Terminal.PTU}</div>
-      <div className="text-gray-500">Date: {report.ReadingDate}</div>
-      <div className="text-gray-500">Generated: {new Date(report.GeneratedAt).toLocaleString()}</div>
-    </div>
-    <Divider />
-    <ReceiptRow label="Starting Invoice" value={report.Invoices.Start ?? 'N/A'} />
-    <ReceiptRow label="Ending Invoice" value={report.Invoices.End ?? 'N/A'} />
-    <Divider />
-    <ReceiptRow label="Gross Sales" value={fmt(report.GrossSales)} bold />
-    <Divider />
-    <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mt-1">Deductions</div>
-    <ReceiptRow label="SC / PWD Discount" value={`(${fmt(report.Deductions.SC_PWD)})`} indent />
-    <ReceiptRow label="Regular Discount" value={`(${fmt(report.Deductions.Regular)})`} indent />
-    <ReceiptRow label="Refunds" value={`(${fmt(report.Deductions.Refunds)})`} indent />
-    <Divider />
-    <ReceiptRow label="NET SALES" value={fmt(report.NetSales)} bold />
-    <Divider />
-    <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mt-1">VAT Breakdown</div>
-    <ReceiptRow label="VATable Sales" value={fmt(report.VAT.VATable)} indent />
-    <ReceiptRow label="VAT Amount (12%)" value={fmt(report.VAT.VATAmount)} indent />
-    <ReceiptRow label="VAT-Exempt Sales" value={fmt(report.VAT.Exempt)} indent />
-    <Divider />
-    <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mt-1">Grand Total Register</div>
-    <ReceiptRow label="Previous Cumulative GT" value={fmt(report.GrandTotals.OldCumulative)} indent />
-    <ReceiptRow label="Today's Net Sales" value={fmt(report.GrandTotals.TodaysSales)} indent />
-    <ReceiptRow label="New Cumulative GT" value={fmt(report.GrandTotals.NewCumulative)} bold highlight />
-    <Divider />
-    <div className="text-center text-gray-400 text-xs pt-1">*** END OF Z-READING ***</div>
+export const ZReadingDisplay: React.FC<ZReadingDisplayProps> = ({ report, businessSettings, persona }) => (
+  <div id="z-reading-printout" className="font-mono text-xs whitespace-pre bg-gray-50 border border-gray-200 p-4 rounded-lg leading-relaxed max-w-sm mx-auto shadow-inner select-all">
+    {generateZReadingText(report, businessSettings, persona)}
   </div>
 )
 
@@ -88,6 +182,7 @@ const ZReadingPanel: React.FC = () => {
   const [successMsg, setSuccessMsg] = useState<string | null>(null)
   const [report, setReport] = useState<ZReadingResult | null>(null)
   const [confirming, setConfirming] = useState(false)
+  const [businessSettings, setBusinessSettings] = useState<BusinessSettings | null>(null)
 
   useEffect(() => {
     SettingsService.getTerminals().then(({ data }) => {
@@ -96,6 +191,9 @@ const ZReadingPanel: React.FC = () => {
         setTerminalId(data[0].terminal_id)
       }
       setTerminalLoading(false)
+    })
+    SettingsService.getBusinessSettings().then(({ data }) => {
+      if (data) setBusinessSettings(data)
     })
   }, [])
 
@@ -237,7 +335,7 @@ const ZReadingPanel: React.FC = () => {
           badgeVariant="emerald"
           printTargetId="z-reading-printout"
         >
-          <ZReadingDisplay report={report} />
+          <ZReadingDisplay report={report} businessSettings={businessSettings} persona={persona} />
         </ReportCard>
       )}
     </div>
