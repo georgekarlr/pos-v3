@@ -24,6 +24,11 @@ export interface BulkRefundResult {
   data?: { refund_ids?: number[]; total_refunded_amount?: number }
 }
 
+export interface VoidSaleResult {
+  success: boolean
+  message: string
+}
+
 export const salesService = {
   async getSalesHistory(params: GetSalesHistoryParams): Promise<{ rows: SalesHistoryRow[] }> {
     const { limit, offset, searchTerm, startDate, endDate } = params
@@ -34,7 +39,6 @@ export const salesService = {
       p_start_date: startDate || null,
       p_end_date: endDate || null
     })
-      console.log(data);
     if (error) {
       console.error('Error fetching sales history:', error)
       throw new Error(error.message)
@@ -51,7 +55,7 @@ export const salesService = {
     searchTerm?: string | null
     startDate?: string | null
     endDate?: string | null
-  }): Promise<{ rows: RefundDetailRow[] }>{
+  }): Promise<{ rows: RefundDetailRow[] }> {
     const { limit, offset, requestingAccountId, orderId, searchTerm, startDate, endDate } = params
     const { data, error } = await supabase.rpc('pos2_get_refund_details', {
       p_requesting_account_id: requestingAccountId,
@@ -62,7 +66,7 @@ export const salesService = {
       p_start_date: startDate ?? null,
       p_end_date: endDate ?? null
     })
-      console.log(data);
+    console.log(data);
     if (error) {
       console.error('Error fetching refund details:', error)
       throw new Error(error.message)
@@ -75,7 +79,7 @@ export const salesService = {
     const { data, error } = await supabase.rpc('pos2_get_sale_details_by_id', {
       p_order_id: orderId
     })
-      console.log(data);
+    console.log(data);
     if (error) {
       console.error('Error fetching sale details:', error)
       throw new Error(error.message)
@@ -111,6 +115,31 @@ export const salesService = {
       success: !!row?.success,
       message: row?.message || (row?.success ? 'Refund processed' : 'Failed to process refund'),
       data: row?.data || undefined
+    }
+  },
+
+  async voidSale(params: {
+    requesting_account_id: number
+    order_id: number
+    reason: string
+  }): Promise<VoidSaleResult> {
+    const { requesting_account_id, order_id, reason } = params
+
+    const { data, error } = await supabase.rpc('pos2_void_sale', {
+      p_requesting_account_id: requesting_account_id,
+      p_order_id: order_id,
+      p_reason: reason
+    })
+
+    if (error) {
+      console.error('Error voiding sale:', error)
+      return { success: false, message: error.message }
+    }
+
+    const row = Array.isArray(data) ? data[0] : data
+    return {
+      success: !!row?.success,
+      message: row?.message || (row?.success ? 'Transaction successfully voided.' : 'Failed to void transaction.')
     }
   }
 }

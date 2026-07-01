@@ -22,6 +22,9 @@ import Reports from './pages/Reports'
 import ReceiptPrinter from './pages/ReceiptPrinter'
 import DebtWizard from './pages/DebtWizard'
 import Customers from './pages/Customers'
+import XReading from './pages/XReading'
+import ZReading from './pages/ZReading'
+import EJournal from './pages/EJournal'
 import { useEffect } from 'react'
 import { SyncService } from './services/syncService'
 
@@ -135,6 +138,36 @@ function App() {
               <PersonaProtectedRoute>
                 <Layout>
                   <Reports />
+                </Layout>
+              </PersonaProtectedRoute>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/reports-compliance/x-reading" element={
+            <ProtectedRoute>
+              <PersonaProtectedRoute>
+                <Layout>
+                  <XReading />
+                </Layout>
+              </PersonaProtectedRoute>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/reports-compliance/z-reading" element={
+            <ProtectedRoute>
+              <PersonaProtectedRoute>
+                <Layout>
+                  <ZReading />
+                </Layout>
+              </PersonaProtectedRoute>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/reports-compliance/e-journal" element={
+            <ProtectedRoute>
+              <PersonaProtectedRoute>
+                <Layout>
+                  <EJournal />
                 </Layout>
               </PersonaProtectedRoute>
             </ProtectedRoute>

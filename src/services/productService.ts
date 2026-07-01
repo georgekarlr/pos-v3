@@ -42,7 +42,6 @@ export class ProductService {
         p_search_term: searchTerm || null,
         p_filter_for_sale: filterForSale ?? null
       });
-      console.log(data);
 
       if (error) {
         // Fallback to cache on network/server error

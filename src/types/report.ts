@@ -44,3 +44,95 @@ export interface GetLowStockProductsParams {
   threshold: number
 }
 
+// ─── X-Reading ────────────────────────────────────────────────────────────────
+
+export interface XReadingDeductions {
+  SC_PWD: number
+  Regular: number
+  Refunds: number
+}
+
+export interface XReadingVAT {
+  VATable: number
+  VATAmount: number
+  Exempt: number
+  ZeroRated: number
+}
+
+export interface XReadingResult {
+  ReportType: string
+  GeneratedAt: string
+  Terminal: { Name: string; MIN: string }
+  TransactionRange: { Start: string | null; End: string | null }
+  GrossSales: number
+  Deductions: XReadingDeductions
+  NetSales: number
+  VAT: XReadingVAT
+}
+
+export interface GenerateXReadingParams {
+  terminal_id: number
+  target_date: string // 'YYYY-MM-DD'
+}
+
+// ─── Z-Reading ────────────────────────────────────────────────────────────────
+
+export interface ZReadingGrandTotals {
+  OldCumulative: number
+  TodaysSales: number
+  NewCumulative: number
+}
+
+export interface ZReadingVAT {
+  VATable: number
+  VATAmount: number
+  Exempt: number
+}
+
+export interface ZReadingResult {
+  ReportType: string
+  ReadingDate: string
+  GeneratedAt: string
+  Business: { Name: string; TIN: string }
+  Terminal: { Name: string; MIN: string; PTU: string }
+  Invoices: { Start: string | null; End: string | null }
+  GrossSales: number
+  NetSales: number
+  Deductions: { SC_PWD: number; Regular: number; Refunds: number }
+  VAT: ZReadingVAT
+  GrandTotals: ZReadingGrandTotals
+}
+
+export interface ZReadingRPCRow {
+  success: boolean
+  message: string
+  data: ZReadingResult | null
+}
+
+export interface GenerateZReadingParams {
+  requesting_account_id: number
+  terminal_id: number
+  target_date: string // 'YYYY-MM-DD'
+}
+
+// ─── E-Journal ────────────────────────────────────────────────────────────────
+
+export interface EJournalRow {
+  log_id: number
+  created_at: string
+  terminal_name: string
+  account_name: string
+  event_type: string
+  event_description: string
+  details: Record<string, unknown> | null
+}
+
+export interface GetEJournalParams {
+  requesting_account_id: number
+  limit: number
+  offset: number
+  terminal_id?: number | null
+  start_date?: string | null
+  end_date?: string | null
+}
+

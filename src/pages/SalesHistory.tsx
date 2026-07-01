@@ -10,6 +10,7 @@ import { mapSaleDetailsToReceipt } from '../utils/receiptMapping'
 import { SalesHistoryRow } from '../types/sales'
 import RefundModal from '../components/sales/RefundModal'
 import RefundListModal from '../components/sales/RefundListModal'
+import VoidSaleModal from '../components/sales/VoidSaleModal'
 import { useAuth } from '../contexts/AuthContext'
 
 const PAGE_SIZE = 20
@@ -40,6 +41,9 @@ const SalesHistory: React.FC = () => {
   const [refundOrderId, setRefundOrderId] = useState<number | null>(null)
   const [refundListOpen, setRefundListOpen] = useState(false)
   const [refundListOrderId, setRefundListOrderId] = useState<number | null>(null)
+
+  const [voidOpen, setVoidOpen] = useState(false)
+  const [voidOrderId, setVoidOrderId] = useState<number | null>(null)
 
   const offset = useMemo(() => (page - 1) * PAGE_SIZE, [page])
 
@@ -110,6 +114,11 @@ const SalesHistory: React.FC = () => {
     setRefundListOpen(true)
   }
 
+  const openVoid = (orderId: number) => {
+    setVoidOrderId(orderId)
+    setVoidOpen(true)
+  }
+
   const requestingAccountId = persona?.id ?? null
 
   return (
@@ -148,7 +157,7 @@ const SalesHistory: React.FC = () => {
         />
 
         <div className="mt-4">
-          <SalesTable rows={rows} loading={loading} onView={openReceipt} onRefund={openRefund} onViewRefunds={openRefundsForOrder} />
+          <SalesTable rows={rows} loading={loading} onView={openReceipt} onRefund={openRefund} onViewRefunds={openRefundsForOrder} onVoid={openVoid} />
           <PaginationControls
             page={page}
             pageSize={PAGE_SIZE}
@@ -175,6 +184,13 @@ const SalesHistory: React.FC = () => {
         onClose={() => setRefundListOpen(false)}
         requestingAccountId={requestingAccountId}
         orderId={refundListOrderId}
+      />
+      <VoidSaleModal
+        open={voidOpen}
+        orderId={voidOrderId}
+        requestingAccountId={requestingAccountId}
+        onClose={() => setVoidOpen(false)}
+        onSuccess={() => fetchRows()}
       />
     </div>
   )

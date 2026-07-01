@@ -1,6 +1,6 @@
 import React from 'react'
 import { SalesHistoryRow } from '../../types/sales'
-import { Eye, Loader2, RotateCcw, History } from 'lucide-react'
+import { Eye, Loader2, RotateCcw, History, Ban } from 'lucide-react'
 
 interface SalesTableProps {
   rows: SalesHistoryRow[]
@@ -8,6 +8,7 @@ interface SalesTableProps {
   onView: (orderId: number) => void
   onRefund?: (orderId: number) => void
   onViewRefunds?: (orderId: number) => void
+  onVoid?: (orderId: number) => void
 }
 
 function formatCurrency(n: number) {
@@ -15,7 +16,7 @@ function formatCurrency(n: number) {
   return `\u20b1${n.toFixed(2)}`
 }
 
-const SalesTable: React.FC<SalesTableProps> = ({ rows, loading, onView, onRefund, onViewRefunds }) => {
+const SalesTable: React.FC<SalesTableProps> = ({ rows, loading, onView, onRefund, onViewRefunds, onVoid }) => {
   return (
     <div className="overflow-x-auto bg-white border border-gray-200 rounded-lg">
       <table className="min-w-full divide-y divide-gray-200">
@@ -48,9 +49,15 @@ const SalesTable: React.FC<SalesTableProps> = ({ rows, loading, onView, onRefund
             rows.map((r) => {
               const d = new Date(r.created_at)
               const dateStr = `${d.toLocaleDateString()} ${d.toLocaleTimeString()}`
+              const isVoided = r.status === 'voided'
               return (
-                <tr key={r.order_id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 text-sm text-gray-900">#{r.order_id}</td>
+                <tr key={r.order_id} className={`hover:bg-gray-50 ${isVoided ? 'opacity-60' : ''}`}>
+                  <td className="px-4 py-3 text-sm text-gray-900">
+                    #{r.order_id}
+                    {isVoided && (
+                      <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-orange-100 text-orange-700 uppercase tracking-wide">Voided</span>
+                    )}
+                  </td>
                   <td className="px-4 py-3 text-sm text-gray-700">{dateStr}</td>
                   {/*<td className="px-4 py-3 text-sm text-gray-700">{r.customer_name}</td>*/}
                   <td className="px-4 py-3 text-sm text-gray-700">{r.account_name}</td>
@@ -70,7 +77,7 @@ const SalesTable: React.FC<SalesTableProps> = ({ rows, loading, onView, onRefund
                         <Eye className="h-4 w-4" />
                         <span className="sr-only sm:not-sr-only sm:inline">View</span>
                       </button>
-                      {onRefund && (
+                      {onRefund && !isVoided && (
                         <button
                           onClick={() => onRefund(r.order_id)}
                           title="Refund"
@@ -88,6 +95,16 @@ const SalesTable: React.FC<SalesTableProps> = ({ rows, loading, onView, onRefund
                         >
                           <History className="h-4 w-4" />
                           <span className="sr-only sm:not-sr-only sm:inline">Refunds</span>
+                        </button>
+                      )}
+                      {onVoid && !isVoided && (
+                        <button
+                          onClick={() => onVoid(r.order_id)}
+                          title="Void transaction"
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md border border-orange-300 text-orange-700 hover:bg-orange-50 text-sm"
+                        >
+                          <Ban className="h-4 w-4" />
+                          <span className="sr-only sm:not-sr-only sm:inline">Void</span>
                         </button>
                       )}
                     </div>
