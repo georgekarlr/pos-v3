@@ -1,5 +1,6 @@
 // services/productsService.ts
 import { supabase } from '../lib/supabase';
+import { OfflineDB } from '../db/offlineDB';
 import type {
   Product,
   CreatePosProductParams,
@@ -12,6 +13,8 @@ export class ProductService {
 
   /**
    * Fetches POS products available to the current user with pagination and search.
+   * When offline, returns cached products from IndexedDB.
+   * When online and successful, saves products to IndexedDB for offline use.
    */
   static async getAllProducts(
     limit: number = 50,
@@ -19,6 +22,19 @@ export class ProductService {
     searchTerm?: string,
     filterForSale?: boolean
   ): Promise<ServiceResponse<Product[]>> {
+    // Offline: serve from IndexedDB cache
+    if (!navigator.onLine) {
+      try {
+        const cached = await OfflineDB.getProducts();
+        if (cached && cached.length > 0) {
+          return { data: cached, error: null };
+        }
+      } catch (cacheErr) {
+        console.error('Error reading offline product cache:', cacheErr);
+      }
+      return { data: [], error: 'Offline — no cached products found.' };
+    }
+
     try {
       const { data, error } = await supabase.rpc('pos2_get_product_details', {
         p_limit: limit,
@@ -29,12 +45,37 @@ export class ProductService {
       console.log(data);
 
       if (error) {
+        // Fallback to cache on network/server error
+        try {
+          const cached = await OfflineDB.getProducts();
+          if (cached && cached.length > 0) {
+            return { data: cached, error: null };
+          }
+        } catch (cacheErr) {
+          console.error('Error reading offline product cache on fallback:', cacheErr);
+        }
         return { data: null, error: error.message };
+      }
+
+      // Cache the fresh products for offline use
+      if (data && data.length > 0) {
+        OfflineDB.saveProducts(data as Product[]).catch(err =>
+          console.error('Error caching products to IndexedDB:', err)
+        );
       }
 
       return { data: data as Product[], error: null };
 
     } catch (err: any) {
+      // Fallback to cache on unexpected error
+      try {
+        const cached = await OfflineDB.getProducts();
+        if (cached && cached.length > 0) {
+          return { data: cached, error: null };
+        }
+      } catch (cacheErr) {
+        console.error('Error reading offline product cache on fallback:', cacheErr);
+      }
       return {
         data: null,
         error: err.message || 'An unexpected error occurred while fetching products.'
@@ -60,7 +101,8 @@ export class ProductService {
         p_selling_method: params.p_selling_method,
         p_inventory_type: params.p_inventory_type,
         p_unit_type: params.p_unit_type,
-        p_is_for_sale: params.p_is_for_sale
+        p_is_for_sale: params.p_is_for_sale,
+        p_tax_type: params.p_tax_type
       });
 
       if (error) {
@@ -100,7 +142,8 @@ export class ProductService {
         p_selling_method: params.p_selling_method,
         p_inventory_type: params.p_inventory_type,
         p_unit_type: params.p_unit_type,
-        p_is_for_sale: params.p_is_for_sale
+        p_is_for_sale: params.p_is_for_sale,
+        p_tax_type: params.p_tax_type
       });
 
       if (error) {

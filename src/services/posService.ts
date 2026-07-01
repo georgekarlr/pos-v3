@@ -18,12 +18,15 @@ export class PosService {
       try {
         const offlineSaleId = await OfflineDB.saveSale({
           accountId: params.p_account_id,
+          terminalId: params.p_terminal_id, // NEW
           cart: params.p_cart_items,
           payments: params.p_payments,
           notes: params.p_notes || null,
           total: params.p_total,
           tax: params.p_tax,
           total_tendered: params.p_total_tendered,
+          scPwdDiscount: params.p_sc_pwd_discount || 0, // NEW
+          regularDiscount: params.p_regular_discount || 0, // NEW
           createdAt: params.p_occurred_at || new Date().toISOString()
         });
 
@@ -44,6 +47,7 @@ export class PosService {
     try {
       const { data, error } = await supabase.rpc('pos2_create_sale', {
         p_account_id: params.p_account_id,
+        p_terminal_id: params.p_terminal_id, // NEW
         p_customer_id: params.p_customer_id,
         p_cart_items: params.p_cart_items,
         p_payments: params.p_payments,
@@ -51,6 +55,8 @@ export class PosService {
         p_total: params.p_total,
         p_tax: params.p_tax,
         p_total_tendered: params.p_total_tendered,
+        p_sc_pwd_discount: params.p_sc_pwd_discount ?? 0, // NEW
+        p_regular_discount: params.p_regular_discount ?? 0, // NEW
         p_occurred_at: params.p_occurred_at ?? null
       });
 
@@ -81,6 +87,58 @@ export class PosService {
         data: null,
         error: err.message || 'An unexpected error occurred while processing the sale.'
       };
+    }
+  }
+
+  /**
+   * Fetches active terminals for the current store user.
+   */
+  static async getActiveTerminals(): Promise<ServiceResponse<any[]>> {
+    if (!navigator.onLine) {
+      try {
+        const cached = localStorage.getItem('cached_active_terminals');
+        if (cached) {
+          return { data: JSON.parse(cached), error: null };
+        }
+      } catch (err) {
+        console.error('Error reading cached active terminals:', err);
+      }
+      return { data: [], error: 'Offline and no cached active terminals found.' };
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('pos2_terminals')
+        .select('*')
+        .eq('is_active', true);
+
+      if (error) {
+        console.error('Error fetching active terminals:', error);
+        try {
+          const cached = localStorage.getItem('cached_active_terminals');
+          if (cached) {
+            return { data: JSON.parse(cached), error: null };
+          }
+        } catch (err) {
+          console.error('Error reading cached active terminals on fallback:', err);
+        }
+        return { data: null, error: error.message };
+      }
+
+      const activeTerminals = data || [];
+      localStorage.setItem('cached_active_terminals', JSON.stringify(activeTerminals));
+      return { data: activeTerminals, error: null };
+    } catch (err: any) {
+      console.error('Unexpected error fetching active terminals:', err);
+      try {
+        const cached = localStorage.getItem('cached_active_terminals');
+        if (cached) {
+          return { data: JSON.parse(cached), error: null };
+        }
+      } catch (e) {
+        console.error('Error reading cached active terminals on fallback:', e);
+      }
+      return { data: null, error: err.message || 'Failed to fetch active terminals.' };
     }
   }
 }

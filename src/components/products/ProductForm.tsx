@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Product, ProductUnitType, PRODUCT_UNIT_LABELS, ProductInventoryType } from '../../types/product'
+import { Product, ProductUnitType, PRODUCT_UNIT_LABELS, ProductInventoryType, ProductTaxType } from '../../types/product'
 import { X } from 'lucide-react'
 
 interface ProductFormProps {
@@ -21,6 +21,7 @@ export interface ProductFormData {
   inventory_type: ProductInventoryType
   unit_type: ProductUnitType | null
   is_for_sale: boolean
+  tax_type: ProductTaxType
 }
 
 const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onCancel, isAdmin }) => {
@@ -28,14 +29,15 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onCancel, 
     name: '',
     description: '',
     base_price: 0,
-    tax_rate: 0,
+    tax_rate: 12,
     sku: '',
     barcode: '',
     image_url: '',
     selling_method: 'unit',
     inventory_type: 'non_perishable',
     unit_type: null,
-    is_for_sale: true
+    is_for_sale: true,
+    tax_type: 'VATable'
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -53,17 +55,28 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onCancel, 
         selling_method: product.selling_method || 'unit',
         inventory_type: product.inventory_type || 'non_perishable',
         unit_type: product.unit_type || null,
-        is_for_sale: product.is_for_sale ?? true
+        is_for_sale: product.is_for_sale ?? true,
+        tax_type: product.tax_type || 'VATable'
       })
     }
   }, [product])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [name]: name === 'base_price' || name === 'tax_rate' ? (value === '' ? 0 : parseFloat(value)) : value
-    }))
+    setFormData(prev => {
+      const updated = {
+        ...prev,
+        [name]: name === 'base_price' || name === 'tax_rate' ? (value === '' ? 0 : parseFloat(value)) : value
+      }
+      if (name === 'tax_type') {
+        if (value === 'VAT-Exempt' || value === 'Zero-Rated') {
+          updated.tax_rate = 0
+        } else if (value === 'VATable') {
+          updated.tax_rate = 12
+        }
+      }
+      return updated
+    })
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -147,7 +160,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onCancel, 
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label htmlFor="base_price" className="block text-sm font-medium text-gray-700 mb-1">
                     Base Price <span className="text-red-500">*</span>
@@ -171,6 +184,24 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onCancel, 
                 </div>
 
                 <div>
+                  <label htmlFor="tax_type" className="block text-sm font-medium text-gray-700 mb-1">
+                    BIR Tax Type <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    id="tax_type"
+                    name="tax_type"
+                    value={formData.tax_type}
+                    onChange={handleChange}
+                    disabled={!isAdmin}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500"
+                  >
+                    <option value="VATable">VATable (12%)</option>
+                    <option value="VAT-Exempt">VAT-Exempt (0%)</option>
+                    <option value="Zero-Rated">Zero-Rated (0%)</option>
+                  </select>
+                </div>
+
+                <div>
                   <label htmlFor="tax_rate" className="block text-sm font-medium text-gray-700 mb-1">
                     Tax Rate <span className="text-red-500">*</span>
                   </label>
@@ -182,7 +213,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onCancel, 
                       value={formData.tax_rate}
                       onChange={handleChange}
                       required
-                      disabled={!isAdmin}
+                      disabled={!isAdmin || formData.tax_type !== 'VATable'}
                       step="0.01"
                       min="0"
                       max="100"

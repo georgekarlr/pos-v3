@@ -41,11 +41,11 @@ export function buildEscposFromReceipt(data: ReceiptData): Uint8Array {
   parts.push(enc.bold(true))
   const storeName = (design as any).storeName?.trim() || data.businessName || 'POS Receipt'
   const storeAddress1 = (design as any).storeAddress1?.trim() || data.businessAddress1
-  const storeAddress2 = (design as any).storeAddress2?.trim() || data.businessAddress2
   pushText(storeName + '\n')
   parts.push(enc.bold(false))
   if (storeAddress1) pushText(storeAddress1 + '\n')
-  if (storeAddress2) pushText(storeAddress2 + '\n')
+  if (data.tin) pushText(`VAT Reg TIN: ${data.tin}\n`)
+  if (data.min) pushText(`MIN: ${data.min}\n`)
   parts.push(enc.newline())
 
   // Meta
@@ -76,6 +76,17 @@ export function buildEscposFromReceipt(data: ReceiptData): Uint8Array {
   } else {
     parts.push(enc.align('center'))
     pushText('Thank you for your business!\n')
+  }
+  // BIR / Provider footer
+  parts.push(enc.align('left'))
+  if (data.ptuIssuedBy) pushText(`PTU Issued by RDO: ${data.ptuIssuedBy}\n`)
+  if (data.softwareProviderName) pushText(`Software Provider: ${data.softwareProviderName}\n`)
+  if (data.softwareProviderAddress) pushText(`Provider Address: ${data.softwareProviderAddress}\n`)
+  if (data.softwareProviderTin) pushText(`Provider TIN: ${data.softwareProviderTin}\n`)
+  if (data.softwareProviderAccreditationNo) pushText(`Accreditation No: ${data.softwareProviderAccreditationNo}\n`)
+  if (data.ptuIssuedBy || data.softwareProviderName) {
+    parts.push(enc.align('center'))
+    pushText('THIS RECEIPT SHALL BE VALID FOR 5 YEARS\nFROM THE DATE OF THE PERMIT TO USE.\n')
   }
   parts.push(enc.newline(3))
   parts.push(enc.cut())

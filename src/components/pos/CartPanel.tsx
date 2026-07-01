@@ -13,6 +13,7 @@ interface CartPanelProps {
     subtotal: number
     tax: number
     total: number
+    terminalSelected: boolean // NEW
     onAdd: (productId: number) => void
     onDeduct: (productId: number) => void
     onClear: (productId: number) => void
@@ -24,7 +25,7 @@ interface CartPanelProps {
 const currency = (n: number) => `\u20b1${n.toFixed(2)}`
 
 // --- THE COMPONENT WITH A CONSISTENT, STACKED LAYOUT ---
-const CartPanel: React.FC<CartPanelProps> = ({ lines, subtotal, tax, total, onAdd, onDeduct, onClear, onClearAll, onQtyClick, onCheckout }) => {
+const CartPanel: React.FC<CartPanelProps> = ({ lines, subtotal, tax, total, terminalSelected, onAdd, onDeduct, onClear, onClearAll, onQtyClick, onCheckout }) => {
     return (
         <div className="bg-white rounded-xl border border-gray-200 shadow-md flex flex-col h-full">
             <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
@@ -118,10 +119,10 @@ const CartPanel: React.FC<CartPanelProps> = ({ lines, subtotal, tax, total, onAd
                     {onCheckout && (
                         <button
                             onClick={onCheckout}
-                            disabled={lines.length === 0}
+                            disabled={lines.length === 0 || !terminalSelected}
                             className="w-full mt-6 bg-blue-600 text-white py-3 rounded-lg font-bold text-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors shadow-lg shadow-blue-200"
                         >
-                            Proceed to Checkout
+                            {!terminalSelected ? 'Select Terminal to Checkout' : 'Proceed to Checkout'}
                         </button>
                     )}
                 </div>

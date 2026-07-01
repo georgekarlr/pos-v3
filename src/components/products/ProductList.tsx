@@ -58,6 +58,9 @@ const ProductList: React.FC<ProductListProps> = ({ products, onEdit, isAdmin }) 
                 Tax Rate
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Tax Type
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Display Price
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -107,6 +110,19 @@ const ProductList: React.FC<ProductListProps> = ({ products, onEdit, isAdmin }) 
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {product.tax_rate}%
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                  <span
+                    className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                      product.tax_type === 'VATable'
+                        ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                        : product.tax_type === 'VAT-Exempt'
+                        ? 'bg-amber-100 text-amber-800 border border-amber-200'
+                        : 'bg-purple-100 text-purple-800 border border-purple-200'
+                    }`}
+                  >
+                    {product.tax_type || 'VATable'}
+                  </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                   {formatCurrency(product.display_price)}
@@ -239,8 +255,21 @@ const ProductList: React.FC<ProductListProps> = ({ products, onEdit, isAdmin }) 
                 <p className="font-medium text-gray-900">{formatCurrency(product.base_price)}</p>
               </div>
               <div>
-                <p className="text-gray-500">Tax Rate</p>
-                <p className="font-medium text-gray-900">{product.tax_rate}%</p>
+                <p className="text-gray-500">Tax Rate / Type</p>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className="font-medium text-gray-950">{product.tax_rate}%</span>
+                  <span
+                    className={`inline-flex px-1.5 py-0.5 text-[10px] font-bold rounded-full ${
+                      product.tax_type === 'VATable'
+                        ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                        : product.tax_type === 'VAT-Exempt'
+                        ? 'bg-amber-100 text-amber-800 border border-amber-200'
+                        : 'bg-purple-100 text-purple-800 border border-purple-200'
+                    }`}
+                  >
+                    {product.tax_type || 'VATable'}
+                  </span>
+                </div>
               </div>
               <div className="col-span-2">
                 <p className="text-gray-500">Inventory</p>

@@ -22,6 +22,7 @@ export const SyncService = {
           console.log(`Syncing sale ${sale.id}...`, sale);
           const { data, error } = await PosService.createSale({
             p_account_id: sale.accountId,
+            p_terminal_id: sale.terminalId, // NEW
             p_customer_id: null,
             p_cart_items: sale.cart,
             p_payments: sale.payments,
@@ -29,6 +30,8 @@ export const SyncService = {
             p_total: sale.total,
             p_tax: sale.tax || 0,
             p_total_tendered: sale.total_tendered,
+            p_sc_pwd_discount: sale.scPwdDiscount || 0, // NEW
+            p_regular_discount: sale.regularDiscount || 0, // NEW
             p_occurred_at: sale.createdAt
           });
 
