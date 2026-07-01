@@ -70,8 +70,9 @@ export const ReportService = {
    * Read-only – nothing is persisted to the database.
    */
   async generateXReading(params: GenerateXReadingParams): Promise<XReadingResult> {
-    const { terminal_id, target_date } = params
+    const { requesting_account_id, terminal_id, target_date } = params
     const { data, error } = await supabase.rpc('pos2_generate_x_reading', {
+      p_requesting_account_id: requesting_account_id,
       p_terminal_id: terminal_id,
       p_target_date: target_date,
     })
@@ -109,6 +110,7 @@ export const ReportService = {
       p_start_date: start_date ?? null,
       p_end_date: end_date ?? null,
     })
+    console.log('data e-journal', data);
     if (error) { console.error('Error fetching E-Journal:', error); throw new Error(error.message) }
     return (data || []) as EJournalRow[]
   },

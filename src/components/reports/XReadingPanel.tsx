@@ -74,7 +74,7 @@ const generateXReadingText = (
   text += `${center(`MIN: ${bMIN}`)}\n`;
   text += `${line}\n`;
   text += `${align('Terminal:', report.Terminal?.Name || 'Register 01')}\n`;
-  text += `${align('Cashier:', persona?.personName || 'Juan Dela Cruz')}\n`;
+  text += `${align('Cashier:', report.Terminal?.CashierName || 'Juan Dela Cruz')}\n`;
   text += `${align('Date:', formatDate(report.GeneratedAt))}\n`;
   text += `${align('Time Printed:', formatTime(report.GeneratedAt))}\n`;
   text += `${line}\n`;
@@ -157,12 +157,13 @@ const XReadingPanel: React.FC = () => {
   }, [])
 
   const handleGenerate = useCallback(async () => {
-    if (!terminalId || !date) return
+    if (!terminalId || !date || !persona?.id) return
     setLoading(true)
     setError(null)
     setReport(null)
     try {
       const result = await ReportService.generateXReading({
+        requesting_account_id: Number(persona.id),
         terminal_id: Number(terminalId),
         target_date: date,
       })
@@ -172,7 +173,7 @@ const XReadingPanel: React.FC = () => {
     } finally {
       setLoading(false)
     }
-  }, [terminalId, date])
+  }, [terminalId, date, persona?.id])
 
   return (
     <div className="space-y-5">

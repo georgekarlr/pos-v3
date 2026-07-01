@@ -62,7 +62,8 @@ export interface XReadingVAT {
 export interface XReadingResult {
   ReportType: string
   GeneratedAt: string
-  Terminal: { Name: string; MIN: string }
+  Business: { Name: string; Address: string; TIN: string }
+  Terminal: { Name: string; MIN: string; CashierName: string }
   TransactionRange: { Start: string | null; End: string | null }
   GrossSales: number
   Deductions: XReadingDeductions
@@ -71,6 +72,7 @@ export interface XReadingResult {
 }
 
 export interface GenerateXReadingParams {
+  requesting_account_id: number
   terminal_id: number
   target_date: string // 'YYYY-MM-DD'
 }
@@ -87,6 +89,7 @@ export interface ZReadingVAT {
   VATable: number
   VATAmount: number
   Exempt: number
+  ZeroRated: number
 }
 
 export interface ZReadingResult {
@@ -94,11 +97,11 @@ export interface ZReadingResult {
   ReadingDate: string
   GeneratedAt: string
   Business: { Name: string; TIN: string }
-  Terminal: { Name: string; MIN: string; PTU: string }
+  Terminal: { Name: string; MIN: string; PTU: string; AdminName: string }
   Invoices: { Start: string | null; End: string | null }
   GrossSales: number
   NetSales: number
-  Deductions: { SC_PWD: number; Regular: number; Refunds: number }
+  Deductions: { SC_PWD: number; Regular: number; Refunds: number; Voids: number }
   VAT: ZReadingVAT
   GrandTotals: ZReadingGrandTotals
 }
