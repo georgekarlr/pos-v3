@@ -58,7 +58,6 @@ const adminNavigation: NavigationItem[] = [
       { name: 'E-Journal', href: '/reports-compliance/e-journal' },
     ]
   },
-  { name: 'Receipt Printer', href: '/settings/receipt-printer', icon: Printer },
   { name: 'Settings', href: '/settings', icon: Settings },
   { name: 'Persona Management', href: '/persona-management', icon: Shield },
 ]
@@ -81,7 +80,6 @@ const staffNavigation: NavigationItem[] = [
       { name: 'Debts', href: '/debt-management/debts' },
     ]
   },
-  { name: 'Receipt Printer', href: '/settings/receipt-printer', icon: Printer },
   { name: 'Settings', href: '/settings', icon: Settings },
 ]
 

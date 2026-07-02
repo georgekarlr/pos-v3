@@ -19,7 +19,6 @@ import {
   Wallet
 } from 'lucide-react'
 import Reports from './pages/Reports'
-import ReceiptPrinter from './pages/ReceiptPrinter'
 import DebtWizard from './pages/DebtWizard'
 import Customers from './pages/Customers'
 import XReading from './pages/XReading'
@@ -182,17 +181,6 @@ function App() {
               </PersonaProtectedRoute>
             </ProtectedRoute>
           } />
-
-          <Route path="/settings/receipt-printer" element={
-            <ProtectedRoute>
-              <PersonaProtectedRoute>
-                <Layout>
-                  <ReceiptPrinter />
-                </Layout>
-              </PersonaProtectedRoute>
-            </ProtectedRoute>
-          } />
-
           {/* Redirect root to dashboard */}
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
         </Routes>
