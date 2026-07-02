@@ -26,6 +26,7 @@ export interface PaymentInput extends PaymentItemInput {}
 
 export interface CreatePosSaleParams {
   p_account_id: number;
+  p_terminal_id: number; // NEW
   p_customer_id: number | null; // Nullable for guest checkout
   p_cart_items: CartItemInput[];
   p_payments: PaymentItemInput[];
@@ -33,6 +34,8 @@ export interface CreatePosSaleParams {
   p_total: number;
   p_tax: number;
   p_total_tendered: number;
+  p_sc_pwd_discount?: number; // NEW
+  p_regular_discount?: number; // NEW
   p_occurred_at?: string | null;
 }
 
@@ -40,6 +43,7 @@ export interface CreatePosSaleParams {
 
 export interface CreateSaleData {
   order_id: number;
+  invoice_number?: string; // NEW
   change_due?: number;
 }
 

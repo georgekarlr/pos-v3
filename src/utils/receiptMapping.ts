@@ -38,11 +38,44 @@ export function mapSaleDetailsToReceipt(details: SaleDetailsResponse): ReceiptDa
     const totalPaid = Number(order.total_tendered ?? order.total_amount ?? 0)
     const change = Math.max(0, totalPaid - total)
 
+    let businessName: string | undefined = undefined;
+    let businessAddress1: string | undefined = undefined;
+    let tin: string | undefined = undefined;
+    let min: string | undefined = undefined;
+    let ptuIssuedBy: string | undefined = undefined;
+    let softwareProviderName: string | undefined = undefined;
+    let softwareProviderAddress: string | undefined = undefined;
+    let softwareProviderTin: string | undefined = undefined;
+    let softwareProviderAccreditationNo: string | undefined = undefined;
+
+    try {
+        const cachedSettings = localStorage.getItem('cached_business_settings');
+        if (cachedSettings) {
+            const settings = JSON.parse(cachedSettings);
+            businessName = settings.business_name || undefined;
+            businessAddress1 = settings.address || undefined;
+            tin = settings.tin || undefined;
+            min = settings.min || undefined;
+            ptuIssuedBy = settings.ptu_issued_by || undefined;
+            softwareProviderName = settings.software_provider_name || undefined;
+            softwareProviderAddress = settings.software_provider_address || undefined;
+            softwareProviderTin = settings.software_provider_tin || undefined;
+            softwareProviderAccreditationNo = settings.software_provider_accreditation_no || undefined;
+        }
+    } catch (e) {
+        console.error('Error parsing cached business settings in mapping:', e);
+    }
+
     return {
         orderId: order.id,
-        businessName: undefined,
-        businessAddress1: undefined,
-        businessAddress2: undefined,
+        invoiceNumber: order.invoice_number ?? undefined,
+        terminalId: order.terminal_id ?? undefined,
+        scPwdDiscount: order.sc_pwd_discount_amount ? Number(order.sc_pwd_discount_amount) : undefined,
+        regularDiscount: order.regular_discount_amount ? Number(order.regular_discount_amount) : undefined,
+        businessName,
+        businessAddress1,
+        tin,
+        min,
         cashier: order.account_person_name || undefined,
         dateISO: order.created_at,
         lines,
@@ -53,6 +86,11 @@ export function mapSaleDetailsToReceipt(details: SaleDetailsResponse): ReceiptDa
         totalPaid,
         change,
         notes: order.notes ?? undefined,
-        totalTendered: totalTendered
+        totalTendered: totalTendered,
+        ptuIssuedBy,
+        softwareProviderName,
+        softwareProviderAddress,
+        softwareProviderTin,
+        softwareProviderAccreditationNo,
     }
 }

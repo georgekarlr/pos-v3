@@ -10,6 +10,7 @@ export interface ServiceResponse<T> {
 export type ProductSellingMethod = 'unit' | 'measured';
 export type ProductInventoryType = 'non_perishable' | 'perishable';
 export type ProductUnitType = 'pieces' | 'box' | 'pack' | 'set' | 'pair' | 'dozen' | 'kg' | 'g' | 'l' | 'ml' | 'm' | 'cm' | 'sq_m' | 'roll';
+export type ProductTaxType = 'VATable' | 'VAT-Exempt' | 'Zero-Rated';
 
 export const PRODUCT_UNIT_LABELS: Record<ProductUnitType, string> = {
   pieces: 'pieces',
@@ -57,6 +58,7 @@ export interface Product {
   inventory_type: ProductInventoryType;
   unit_type: ProductUnitType | null;
   is_for_sale: boolean;
+  tax_type: ProductTaxType;
 }
 
 // --- Parameter Interfaces ---
@@ -74,6 +76,7 @@ export interface CreatePosProductParams {
   p_inventory_type: ProductInventoryType;
   p_unit_type: ProductUnitType | null;
   p_is_for_sale: boolean;
+  p_tax_type: ProductTaxType;
 }
 
 export interface UpdatePosProductParams extends CreatePosProductParams {

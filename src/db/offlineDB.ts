@@ -3,12 +3,15 @@ import { Product } from '../types/product';
 export interface OfflineSale {
   id?: number;
   accountId: number;
+  terminalId: number; // NEW
   cart: any[];
   payments: any[];
   notes: string | null;
   total: number;
   tax: number | null;
   total_tendered: number;
+  scPwdDiscount?: number; // NEW
+  regularDiscount?: number; // NEW
   createdAt: string;
 }
 
@@ -27,7 +30,7 @@ export interface OfflineDebt {
 
 export class IndexedDBService {
   private dbName = 'pos-offline-db';
-  private dbVersion = 3;
+  private dbVersion = 4;
   private salesStore = 'offline-sales';
   private productsStore = 'products';
   private debtsStore = 'offline-debts';
@@ -95,10 +98,10 @@ export class IndexedDBService {
     return new Promise((resolve, reject) => {
       const transaction = db.transaction(this.productsStore, 'readwrite');
       const store = transaction.objectStore(this.productsStore);
-      
+
       // Clear existing products before saving new ones to keep cache fresh
       store.clear();
-      
+
       products.forEach(product => {
         store.put(product);
       });

@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { ProductService } from '../services/productService'
 import { Product } from '../types/product'
@@ -38,6 +39,12 @@ const POS: React.FC = () => {
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [scanSuccess, setScanSuccess] = useState<string | null>(null)
 
+  // Terminals and discounts state
+  const [terminals, setTerminals] = useState<any[]>([])
+  const [selectedTerminalId, setSelectedTerminalId] = useState<number | null>(null)
+  const [isScPwdDiscount, setIsScPwdDiscount] = useState<boolean>(false)
+  const [regularDiscount, setRegularDiscount] = useState<string>('')
+
   // Receipt & Payment modal state
   const [receiptOpen, setReceiptOpen] = useState(false)
   const [paymentOpen, setPaymentOpen] = useState(false)
@@ -58,11 +65,14 @@ const POS: React.FC = () => {
     setError(null)
     try {
       const { data, error } = await ProductService.getAllProducts(1000, 0, undefined, true)
-      if (error) {
-        if (isOnline) setError(error)
-      } else {
-        setProducts(data || [])
-        setFilteredProducts(data || [])
+      // Always apply whatever data we got (cached or live)
+      if (data !== null) {
+        setProducts(data)
+        setFilteredProducts(data)
+      }
+      // Only show error banner when online (offline errors are expected)
+      if (error && isOnline) {
+        setError(error)
       }
     } catch (err) {
       if (isOnline) setError(err instanceof Error ? err.message : 'Failed to load products')
@@ -71,8 +81,30 @@ const POS: React.FC = () => {
     }
   }
 
+  const loadTerminals = async () => {
+    try {
+      const { data, error: termError } = await PosService.getActiveTerminals()
+      if (termError) {
+        console.error('Failed to load terminals:', termError)
+      } else {
+        setTerminals(data || [])
+        if (data && data.length > 0) {
+          const savedId = localStorage.getItem('selected_pos_terminal_id')
+          if (savedId && data.some((t: any) => t.id === Number(savedId))) {
+            setSelectedTerminalId(Number(savedId))
+          } else if (data.length === 1) {
+            setSelectedTerminalId(data[0].id)
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Unexpected error loading terminals:', err)
+    }
+  }
+
   useEffect(() => {
     loadProducts()
+    loadTerminals()
 
     const handleOnline = () => {
       setIsOnline(true)
@@ -191,8 +223,25 @@ const POS: React.FC = () => {
   }, [orderQtyById, products])
 
   const subtotal = useMemo(() => cartLines.reduce((sum, l) => sum + l.product.base_price * l.qty, 0), [cartLines])
-  const tax = useMemo(() => cartLines.reduce((sum, l) => sum + (l.product.base_price * l.qty) * (l.product.tax_rate / 100), 0), [cartLines])
-  const total = useMemo(() => subtotal + tax, [subtotal, tax])
+  
+  const tax = useMemo(() => {
+    if (isScPwdDiscount) return 0
+    return cartLines.reduce((sum, l) => sum + (l.product.base_price * l.qty) * (l.product.tax_rate / 100), 0)
+  }, [cartLines, isScPwdDiscount])
+
+  const scPwdDiscountAmount = useMemo(() => {
+    if (!isScPwdDiscount) return 0
+    return subtotal * 0.20
+  }, [subtotal, isScPwdDiscount])
+
+  const regularDiscountAmount = useMemo(() => {
+    return Number(regularDiscount) || 0
+  }, [regularDiscount])
+
+  const total = useMemo(() => {
+    const calculated = subtotal + tax - scPwdDiscountAmount - regularDiscountAmount
+    return Math.max(0, calculated)
+  }, [subtotal, tax, scPwdDiscountAmount, regularDiscountAmount])
     {/**const totalPaid = useMemo(() => payments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0), [payments])
   const itemsCount = useMemo(() => cartLines.reduce((sum, l) => sum + l.qty, 0), [cartLines])
      **/}
@@ -230,6 +279,10 @@ const POS: React.FC = () => {
       setError('Account ID missing')
       return
     }
+    if (!selectedTerminalId) {
+      setError('Please select a terminal before completing the sale.')
+      return
+    }
     console.log('totalss', totalPaidFromUI)
     if (cartLines.length === 0) return
 
@@ -246,6 +299,7 @@ const POS: React.FC = () => {
 
       const { data: serviceData, error: serviceError } = await PosService.createSale({
           p_account_id: persona.id!,
+          p_terminal_id: selectedTerminalId, // NEW
           p_customer_id: null,
           p_cart_items: cartPayload,
           p_payments: payments.map(p => ({
@@ -256,7 +310,9 @@ const POS: React.FC = () => {
           p_notes: notes || null,
           p_total: total,
           p_tax: tax,
-          p_total_tendered: totalPaidFromUI
+          p_total_tendered: totalPaidFromUI,
+          p_sc_pwd_discount: scPwdDiscountAmount, // NEW
+          p_regular_discount: regularDiscountAmount // NEW
         })
 
 
@@ -277,22 +333,60 @@ const POS: React.FC = () => {
         }));
         const totalPaidLocal = totalPaidFromUI;
         const change = Math.max(0, totalPaidLocal - total);
+        let businessName = 'Point of Sale';
+        let businessAddress1: string | undefined;
+        let tin: string | undefined;
+        let min: string | undefined;
+        let ptuIssuedBy: string | undefined;
+        let softwareProviderName: string | undefined;
+        let softwareProviderAddress: string | undefined;
+        let softwareProviderTin: string | undefined;
+        let softwareProviderAccreditationNo: string | undefined;
+
+        try {
+          const cachedSettings = localStorage.getItem('cached_business_settings');
+          if (cachedSettings) {
+            const settings = JSON.parse(cachedSettings);
+            businessName = settings.business_name || 'Point of Sale';
+            businessAddress1 = settings.address || undefined;
+            tin = settings.tin || undefined;
+            min = settings.min || undefined;
+            ptuIssuedBy = settings.ptu_issued_by || undefined;
+            softwareProviderName = settings.software_provider_name || undefined;
+            softwareProviderAddress = settings.software_provider_address || undefined;
+            softwareProviderTin = settings.software_provider_tin || undefined;
+            softwareProviderAccreditationNo = settings.software_provider_accreditation_no || undefined;
+          }
+        } catch (e) {
+          console.error('Error parsing cached business settings in POS checkout:', e);
+        }
+
         const receipt: ReceiptData = {
           orderId: result.is_offline ? undefined : result.data?.order_id,
           offlineId: result.is_offline ? result.data?.order_id : undefined,
-          businessName: 'Point of Sale',
-          businessAddress1: '',
-          businessAddress2: '',
+          invoiceNumber: result.data?.invoice_number,
+          terminalId: selectedTerminalId,
+          businessName,
+          businessAddress1,
+          tin,
+          min,
           cashier: persona.personName || persona.loginName || undefined,
           dateISO: new Date().toISOString(),
           lines,
           subtotal,
           tax,
+          scPwdDiscount: scPwdDiscountAmount,
+          regularDiscount: regularDiscountAmount,
           total,
           payments: payments.map(p => ({ method: p.method, amount: Number(p.amount) || 0, reference: p.transaction_ref || undefined })),
           totalPaid: totalPaidLocal,
           change,
           notes: notes || null,
+          ptuIssuedBy,
+          softwareProviderName,
+          softwareProviderAddress,
+          softwareProviderTin,
+          softwareProviderAccreditationNo,
         };
         setReceiptData(receipt)
         setReceiptOpen(true)
@@ -301,6 +395,8 @@ const POS: React.FC = () => {
         setOrderQtyById({})
         setPayments([])
         setNotes('')
+        setIsScPwdDiscount(false) // NEW
+        setRegularDiscount('') // NEW
         // Optionally refresh products (to update stock)
         // Use silent refresh so the receipt modal remains visible
         loadProducts(true)
@@ -353,18 +449,45 @@ const POS: React.FC = () => {
                   </button>
                 </div>
               )}
-              <ActionModeBar value={selectedAction} onChange={setSelectedAction} />
-              {scanMode === 'camera' && (
-                <button
-                  onClick={() => setIsCameraOpen(true)}
-                  className="px-4 py-2 text-sm font-medium flex items-center gap-2 rounded-lg border border-gray-200 bg-white shadow-sm text-blue-700 hover:bg-gray-50 transition-colors"
-                  title="Open Camera Scanner"
-                >
-                  <Camera className="h-4 w-4" />
-                  <span>Open Scanner</span>
-                </button>
+              {!selectedTerminalId && !isLoading && (
+                <div className="w-full bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-center gap-2 text-amber-800 text-sm">
+                  <AlertCircle className="h-4 w-4 text-amber-600 flex-shrink-0 animate-pulse" />
+                  <span>No active terminal selected. Please select a terminal to process checkout transactions.</span>
+                </div>
               )}
-              <ViewModeSwitcher value={viewMode} onChange={setViewMode} />
+              <div className="flex flex-wrap items-center justify-center gap-3 w-full">
+                <ActionModeBar value={selectedAction} onChange={setSelectedAction} />
+                
+                {/* Active Terminal Display */}
+                <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-gray-200 shadow-sm text-sm">
+                  <span className="text-gray-500 font-medium">Terminal:</span>
+                  <span className="font-semibold text-gray-900">
+                    {selectedTerminalId 
+                      ? (terminals.find(t => t.id === selectedTerminalId)?.terminal_name || 
+                         terminals.find(t => t.id === selectedTerminalId)?.name || 
+                         `Terminal #${selectedTerminalId}`)
+                      : 'None'}
+                  </span>
+                  <Link 
+                    to="/settings" 
+                    className="text-xs text-blue-600 hover:text-blue-800 hover:underline ml-1.5 border-l pl-1.5 border-gray-300 font-medium"
+                  >
+                    Change
+                  </Link>
+                </div>
+
+                {scanMode === 'camera' && (
+                  <button
+                    onClick={() => setIsCameraOpen(true)}
+                    className="px-4 py-2 text-sm font-medium flex items-center gap-2 rounded-lg border border-gray-200 bg-white shadow-sm text-blue-700 hover:bg-gray-50 transition-colors"
+                    title="Open Camera Scanner"
+                  >
+                    <Camera className="h-4 w-4" />
+                    <span>Open Scanner</span>
+                  </button>
+                )}
+                <ViewModeSwitcher value={viewMode} onChange={setViewMode} />
+              </div>
           </div>
           {/**<TotalsBar items={itemsCount} subtotal={subtotal} tax={tax} total={total} paid={totalPaid} />**/}
         <div className="mb-4 sm:mb-6">
@@ -452,6 +575,7 @@ const POS: React.FC = () => {
                 subtotal={subtotal}
                 tax={tax}
                 total={total}
+                terminalSelected={selectedTerminalId !== null} // NEW
                 onAdd={(id) => add(id, 1)}
                 onDeduct={(id) => deduct(id, 1)}
                 onClear={clear}
@@ -482,6 +606,7 @@ const POS: React.FC = () => {
                 subtotal={subtotal}
                 tax={tax}
                 total={total}
+                terminalSelected={selectedTerminalId !== null} // NEW
                 onAdd={(id) => add(id, 1)}
                 onDeduct={(id) => deduct(id, 1)}
                 onClear={clear}
@@ -534,6 +659,13 @@ const POS: React.FC = () => {
         onSubmit={handleSubmit}
         submitting={submitting}
         disabled={cartLines.length === 0}
+        isScPwdDiscount={isScPwdDiscount}
+        onScPwdToggle={setIsScPwdDiscount}
+        regularDiscount={regularDiscount}
+        onRegularDiscountChange={setRegularDiscount}
+        subtotal={subtotal}
+        tax={tax}
+        scPwdDiscountAmount={scPwdDiscountAmount}
       />
 
       <OfflineSalesModal

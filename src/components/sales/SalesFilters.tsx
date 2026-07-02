@@ -39,7 +39,7 @@ const SalesFilters: React.FC<SalesFiltersProps> = ({ value, onChange, onApply, o
             <input
               value={local.search}
               onChange={(e) => setLocal({ ...local, search: e.target.value })}
-              placeholder="Order # or customer name"
+              placeholder="Invoice #, customer name, or order #"
               className="w-full pl-9 pr-10 py-2 rounded-md border border-gray-300 text-sm focus:ring-blue-500 focus:border-blue-500"
             />
             {local.search && (

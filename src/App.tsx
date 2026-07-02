@@ -19,9 +19,11 @@ import {
   Wallet
 } from 'lucide-react'
 import Reports from './pages/Reports'
-import ReceiptPrinter from './pages/ReceiptPrinter'
 import DebtWizard from './pages/DebtWizard'
 import Customers from './pages/Customers'
+import XReading from './pages/XReading'
+import ZReading from './pages/ZReading'
+import EJournal from './pages/EJournal'
 import { useEffect } from 'react'
 import { SyncService } from './services/syncService'
 
@@ -140,6 +142,36 @@ function App() {
             </ProtectedRoute>
           } />
 
+          <Route path="/reports-compliance/x-reading" element={
+            <ProtectedRoute>
+              <PersonaProtectedRoute>
+                <Layout>
+                  <XReading />
+                </Layout>
+              </PersonaProtectedRoute>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/reports-compliance/z-reading" element={
+            <ProtectedRoute>
+              <PersonaProtectedRoute>
+                <Layout>
+                  <ZReading />
+                </Layout>
+              </PersonaProtectedRoute>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/reports-compliance/e-journal" element={
+            <ProtectedRoute>
+              <PersonaProtectedRoute>
+                <Layout>
+                  <EJournal />
+                </Layout>
+              </PersonaProtectedRoute>
+            </ProtectedRoute>
+          } />
+
           <Route path="/settings" element={
             <ProtectedRoute>
               <PersonaProtectedRoute>
@@ -149,17 +181,6 @@ function App() {
               </PersonaProtectedRoute>
             </ProtectedRoute>
           } />
-
-          <Route path="/settings/receipt-printer" element={
-            <ProtectedRoute>
-              <PersonaProtectedRoute>
-                <Layout>
-                  <ReceiptPrinter />
-                </Layout>
-              </PersonaProtectedRoute>
-            </ProtectedRoute>
-          } />
-
           {/* Redirect root to dashboard */}
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
         </Routes>

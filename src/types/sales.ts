@@ -1,9 +1,11 @@
 export interface SalesHistoryRow {
   order_id: number
+  invoice_number: string | null
   created_at: string
   customer_name: string
   account_name: string
   original_total_amount: number
+  total_discount: number
   total_refund_amount: number
   net_amount: number
   status: string
@@ -19,6 +21,10 @@ export interface SaleOrderDetails {
   customer_name?: string | null
   account_person_name?: string | null
   total_tendered?: number | null
+  invoice_number?: string | null
+  terminal_id?: number | null
+  sc_pwd_discount_amount?: number | null
+  regular_discount_amount?: number | null
 }
 
 export interface SaleItemDetails {

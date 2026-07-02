@@ -20,20 +20,32 @@ export interface ReceiptPayment {
 export interface ReceiptData {
     orderId?: number
     offlineId?: number
+    invoiceNumber?: string
+    terminalId?: number
+    // Header fields
     businessName?: string
     businessAddress1?: string
-    businessAddress2?: string
+    tin?: string           // VAT Reg TIN
+    min?: string           // Machine Identification Number
     cashier?: string
     dateISO: string
     lines: ReceiptLine[]
     subtotal: number
     tax: number
+    scPwdDiscount?: number
+    regularDiscount?: number
     total: number
     payments: ReceiptPayment[]
     totalPaid: number
     change: number
     notes?: string | null
     totalTendered?: number | null
+    // Footer fields
+    ptuIssuedBy?: string
+    softwareProviderName?: string
+    softwareProviderAddress?: string
+    softwareProviderTin?: string
+    softwareProviderAccreditationNo?: string
 }
 
 // Narrow, thermal-like receipt using Tailwind
@@ -48,18 +60,41 @@ const Receipt: React.FC<{ data: ReceiptData; className?: string }>
                 <div className="font-bold text-base tracking-wide">
                     {data.businessName || 'POS Receipt'}
                 </div>
-                {(data.businessAddress1 || data.businessAddress2) && (
-                    <div className="text-[11px] leading-tight text-gray-600 mt-1">
-                        {data.businessAddress1}<br/>{data.businessAddress2}
+                {data.businessAddress1 && (
+                    <div className="text-[11px] leading-tight text-gray-600 mt-0.5">
+                        {data.businessAddress1}
+                    </div>
+                )}
+                {data.tin && (
+                    <div className="text-[11px] leading-tight text-gray-600">
+                        VAT Reg TIN: {data.tin}
+                    </div>
+                )}
+                {data.min && (
+                    <div className="text-[11px] leading-tight text-gray-600">
+                        MIN: {data.min}
                     </div>
                 )}
             </div>
 
             <div className="px-4 text-[11px] text-gray-700">
-                <div className="flex justify-between">
-                    <span>{data.offlineId ? 'Offline Ref' : 'Order'}</span>
-                    <span>#{data.offlineId ?? data.orderId ?? '—'}</span>
-                </div>
+                {data.invoiceNumber ? (
+                    <div className="flex justify-between">
+                        <span>Invoice #</span>
+                        <span className="font-semibold">{data.invoiceNumber}</span>
+                    </div>
+                ) : (
+                    <div className="flex justify-between">
+                        <span>{data.offlineId ? 'Offline Ref' : 'Order'}</span>
+                        <span>#{data.offlineId ?? data.orderId ?? '—'}</span>
+                    </div>
+                )}
+                {data.terminalId && (
+                    <div className="flex justify-between">
+                        <span>Terminal</span>
+                        <span>#{data.terminalId}</span>
+                    </div>
+                )}
                 <div className="flex justify-between">
                     <span>Date</span>
                     <span>{date.toLocaleDateString()} {date.toLocaleTimeString()}</span>
@@ -112,9 +147,24 @@ const Receipt: React.FC<{ data: ReceiptData; className?: string }>
 
             <div className="px-4 text-[12px] space-y-1">
                 <div className="flex justify-between"><span>Subtotal</span><span>{format(data.subtotal)}</span></div>
-                <div className="flex justify-between"><span>Tax</span><span>{format(data.tax)}</span></div>
+                <div className="flex justify-between"><span>Tax (VAT)</span><span>{format(data.tax)}</span></div>
+                {data.scPwdDiscount !== undefined && data.scPwdDiscount > 0 && (
+                    <div className="flex justify-between text-amber-700">
+                        <span>SC/PWD Discount (20%)</span>
+                        <span>-{format(data.scPwdDiscount)}</span>
+                    </div>
+                )}
+                {data.regularDiscount !== undefined && data.regularDiscount > 0 && (
+                    <div className="flex justify-between text-blue-700">
+                        <span>Regular Discount</span>
+                        <span>-{format(data.regularDiscount)}</span>
+                    </div>
+                )}
                 <div className="my-2 border-t border-dashed" />
-                <div className="flex justify-between font-semibold"><span>Total</span><span>{format(data.total)}</span></div>
+                <div className="flex justify-between font-semibold text-[13px] text-gray-900">
+                    <span>Total Due</span>
+                    <span>{format(data.total)}</span>
+                </div>
             </div>
 
             <div className="px-4 text-[12px] space-y-1">
@@ -140,8 +190,33 @@ const Receipt: React.FC<{ data: ReceiptData; className?: string }>
                 </>
             )}
 
-            <div className="mt-2 px-4 pb-4 text-center text-[10px] text-gray-500">
+            <div className="mt-2 px-4 text-center text-[10px] text-gray-500">
                 Thank you for your business!
+            </div>
+
+            {/* BIR / Provider Footer */}
+            <div className="my-2 border-t border-dashed" />
+            <div className="px-4 pb-4 text-[10px] text-gray-500 space-y-0.5 leading-tight">
+                {data.ptuIssuedBy && (
+                    <div>PTU Issued by RDO: {data.ptuIssuedBy}</div>
+                )}
+                {data.softwareProviderName && (
+                    <div>Software Provider: {data.softwareProviderName}</div>
+                )}
+                {data.softwareProviderAddress && (
+                    <div>Provider Address: {data.softwareProviderAddress}</div>
+                )}
+                {data.softwareProviderTin && (
+                    <div>Provider TIN: {data.softwareProviderTin}</div>
+                )}
+                {data.softwareProviderAccreditationNo && (
+                    <div>Accreditation No: {data.softwareProviderAccreditationNo}</div>
+                )}
+                {(data.ptuIssuedBy || data.softwareProviderName) && (
+                    <div className="mt-1 text-center font-semibold text-[9px] text-gray-400 uppercase tracking-wide">
+                        THIS RECEIPT SHALL BE VALID FOR 5 YEARS FROM THE DATE OF THE PERMIT TO USE.
+                    </div>
+                )}
             </div>
         </div>
     )

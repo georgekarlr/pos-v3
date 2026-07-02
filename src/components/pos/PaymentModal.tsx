@@ -17,6 +17,14 @@ interface PaymentModalProps {
     onSubmit: (totalPaid: number) => void
     submitting?: boolean
     disabled?: boolean
+    // Discounts state and handlers
+    isScPwdDiscount: boolean
+    onScPwdToggle: (val: boolean) => void
+    regularDiscount: string | number
+    onRegularDiscountChange: (val: string) => void
+    subtotal: number
+    tax: number
+    scPwdDiscountAmount: number
 }
 
 const PaymentModal: React.FC<PaymentModalProps> = ({
@@ -31,7 +39,14 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     onNotesChange,
     onSubmit,
     submitting,
-    disabled
+    disabled,
+    isScPwdDiscount,
+    onScPwdToggle,
+    regularDiscount,
+    onRegularDiscountChange,
+    subtotal,
+    tax,
+    scPwdDiscountAmount
 }) => {
     const [show, setShow] = useState(false)
 
@@ -77,6 +92,13 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                             onSubmit={onSubmit}
                             submitting={submitting}
                             disabled={disabled}
+                            isScPwdDiscount={isScPwdDiscount}
+                            onScPwdToggle={onScPwdToggle}
+                            regularDiscount={regularDiscount}
+                            onRegularDiscountChange={onRegularDiscountChange}
+                            subtotal={subtotal}
+                            tax={tax}
+                            scPwdDiscountAmount={scPwdDiscountAmount}
                         />
                     </div>
                 </div>

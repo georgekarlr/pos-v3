@@ -108,7 +108,7 @@ const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({ product, onCl
                                     <Banknote className="h-4 w-4" />
                                     Pricing & Tax
                                 </h4>
-                                <div className="grid grid-cols-3 gap-4">
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                                     <div>
                                         <label className="text-xs text-gray-500 block mb-1">Base Price</label>
                                         <p className="text-sm font-bold text-gray-900">{formatCurrency(product.base_price)}</p>
@@ -116,6 +116,22 @@ const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({ product, onCl
                                     <div>
                                         <label className="text-xs text-gray-500 block mb-1">Tax Rate</label>
                                         <p className="text-sm font-bold text-gray-900">{product.tax_rate}%</p>
+                                    </div>
+                                    <div>
+                                        <label className="text-xs text-gray-500 block mb-1">Tax Type</label>
+                                        <div>
+                                            <span
+                                                className={`inline-flex px-2 py-0.5 text-xs font-bold rounded-full ${
+                                                    product.tax_type === 'VATable'
+                                                        ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                                                        : product.tax_type === 'VAT-Exempt'
+                                                        ? 'bg-amber-100 text-amber-800 border border-amber-200'
+                                                        : 'bg-purple-100 text-purple-800 border border-purple-200'
+                                                }`}
+                                            >
+                                                {product.tax_type || 'VATable'}
+                                            </span>
+                                        </div>
                                     </div>
                                     <div>
                                         <label className="text-xs text-gray-500 block mb-1">Selling Price</label>

@@ -12,7 +12,8 @@ import {
   ChevronDown,
   ChevronRight,
   Printer,
-  Wallet
+  Wallet,
+  ClipboardList
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -48,10 +49,17 @@ const adminNavigation: NavigationItem[] = [
     ]
   },
   { name: 'Analytics Reports', href: '/analytics-reports', icon: BarChart3 },
-  { name: 'Receipt Printer', href: '/settings/receipt-printer', icon: Printer },
+  {
+    name: 'Reports & Compliance',
+    icon: ClipboardList,
+    children: [
+      { name: 'X-Reading', href: '/reports-compliance/x-reading' },
+      { name: 'Z-Reading', href: '/reports-compliance/z-reading' },
+      { name: 'E-Journal', href: '/reports-compliance/e-journal' },
+    ]
+  },
   { name: 'Settings', href: '/settings', icon: Settings },
   { name: 'Persona Management', href: '/persona-management', icon: Shield },
-
 ]
 
 const staffNavigation: NavigationItem[] = [
@@ -72,7 +80,6 @@ const staffNavigation: NavigationItem[] = [
       { name: 'Debts', href: '/debt-management/debts' },
     ]
   },
-  { name: 'Receipt Printer', href: '/settings/receipt-printer', icon: Printer },
   { name: 'Settings', href: '/settings', icon: Settings },
 ]
 
