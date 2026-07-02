@@ -239,8 +239,6 @@ export class PersonaService {
         }
       }
 
-      console.log('Staff accounts retrieved successfully', data)
-      console.log('error retrieved successfully', error)
       return {
         success: true,
         data: data || [],
