@@ -80,6 +80,13 @@ const staffNavigation: NavigationItem[] = [
       { name: 'Debts', href: '/debt-management/debts' },
     ]
   },
+  {
+    name: 'Reports & Compliance',
+    icon: ClipboardList,
+    children: [
+      { name: 'X-Reading', href: '/reports-compliance/x-reading' },
+    ]
+  },
   { name: 'Settings', href: '/settings', icon: Settings },
 ]
 
