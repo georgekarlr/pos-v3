@@ -13,7 +13,8 @@ import {
   ChevronRight,
   Printer,
   Wallet,
-  ClipboardList
+  ClipboardList,
+  CreditCard
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -48,6 +49,7 @@ const adminNavigation: NavigationItem[] = [
       { name: 'Debts', href: '/debt-management/debts' },
     ]
   },
+  { name: 'Installments', href: '/installments', icon: CreditCard },
   { name: 'Analytics Reports', href: '/analytics-reports', icon: BarChart3 },
   {
     name: 'Reports & Compliance',
@@ -80,6 +82,7 @@ const staffNavigation: NavigationItem[] = [
       { name: 'Debts', href: '/debt-management/debts' },
     ]
   },
+  { name: 'Installments', href: '/installments', icon: CreditCard },
   {
     name: 'Reports & Compliance',
     icon: ClipboardList,
