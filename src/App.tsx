@@ -21,6 +21,7 @@ import {
 import Reports from './pages/Reports'
 import DebtWizard from './pages/DebtWizard'
 import Customers from './pages/Customers'
+import Installments from './pages/Installments'
 import XReading from './pages/XReading'
 import ZReading from './pages/ZReading'
 import EJournal from './pages/EJournal'
@@ -127,6 +128,16 @@ function App() {
               <PersonaProtectedRoute>
                 <Layout>
                   <Customers />
+                </Layout>
+              </PersonaProtectedRoute>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/installments" element={
+            <ProtectedRoute>
+              <PersonaProtectedRoute>
+                <Layout>
+                  <Installments />
                 </Layout>
               </PersonaProtectedRoute>
             </ProtectedRoute>
