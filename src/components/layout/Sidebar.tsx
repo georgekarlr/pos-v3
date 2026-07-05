@@ -39,6 +39,7 @@ const adminNavigation: NavigationItem[] = [
       { name: 'Products', href: '/management/products' },
       { name: 'Inventory', href: '/management/inventory' },
       { name: 'Sales History', href: '/management/sales-history' },
+      { name: 'Customers', href: '/management/customers' },
     ]
   },
   {
@@ -72,6 +73,7 @@ const staffNavigation: NavigationItem[] = [
     icon: Package,
     children: [
       { name: 'Sales History', href: '/management/sales-history' },
+      { name: 'Customers', href: '/management/customers' },
     ]
   },
   {
