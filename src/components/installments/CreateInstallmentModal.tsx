@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   X, Search, Plus, Minus, Trash2, ShoppingCart, Banknote,
-  CheckCircle2, ChevronRight, ChevronLeft, Loader2, AlertCircle, User,
+  CheckCircle2, ChevronRight, ChevronLeft, Loader2, AlertCircle, User, Percent
 } from 'lucide-react';
 import { DebtService } from '../../services/debtService';
 import { ProductService } from '../../services/productService';
@@ -34,7 +34,7 @@ const STEPS: { id: Step; label: string }[] = [
 ];
 
 const CreateInstallmentModal: React.FC<CreateInstallmentModalProps> = ({
-  accountId,
+  accountId, // Kept for prop type consistency, though unused directly in rendering
   onConfirm,
   onClose,
   isLoading,
@@ -57,6 +57,7 @@ const CreateInstallmentModal: React.FC<CreateInstallmentModalProps> = ({
   const [downpayment, setDownpayment] = useState('');
   const [downpaymentMethod, setDownpaymentMethod] = useState('Cash');
   const [monthsToPay, setMonthsToPay] = useState('12');
+  const [interestRate, setInterestRate] = useState('0'); // NEW: Interest Rate State
   const [occurredAt, setOccurredAt] = useState(new Date().toISOString().slice(0, 16));
 
   // Load products and terminals once
@@ -71,7 +72,6 @@ const CreateInstallmentModal: React.FC<CreateInstallmentModalProps> = ({
       }
     };
     load();
-
   }, []);
 
   // Customer search (debounced)
@@ -102,11 +102,16 @@ const CreateInstallmentModal: React.FC<CreateInstallmentModalProps> = ({
     setCart(prev => prev.map(i => i.product.id === productId ? { ...i, quantity: Math.min(i.product.total_stock, qty) } : i));
   };
 
+  // Calculations (Matches backend logic)
   const cartSubtotal = cart.reduce((s, i) => s + i.product.display_price * i.quantity, 0);
   const dpNum = parseFloat(downpayment) || 0;
   const monthsNum = parseInt(monthsToPay) || 1;
+  const interestRateNum = parseFloat(interestRate) || 0;
+
   const financed = cartSubtotal - dpNum;
-  const monthlyDue = financed > 0 ? financed / monthsNum : 0;
+  const totalInterestAmount = financed * (interestRateNum / 100);
+  const totalOwed = financed + totalInterestAmount;
+  const monthlyDue = totalOwed > 0 ? totalOwed / monthsNum : 0;
 
   // Navigation
   const goNext = () => {
@@ -121,6 +126,7 @@ const CreateInstallmentModal: React.FC<CreateInstallmentModalProps> = ({
       if (dpNum < 0) { setError('Downpayment cannot be negative.'); return; }
       if (dpNum >= cartSubtotal) { setError('Downpayment covers the full amount. Use a standard sale instead.'); return; }
       if (monthsNum < 1) { setError('Months to pay must be at least 1.'); return; }
+      if (interestRateNum < 0) { setError('Interest rate cannot be negative.'); return; }
       setStep('confirm');
     }
   };
@@ -141,7 +147,8 @@ const CreateInstallmentModal: React.FC<CreateInstallmentModalProps> = ({
       p_downpayment_amount: dpNum,
       p_downpayment_method: downpaymentMethod,
       p_months_to_pay: monthsNum,
-      p_occurred_at: occurredAt ? new Date(occurredAt).toISOString() : null,
+      p_interest_rate: interestRateNum, // NEW
+      p_occurred_at: null,
     });
     if (!result.success) setError(result.message);
   };
@@ -337,9 +344,9 @@ const CreateInstallmentModal: React.FC<CreateInstallmentModalProps> = ({
           {/* Step 3: Terms */}
           {step === 'terms' && (
             <div className="space-y-5">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Downpayment Amount</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Downpayment</label>
                   <div className="relative">
                     <Banknote size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input
@@ -363,6 +370,21 @@ const CreateInstallmentModal: React.FC<CreateInstallmentModalProps> = ({
                     value={monthsToPay}
                     onChange={(e) => setMonthsToPay(e.target.value)}
                   />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Interest Rate (%)</label>
+                  <div className="relative">
+                    <Percent size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      placeholder="0.0"
+                      className="w-full pl-8 pr-4 py-2.5 border border-gray-300 rounded-xl text-sm font-mono focus:ring-2 focus:ring-indigo-500"
+                      value={interestRate}
+                      onChange={(e) => setInterestRate(e.target.value)}
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -398,6 +420,8 @@ const CreateInstallmentModal: React.FC<CreateInstallmentModalProps> = ({
                     ['Total Contract Value', `₱${cartSubtotal.toFixed(2)}`],
                     ['Downpayment', `₱${dpNum.toFixed(2)}`],
                     ['Financed Amount', `₱${financed.toFixed(2)}`],
+                    ['Interest Amount', `₱${totalInterestAmount.toFixed(2)} (${interestRateNum}%)`],
+                    ['Total Owed', `₱${totalOwed.toFixed(2)}`],
                     ['Monthly Due', `₱${monthlyDue.toFixed(2)} × ${monthsNum} months`],
                   ].map(([label, value]) => (
                     <div key={label} className="flex justify-between text-sm">
@@ -441,6 +465,8 @@ const CreateInstallmentModal: React.FC<CreateInstallmentModalProps> = ({
                   ['Total Contract Value', `₱${cartSubtotal.toFixed(2)}`],
                   ['Downpayment', `₱${dpNum.toFixed(2)} via ${downpaymentMethod}`],
                   ['Financed Amount', `₱${financed.toFixed(2)}`],
+                  ['Interest', `₱${totalInterestAmount.toFixed(2)} (${interestRateNum}%)`],
+                  ['Total Owed', `₱${totalOwed.toFixed(2)}`],
                   ['Duration', `${monthsNum} months`],
                 ].map(([label, value]) => (
                   <div key={label} className="flex justify-between text-sm">

@@ -76,6 +76,7 @@ export const ReportService = {
       p_terminal_id: terminal_id,
       p_target_date: target_date,
     })
+    console.log('data x-reading', data);
     if (error) { console.error('Error generating X-Reading:', error); throw new Error(error.message) }
     return data as XReadingResult
   },

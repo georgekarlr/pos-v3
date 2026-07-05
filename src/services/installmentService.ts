@@ -48,6 +48,7 @@ export class InstallmentService {
         return { data: null, error: 'Creating installment sales requires an internet connection.' };
       }
 
+      console.log('params', params);
       const { data, error } = await supabase.rpc('pos2_create_installment_sale', {
         p_account_id: params.p_account_id,
         p_terminal_id: params.p_terminal_id,
@@ -56,6 +57,7 @@ export class InstallmentService {
         p_downpayment_amount: params.p_downpayment_amount,
         p_downpayment_method: params.p_downpayment_method,
         p_months_to_pay: params.p_months_to_pay,
+        p_interest_rate: params.p_interest_rate, // NEW: Interest Rate
         p_occurred_at: params.p_occurred_at ?? null,
       });
 
