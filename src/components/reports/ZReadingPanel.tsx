@@ -31,7 +31,7 @@ const generateZReadingText = (
     return val.padStart(9);
   };
   const fmtAmt = (n: number) => `PHP ${fmtVal(n)}`;
-  
+
   const formatDate = (dateStr: string) => {
     try {
       const d = new Date(dateStr);
@@ -71,7 +71,7 @@ const generateZReadingText = (
   const providerTIN = businessSettings?.software_provider_tin || '[Your TIN]';
   const providerAccredNo = businessSettings?.software_provider_accreditation_no || '045-123456789-000000';
   const providerDateIssued = businessSettings?.software_provider_date_issued ? formatDate(businessSettings.software_provider_date_issued) : 'Jan 01, 2024';
-  
+
   // Calculate Valid Until: 5 years after software_provider_date_issued
   let providerValidUntil = 'Jan 01, 2029';
   if (businessSettings?.software_provider_date_issued) {
@@ -79,7 +79,7 @@ const generateZReadingText = (
       const issueDate = new Date(businessSettings.software_provider_date_issued);
       const validDate = new Date(issueDate.setFullYear(issueDate.getFullYear() + 5));
       providerValidUntil = validDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    } catch {}
+    } catch { }
   }
 
   const zCounter = (report as any).z_counter || (report as any).id || (report as any).z_reading_id || 142;
@@ -125,7 +125,7 @@ const generateZReadingText = (
   text += `${align('VAT-Exempt Sales:', fmtAmt(report.VAT?.Exempt || 0))}\n`;
   text += `${align('Zero-Rated Sales:', fmtAmt(report.VAT?.ZeroRated || 0))}\n`;
   text += `${line}\n`;
-  
+
   if (report.Collections) {
     text += `CASH DRAWER COLLECTIONS\n\n`;
     const breakdown = report.Collections.Breakdown || [];
@@ -136,7 +136,7 @@ const generateZReadingText = (
     text += `${align('Total Collected:', fmtAmt(report.Collections.TotalCollected || 0))}\n`;
     text += `${line}\n`;
   }
-  
+
   text += `ACCUMULATED GRAND TOTALS\n`;
   text += `(Non-Resettable)\n\n`;
   text += `${align('Old Grand Total:', fmtAmt(report.GrandTotals?.OldCumulative || 0))}\n`;
@@ -157,7 +157,7 @@ const generateZReadingText = (
   text += `${center('FOR 5 YEARS FROM THE DATE OF')}\n`;
   text += `${center('THE PERMIT TO USE.')}\n`;
   text += `${line}`;
-  
+
   return text;
 };
 

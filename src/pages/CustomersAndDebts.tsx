@@ -2,21 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { DebtService } from '../services/debtService';
 import { CustomerListItem, CustomerDebtDetails } from '../types/debt';
-import { ManageDebtForm } from '../components/customers/ManageDebtForm';
 import {
-  Users,
   Search,
   Loader2,
   Phone,
   Mail,
   MapPin,
-  Wallet,
   ChevronLeft,
   ChevronRight,
-  Filter,
-  MoreVertical,
   Banknote,
-  RotateCcw,
   CheckCircle2,
   X,
   AlertCircle,
@@ -38,6 +32,10 @@ const CustomersAndDebts: React.FC = () => {
   const limit = 20;
 
   // Management State
+  const [actionType, setActionType] = useState<'PAYMENT' | 'DEPOSIT' | 'WITHDRAW_DEPOSIT' | 'SETTLE'>('PAYMENT');
+  const [amount, setAmount] = useState<string>('');
+  const [paymentMethod, setPaymentMethod] = useState<string>('Cash');
+  const [notes, setNotes] = useState<string>('');
   const [submitting, setSubmitting] = useState(false);
 
   // Detail Modal State
@@ -63,30 +61,28 @@ const CustomersAndDebts: React.FC = () => {
     setLoading(false);
   };
 
-  const handleManageAction = async (params: {
-    actionType: any;
-    amount: number;
-    paymentMethod: string;
-    notes: string;
-  }) => {
+  const handleManageAction = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!detailsCustomer || !persona) return;
 
     setSubmitting(true);
     setError(null);
 
     const { data, error: apiError } = await DebtService.manageDebtAccount({
-      p_requesting_account_id: persona.id,
+      p_requesting_account_id: persona.id || 0,
       p_customer_id: detailsCustomer.customer_id,
-      p_action_type: params.actionType,
-      p_amount: params.amount,
-      p_payment_method: params.paymentMethod,
-      p_notes: params.notes || null
+      p_action_type: actionType,
+      p_amount: actionType === 'SETTLE' ? 0 : parseFloat(amount),
+      p_payment_method: paymentMethod,
+      p_notes: notes || null
     });
 
     if (apiError) {
       setError(apiError);
     } else if (data) {
       setSuccess(data.message);
+      setAmount('');
+      setNotes('');
       setShowManageForm(false);
       fetchCustomers();
       // Refresh details as well
@@ -284,13 +280,97 @@ const CustomersAndDebts: React.FC = () => {
                     <div className="space-y-8">
                       {/* Management Form (Conditional) */}
                       {showManageForm && (
-                        <ManageDebtForm
-                          currentBalance={customerDetails.account.current_balance}
-                          isAdmin={persona?.type === 'admin'}
-                          submitting={submitting}
-                          onSubmit={handleManageAction}
-                          onCancel={() => setShowManageForm(false)}
-                        />
+                        <div className="bg-indigo-50 p-6 rounded-xl border border-indigo-100 animate-in slide-in-from-top duration-300">
+                          <div className="flex justify-between items-center mb-4">
+                            <h4 className="font-bold text-indigo-900 flex items-center">
+                              <Banknote size={18} className="mr-2" />
+                              Manage Customer Account
+                            </h4>
+                            <button onClick={() => setShowManageForm(false)} className="text-indigo-400 hover:text-indigo-600">
+                              <X size={18} />
+                            </button>
+                          </div>
+
+                          <form onSubmit={handleManageAction} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                            <div className="md:col-span-2">
+                              <label className="block text-xs font-bold text-indigo-700 uppercase mb-1">Action</label>
+                              <div className="grid grid-cols-4 gap-1">
+                                {['PAYMENT', 'DEPOSIT', 'WITHDRAW_DEPOSIT', 'SETTLE'].map((type) => (
+                                  <button
+                                    key={type}
+                                    type="button"
+                                    onClick={() => setActionType(type as any)}
+                                    className={`py-2 px-1 text-[9px] font-bold rounded border transition-colors ${actionType === type
+                                      ? 'bg-indigo-600 text-white border-indigo-600'
+                                      : 'bg-white text-indigo-700 border-indigo-200 hover:bg-indigo-50'
+                                      }`}
+                                  >
+                                    {type.replace('_', ' ')}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+
+                            {actionType !== 'SETTLE' ? (
+                              <>
+                                <div>
+                                  <label className="block text-xs font-bold text-indigo-700 uppercase mb-1">Amount</label>
+                                  <div className="relative">
+                                    <input
+                                      type="number"
+                                      step="0.01"
+                                      required
+                                      min="0.01"
+                                      className="w-full px-3 py-2 border border-indigo-200 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm"
+                                      placeholder="0.00"
+                                      value={amount}
+                                      onChange={(e) => setAmount(e.target.value)}
+                                    />
+                                  </div>
+                                </div>
+                                <div className={actionType === 'WITHDRAW_DEPOSIT' ? 'md:col-span-1' : ''}>
+                                  <label className="block text-xs font-bold text-indigo-700 uppercase mb-1">Method</label>
+                                  <select
+                                    className="w-full px-3 py-2 border border-indigo-200 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm bg-white"
+                                    value={paymentMethod}
+                                    onChange={(e) => setPaymentMethod(e.target.value)}
+                                  >
+                                    <option value="Cash">Cash</option>
+                                    <option value="Bank Transfer">Bank Transfer</option>
+                                    <option value="Mobile Money">Mobile Money</option>
+                                    <option value="Other">Other</option>
+                                  </select>
+                                </div>
+                              </>
+                            ) : (
+                              <div className="md:col-span-1 p-2 bg-yellow-50 border border-yellow-200 rounded-lg flex items-center">
+                                <AlertCircle size={16} className="text-yellow-600 mr-2 flex-shrink-0" />
+                                <p className="text-[10px] text-yellow-800 leading-tight">Settle will convert items to receipt. Balance ≤ 0.</p>
+                              </div>
+                            )}
+
+                            <div>
+                              <button
+                                type="submit"
+                                disabled={submitting}
+                                className="w-full py-2 bg-indigo-600 text-white rounded-lg font-bold text-sm hover:bg-indigo-700 disabled:opacity-50 flex justify-center items-center"
+                              >
+                                {submitting ? <Loader2 size={16} className="animate-spin" /> : 'Confirm'}
+                              </button>
+                            </div>
+
+                            <div className="md:col-span-4">
+                              <label className="block text-xs font-bold text-indigo-700 uppercase mb-1">Notes (Optional)</label>
+                              <input
+                                type="text"
+                                className="w-full px-3 py-2 border border-indigo-200 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm"
+                                placeholder="Add any relevant details..."
+                                value={notes}
+                                onChange={(e) => setNotes(e.target.value)}
+                              />
+                            </div>
+                          </form>
+                        </div>
                       )}
 
                       {/* Top Cards */}
