@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Users, Plus, Search, AlertCircle, X, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext'; import { Customer } from '../types/customer';
 import CustomerList from '../components/customers/CustomerList';

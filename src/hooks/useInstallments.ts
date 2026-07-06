@@ -5,6 +5,8 @@ import {
   InstallmentContract,
   CreateInstallmentSaleParams,
   PayInstallmentScheduleParams,
+  WriteOffInstallmentContractParams,
+  RecoverInstallmentDebtParams,
 } from '../types/installment';
 
 interface UseInstallmentsReturn {
@@ -16,6 +18,8 @@ interface UseInstallmentsReturn {
   loadCustomerInstallments: (customerId: number) => Promise<void>;
   createSale: (params: CreateInstallmentSaleParams) => Promise<{ success: boolean; message: string }>;
   paySchedule: (params: PayInstallmentScheduleParams) => Promise<{ success: boolean; message: string }>;
+  writeOff: (params: WriteOffInstallmentContractParams) => Promise<{ success: boolean; message: string }>;
+  recoverDebt: (params: RecoverInstallmentDebtParams) => Promise<{ success: boolean; message: string }>;
   clearError: () => void;
   reset: () => void;
 }
@@ -87,6 +91,46 @@ export function useInstallments(): UseInstallmentsReturn {
     return { success: true, message: data?.message || 'Payment processed.' };
   }, [installments, loadCustomerInstallments]);
 
+  const writeOff = useCallback(async (params: WriteOffInstallmentContractParams) => {
+    setLoading(true);
+    setError(null);
+
+    const { data, error: serviceError } = await InstallmentService.writeOffContract(params);
+
+    setLoading(false);
+
+    if (serviceError) {
+      setError(serviceError);
+      return { success: false, message: serviceError };
+    }
+
+    if (installments?.customer?.id) {
+      await loadCustomerInstallments(installments.customer.id);
+    }
+
+    return { success: true, message: data?.message || 'Contract written off.' };
+  }, [installments, loadCustomerInstallments]);
+
+  const recoverDebt = useCallback(async (params: RecoverInstallmentDebtParams) => {
+    setLoading(true);
+    setError(null);
+
+    const { data, error: serviceError } = await InstallmentService.recoverDebt(params);
+
+    setLoading(false);
+
+    if (serviceError) {
+      setError(serviceError);
+      return { success: false, message: serviceError };
+    }
+
+    if (installments?.customer?.id) {
+      await loadCustomerInstallments(installments.customer.id);
+    }
+
+    return { success: true, message: data?.message || 'Debt recovery processed.' };
+  }, [installments, loadCustomerInstallments]);
+
   return {
     installments,
     selectedContract,
@@ -96,6 +140,8 @@ export function useInstallments(): UseInstallmentsReturn {
     loadCustomerInstallments,
     createSale,
     paySchedule,
+    writeOff,
+    recoverDebt,
     clearError,
     reset,
   };

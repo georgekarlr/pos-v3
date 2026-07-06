@@ -1,6 +1,6 @@
 // ---- Enums / Literals ----
 
-export type ScheduleStatus = 'pending' | 'partial' | 'paid' | 'late';
+export type ScheduleStatus = 'pending' | 'partial' | 'paid' | 'late' | 'defaulted';
 export type ContractStatus = 'active' | 'completed' | 'defaulted';
 
 // ---- Core Models ----
@@ -87,5 +87,37 @@ export interface PayInstallmentScheduleResult {
       new_status: ScheduleStatus;
     }[];
     contract_completed: boolean;
+  } | null;
+}
+
+export interface WriteOffInstallmentContractParams {
+  p_requesting_account_id: number;
+  p_contract_id: number;
+  p_reason: string;
+}
+
+export interface WriteOffInstallmentContractResult {
+  success: boolean;
+  message: string;
+  data: {
+    amount_written_off: number;
+    contract_status: 'defaulted';
+  } | null;
+}
+
+export interface RecoverInstallmentDebtParams {
+  p_requesting_account_id: number;
+  p_contract_id: number;
+  p_recovery_amount: number;
+  p_payment_method: string;
+  p_notes?: string;
+}
+
+export interface RecoverInstallmentDebtResult {
+  success: boolean;
+  message: string;
+  data: {
+    contract_id: number;
+    amount_recovered: number;
   } | null;
 }
