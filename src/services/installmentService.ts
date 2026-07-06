@@ -6,6 +6,10 @@ import {
   CreateInstallmentSaleResult,
   PayInstallmentScheduleParams,
   PayInstallmentScheduleResult,
+  WriteOffInstallmentContractParams,
+  WriteOffInstallmentContractResult,
+  RecoverInstallmentDebtParams,
+  RecoverInstallmentDebtResult,
 } from '../types/installment';
 
 export class InstallmentService {
@@ -48,6 +52,7 @@ export class InstallmentService {
         return { data: null, error: 'Creating installment sales requires an internet connection.' };
       }
 
+      console.log('params', params);
       const { data, error } = await supabase.rpc('pos2_create_installment_sale', {
         p_account_id: params.p_account_id,
         p_terminal_id: params.p_terminal_id,
@@ -56,6 +61,7 @@ export class InstallmentService {
         p_downpayment_amount: params.p_downpayment_amount,
         p_downpayment_method: params.p_downpayment_method,
         p_months_to_pay: params.p_months_to_pay,
+        p_interest_rate: params.p_interest_rate, // NEW: Interest Rate
         p_occurred_at: params.p_occurred_at ?? null,
       });
 
@@ -118,6 +124,88 @@ export class InstallmentService {
       return { data: result, error: null };
     } catch (err: any) {
       console.error('Unexpected error paying installment schedule:', err);
+      return { data: null, error: err.message || 'An unexpected error occurred.' };
+    }
+  }
+
+  /**
+   * Writes off an active installment contract as a bad debt.
+   * Requires admin permissions.
+   */
+  static async writeOffContract(
+    params: WriteOffInstallmentContractParams
+  ): Promise<ServiceResponse<WriteOffInstallmentContractResult>> {
+    try {
+      if (!navigator.onLine) {
+        return { data: null, error: 'Writing off contracts requires an internet connection.' };
+      }
+
+      const { data, error } = await supabase.rpc('pos2_write_off_installment_contract', {
+        p_requesting_account_id: params.p_requesting_account_id,
+        p_contract_id: params.p_contract_id,
+        p_reason: params.p_reason,
+      });
+
+      if (error) {
+        console.error('Error writing off contract:', error);
+        return { data: null, error: error.message };
+      }
+
+      if (!data || data.length === 0) {
+        return { data: null, error: 'Failed to write off contract.' };
+      }
+
+      const result = data[0] as WriteOffInstallmentContractResult;
+
+      if (!result.success) {
+        return { data: null, error: result.message };
+      }
+
+      return { data: result, error: null };
+    } catch (err: any) {
+      console.error('Unexpected error writing off contract:', err);
+      return { data: null, error: err.message || 'An unexpected error occurred.' };
+    }
+  }
+
+  /**
+   * Processes recovery of a defaulted/written-off contract.
+   * Requires admin permissions.
+   */
+  static async recoverDebt(
+    params: RecoverInstallmentDebtParams
+  ): Promise<ServiceResponse<RecoverInstallmentDebtResult>> {
+    try {
+      if (!navigator.onLine) {
+        return { data: null, error: 'Debt recovery requires an internet connection.' };
+      }
+
+      const { data, error } = await supabase.rpc('pos2_recover_installment_debt', {
+        p_requesting_account_id: params.p_requesting_account_id,
+        p_contract_id: params.p_contract_id,
+        p_recovery_amount: params.p_recovery_amount,
+        p_payment_method: params.p_payment_method,
+        p_notes: params.p_notes ?? 'Recovered Bad Debt',
+      });
+
+      if (error) {
+        console.error('Error recovering installment debt:', error);
+        return { data: null, error: error.message };
+      }
+
+      if (!data || data.length === 0) {
+        return { data: null, error: 'Failed to process debt recovery.' };
+      }
+
+      const result = data[0] as RecoverInstallmentDebtResult;
+
+      if (!result.success) {
+        return { data: null, error: result.message };
+      }
+
+      return { data: result, error: null };
+    } catch (err: any) {
+      console.error('Unexpected error recovering installment debt:', err);
       return { data: null, error: err.message || 'An unexpected error occurred.' };
     }
   }

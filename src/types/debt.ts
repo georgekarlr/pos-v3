@@ -30,7 +30,7 @@ export interface CreateCustomerDebtParams {
 export interface ManageDebtAccountParams {
   p_requesting_account_id: number;
   p_customer_id: number;
-  p_action_type: 'PAYMENT' | 'DEPOSIT' | 'WITHDRAW_DEPOSIT' | 'SETTLE';
+  p_action_type: 'PAYMENT' | 'DEPOSIT' | 'WITHDRAW_DEPOSIT' | 'SETTLE' | 'WRITE_OFF' | 'RECOVER_DEBT';
   p_amount?: number;
   p_payment_method?: string;
   p_notes?: string | null;
@@ -42,6 +42,8 @@ export interface ManageDebtAccountResult {
   data: {
     new_balance?: number;
     created_order_id?: number;
+    amount_written_off?: number;
+    amount_recovered?: number;
   } | null;
 }
 

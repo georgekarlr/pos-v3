@@ -1,6 +1,6 @@
 // ---- Enums / Literals ----
 
-export type ScheduleStatus = 'pending' | 'partial' | 'paid' | 'late';
+export type ScheduleStatus = 'pending' | 'partial' | 'paid' | 'late' | 'defaulted';
 export type ContractStatus = 'active' | 'completed' | 'defaulted';
 
 // ---- Core Models ----
@@ -23,6 +23,8 @@ export interface InstallmentContract {
   total_contract_value: number;
   downpayment_amount: number;
   financed_amount: number;
+  interest_rate: number;         // NEW: Interest Rate (%)
+  total_interest_amount: number; // NEW: Total Flat Interest Amount
   months_to_pay: number;
   monthly_due: number;
   contract_status: ContractStatus;
@@ -51,6 +53,7 @@ export interface CreateInstallmentSaleParams {
   p_downpayment_amount: number;
   p_downpayment_method: string;
   p_months_to_pay: number;
+  p_interest_rate: number;       // NEW: Interest Rate Param
   p_occurred_at?: string | null;
 }
 
@@ -62,6 +65,7 @@ export interface CreateInstallmentSaleResult {
     invoice_number: string;
     contract_id: number;
     monthly_due: number;
+    total_interest: number;      // NEW: Returned total interest
   } | null;
 }
 
@@ -83,5 +87,37 @@ export interface PayInstallmentScheduleResult {
       new_status: ScheduleStatus;
     }[];
     contract_completed: boolean;
+  } | null;
+}
+
+export interface WriteOffInstallmentContractParams {
+  p_requesting_account_id: number;
+  p_contract_id: number;
+  p_reason: string;
+}
+
+export interface WriteOffInstallmentContractResult {
+  success: boolean;
+  message: string;
+  data: {
+    amount_written_off: number;
+    contract_status: 'defaulted';
+  } | null;
+}
+
+export interface RecoverInstallmentDebtParams {
+  p_requesting_account_id: number;
+  p_contract_id: number;
+  p_recovery_amount: number;
+  p_payment_method: string;
+  p_notes?: string;
+}
+
+export interface RecoverInstallmentDebtResult {
+  success: boolean;
+  message: string;
+  data: {
+    contract_id: number;
+    amount_recovered: number;
   } | null;
 }

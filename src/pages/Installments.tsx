@@ -18,6 +18,8 @@ import ContractList from '../components/installments/ContractList';
 import ContractDetail from '../components/installments/ContractDetail';
 import PaymentModal from '../components/installments/PaymentModal';
 import CreateInstallmentModal from '../components/installments/CreateInstallmentModal';
+import WriteOffModal from '../components/installments/WriteOffModal';
+import DebtRecoveryModal from '../components/installments/DebtRecoveryModal';
 
 const Installments: React.FC = () => {
   const { persona } = useAuth();
@@ -30,6 +32,8 @@ const Installments: React.FC = () => {
     loadCustomerInstallments,
     createSale,
     paySchedule,
+    writeOff,
+    recoverDebt,
     clearError,
     reset,
   } = useInstallments();
@@ -37,8 +41,12 @@ const Installments: React.FC = () => {
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerSearchResult | null>(null);
   const [showPayModal, setShowPayModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showWriteOffModal, setShowWriteOffModal] = useState(false);
+  const [showRecoveryModal, setShowRecoveryModal] = useState(false);
   const [payLoading, setPayLoading] = useState(false);
   const [createLoading, setCreateLoading] = useState(false);
+  const [writeOffLoading, setWriteOffLoading] = useState(false);
+  const [recoveryLoading, setRecoveryLoading] = useState(false);
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   const showToast = (type: 'success' | 'error', message: string) => {
@@ -75,6 +83,46 @@ const Installments: React.FC = () => {
     if (result.success) {
       showToast('success', 'Payment processed successfully!');
       // Refresh selected contract from updated installments
+      setSelectedContract(null);
+    } else {
+      showToast('error', result.message);
+    }
+  };
+
+  const handleWriteOffConfirm = async (reason: string) => {
+    if (!selectedContract || !persona?.id) return;
+    setWriteOffLoading(true);
+    const result = await writeOff({
+      p_requesting_account_id: persona.id,
+      p_contract_id: selectedContract.contract_id,
+      p_reason: reason,
+    });
+    setWriteOffLoading(false);
+    setShowWriteOffModal(false);
+
+    if (result.success) {
+      showToast('success', 'Contract successfully written off as bad debt!');
+      setSelectedContract(null);
+    } else {
+      showToast('error', result.message);
+    }
+  };
+
+  const handleRecoveryConfirm = async (amount: number, method: string, notes: string) => {
+    if (!selectedContract || !persona?.id) return;
+    setRecoveryLoading(true);
+    const result = await recoverDebt({
+      p_requesting_account_id: persona.id,
+      p_contract_id: selectedContract.contract_id,
+      p_recovery_amount: amount,
+      p_payment_method: method,
+      p_notes: notes,
+    });
+    setRecoveryLoading(false);
+    setShowRecoveryModal(false);
+
+    if (result.success) {
+      showToast('success', 'Installment bad debt recovery processed successfully!');
       setSelectedContract(null);
     } else {
       showToast('error', result.message);
@@ -218,7 +266,10 @@ const Installments: React.FC = () => {
                   <ContractDetail
                     contract={selectedContract}
                     onPayClick={() => setShowPayModal(true)}
-                    isLoading={payLoading}
+                    onWriteOffClick={() => setShowWriteOffModal(true)}
+                    onRecoverClick={() => setShowRecoveryModal(true)}
+                    isAdmin={persona?.type === 'admin'}
+                    isLoading={payLoading || writeOffLoading || recoveryLoading}
                   />
                 </div>
               </div>
@@ -255,6 +306,24 @@ const Installments: React.FC = () => {
           onConfirm={handlePayConfirm}
           onClose={() => setShowPayModal(false)}
           isLoading={payLoading}
+        />
+      )}
+
+      {showWriteOffModal && selectedContract && (
+        <WriteOffModal
+          contract={selectedContract}
+          onConfirm={handleWriteOffConfirm}
+          onClose={() => setShowWriteOffModal(false)}
+          isLoading={writeOffLoading}
+        />
+      )}
+
+      {showRecoveryModal && selectedContract && (
+        <DebtRecoveryModal
+          contract={selectedContract}
+          onConfirm={handleRecoveryConfirm}
+          onClose={() => setShowRecoveryModal(false)}
+          isLoading={recoveryLoading}
         />
       )}
 
