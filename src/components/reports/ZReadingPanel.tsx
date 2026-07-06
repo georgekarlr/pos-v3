@@ -125,6 +125,18 @@ const generateZReadingText = (
   text += `${align('VAT-Exempt Sales:', fmtAmt(report.VAT?.Exempt || 0))}\n`;
   text += `${align('Zero-Rated Sales:', fmtAmt(report.VAT?.ZeroRated || 0))}\n`;
   text += `${line}\n`;
+  
+  if (report.Collections) {
+    text += `CASH DRAWER COLLECTIONS\n\n`;
+    const breakdown = report.Collections.Breakdown || [];
+    breakdown.forEach((item: any) => {
+      text += `${align(`  ${item.method}:`, fmtAmt(item.amount))}\n`;
+    });
+    text += `                            ---------------\n`;
+    text += `${align('Total Collected:', fmtAmt(report.Collections.TotalCollected || 0))}\n`;
+    text += `${line}\n`;
+  }
+  
   text += `ACCUMULATED GRAND TOTALS\n`;
   text += `(Non-Resettable)\n\n`;
   text += `${align('Old Grand Total:', fmtAmt(report.GrandTotals?.OldCumulative || 0))}\n`;
