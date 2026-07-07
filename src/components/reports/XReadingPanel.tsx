@@ -30,7 +30,7 @@ const generateXReadingText = (
     return val.padStart(9);
   };
   const fmtAmt = (n: number) => `PHP ${fmtVal(n)}`;
-  
+
   const formatDate = (dateStr: string) => {
     try {
       const d = new Date(dateStr);
@@ -102,10 +102,22 @@ const generateXReadingText = (
   const zeroRatedVal = (report.VAT as any)?.ZeroRated || (report.VAT as any)?.zero_rated || 0;
   text += `${align('Zero-Rated Sales:', fmtAmt(zeroRatedVal))}\n`;
   text += `${line}\n`;
+
+  if (report.Collections) {
+    text += `CASH DRAWER COLLECTIONS\n\n`;
+    const breakdown = report.Collections.Breakdown || [];
+    breakdown.forEach((item: any) => {
+      text += `${align(`  ${item.method}:`, fmtAmt(item.amount))}\n`;
+    });
+    text += `                            ---------------\n`;
+    text += `${align('Total Collected:', fmtAmt(report.Collections.TotalCollected || 0))}\n`;
+    text += `${line}\n`;
+  }
+
   text += `${center('*** THIS IS NOT AN OFFICIAL RECEIPT ***')}\n`;
   text += `${center('*** FOR INTERNAL USE ONLY ***')}\n`;
   text += `${line}`;
-  
+
   return text;
 };
 

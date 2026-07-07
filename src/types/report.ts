@@ -46,10 +46,21 @@ export interface GetLowStockProductsParams {
 
 // ─── X-Reading ────────────────────────────────────────────────────────────────
 
+export interface CollectionBreakdown {
+  method: string
+  amount: number
+}
+
+export interface CollectionDetails {
+  TotalCollected: number
+  Breakdown: CollectionBreakdown[]
+}
+
 export interface XReadingDeductions {
   SC_PWD: number
   Regular: number
   Refunds: number
+  Voids: number
 }
 
 export interface XReadingVAT {
@@ -62,13 +73,14 @@ export interface XReadingVAT {
 export interface XReadingResult {
   ReportType: string
   GeneratedAt: string
-  Business: { Name: string; Address: string; TIN: string }
+  Business?: { Name: string; Address: string; TIN: string }
   Terminal: { Name: string; MIN: string; CashierName: string }
   TransactionRange: { Start: string | null; End: string | null }
   GrossSales: number
   Deductions: XReadingDeductions
   NetSales: number
   VAT: XReadingVAT
+  Collections?: CollectionDetails
 }
 
 export interface GenerateXReadingParams {
@@ -96,7 +108,7 @@ export interface ZReadingResult {
   ReportType: string
   ReadingDate: string
   GeneratedAt: string
-  Business: { Name: string; TIN: string }
+  Business: { Name: string; Address: string; TIN: string }
   Terminal: { Name: string; MIN: string; PTU: string; AdminName: string }
   Invoices: { Start: string | null; End: string | null }
   GrossSales: number
@@ -104,6 +116,7 @@ export interface ZReadingResult {
   Deductions: { SC_PWD: number; Regular: number; Refunds: number; Voids: number }
   VAT: ZReadingVAT
   GrandTotals: ZReadingGrandTotals
+  Collections?: CollectionDetails
 }
 
 export interface ZReadingRPCRow {

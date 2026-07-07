@@ -11,6 +11,7 @@ import { SalesHistoryRow } from '../types/sales'
 import RefundModal from '../components/sales/RefundModal'
 import RefundListModal from '../components/sales/RefundListModal'
 import VoidSaleModal from '../components/sales/VoidSaleModal'
+import ManualSaleModal from '../components/sales/ManualSaleModal'
 import { useAuth } from '../contexts/AuthContext'
 
 const PAGE_SIZE = 20
@@ -44,6 +45,8 @@ const SalesHistory: React.FC = () => {
 
   const [voidOpen, setVoidOpen] = useState(false)
   const [voidOrderId, setVoidOrderId] = useState<number | null>(null)
+
+  const [manualSaleOpen, setManualSaleOpen] = useState(false)
 
   const offset = useMemo(() => (page - 1) * PAGE_SIZE, [page])
 
@@ -133,7 +136,8 @@ const SalesHistory: React.FC = () => {
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Sales History</h1>
               <p className="mt-1 text-sm text-gray-500">View and search past transactions. Click an order to view the receipt.</p>
             </div>
-            <div>
+            <div className="flex items-center gap-2">
+              <button onClick={() => setManualSaleOpen(true)} className="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 text-sm font-medium">Record Manual Sale</button>
               <button onClick={openAllRefunds} className="inline-flex items-center gap-2 px-3 py-2 rounded-md border border-blue-300 text-blue-700 hover:bg-blue-50 text-sm">View All Refunds</button>
             </div>
           </div>
@@ -191,6 +195,12 @@ const SalesHistory: React.FC = () => {
         requestingAccountId={requestingAccountId}
         onClose={() => setVoidOpen(false)}
         onSuccess={() => fetchRows()}
+      />
+      <ManualSaleModal
+        open={manualSaleOpen}
+        onClose={() => setManualSaleOpen(false)}
+        onSuccess={() => fetchRows()}
+        accountId={persona?.id || 0}
       />
     </div>
   )

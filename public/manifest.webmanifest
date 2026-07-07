@@ -1,7 +1,7 @@
 {
-  "name": "Point Of Sales",
-  "short_name": "POS",
-  "description": "Point Of Sales progressive web app",
+  "name": "CPOS Pro",
+  "short_name": "CPOS Pro",
+  "description": "CPOS Pro — Cloud Point of Sale progressive web app",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
