@@ -11,6 +11,7 @@ export interface BusinessSettings {
   software_provider_tin: string | null;
   software_provider_accreditation_no: string | null;
   software_provider_date_issued: string | null; // format YYYY-MM-DD
+  is_vat_registered: boolean;
   updated_at?: string;
 }
 
@@ -39,6 +40,7 @@ export interface UpsertBusinessSettingsParams {
   p_software_provider_tin?: string | null;
   p_software_provider_accreditation_no?: string | null;
   p_software_provider_date_issued?: string | null;
+  p_is_vat_registered?: boolean;
 }
 
 export interface CreateTerminalParams {

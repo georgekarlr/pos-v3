@@ -67,7 +67,8 @@ const Settings: React.FC = () => {
     software_provider_address: 'Your Company Address',
     software_provider_tin: '000-000-000-000',
     software_provider_accreditation_no: '00000000000000',
-    software_provider_date_issued: ''
+    software_provider_date_issued: '',
+    is_vat_registered: true
   })
 
   // Terminals state
@@ -158,7 +159,8 @@ const Settings: React.FC = () => {
       } else if (response.data) {
         setBusinessSettings({
           ...response.data,
-          software_provider_date_issued: response.data.software_provider_date_issued || ''
+          software_provider_date_issued: response.data.software_provider_date_issued || '',
+          is_vat_registered: response.data.is_vat_registered ?? true
         })
       }
     } catch (err: any) {
@@ -200,7 +202,8 @@ const Settings: React.FC = () => {
         p_software_provider_address: businessSettings.software_provider_address || null,
         p_software_provider_tin: businessSettings.software_provider_tin || null,
         p_software_provider_accreditation_no: businessSettings.software_provider_accreditation_no || null,
-        p_software_provider_date_issued: businessSettings.software_provider_date_issued || null
+        p_software_provider_date_issued: businessSettings.software_provider_date_issued || null,
+        p_is_vat_registered: businessSettings.is_vat_registered
       }
 
       const response = await SettingsService.upsertBusinessSettings(params)
@@ -663,6 +666,58 @@ const Settings: React.FC = () => {
                     />
                   </div>
                 </div>
+              </div>
+            </div>
+
+            {/* VAT Registration Toggle */}
+            <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                <h2 className="text-lg font-semibold text-gray-800">Tax Configuration</h2>
+                <p className="text-xs text-gray-500 mt-1">Specify whether this business is VAT-registered. This affects how taxes are computed and printed on receipts.</p>
+              </div>
+              <div className="p-6">
+                <label
+                  htmlFor="is-vat-registered"
+                  className={`flex items-center justify-between gap-4 p-4 rounded-xl border-2 select-none transition-all ${
+                    !isAdmin ? 'cursor-default opacity-70' : 'cursor-pointer'
+                  } ${
+                    businessSettings.is_vat_registered
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-200 bg-gray-50'
+                  }`}
+                >
+                  <div>
+                    <p className="text-sm font-semibold text-gray-800">
+                      {businessSettings.is_vat_registered ? 'VAT-Registered Business' : 'Non-VAT / Exempt Business'}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {businessSettings.is_vat_registered
+                        ? 'Receipts will include 12% VAT breakdown.'
+                        : 'Receipts will not include a VAT line.'}
+                    </p>
+                  </div>
+                  {/* Toggle switch */}
+                  <div className="relative flex-shrink-0">
+                    <input
+                      id="is-vat-registered"
+                      type="checkbox"
+                      disabled={!isAdmin}
+                      checked={businessSettings.is_vat_registered}
+                      onChange={(e) => setBusinessSettings({ ...businessSettings, is_vat_registered: e.target.checked })}
+                      className="sr-only"
+                    />
+                    <div
+                      className={`w-11 h-6 rounded-full transition-colors ${
+                        businessSettings.is_vat_registered ? 'bg-blue-600' : 'bg-gray-300'
+                      }`}
+                    />
+                    <div
+                      className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                        businessSettings.is_vat_registered ? 'translate-x-5' : 'translate-x-0'
+                      }`}
+                    />
+                  </div>
+                </label>
               </div>
             </div>
 

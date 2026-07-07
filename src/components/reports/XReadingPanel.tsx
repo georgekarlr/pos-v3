@@ -70,7 +70,7 @@ const generateXReadingText = (
   addrLines.forEach(l => {
     text += `${center(l)}\n`;
   });
-  text += `${center(`VAT REG TIN: ${bTIN}`)}\n`;
+  text += `${center(`${businessSettings?.is_vat_registered === false ? 'NON-VAT REG TIN' : 'VAT REG TIN'}: ${bTIN}`)}\n`;
   text += `${center(`MIN: ${bMIN}`)}\n`;
   text += `${line}\n`;
   text += `${align('Terminal:', report.Terminal?.Name || 'Register 01')}\n`;
@@ -95,13 +95,15 @@ const generateXReadingText = (
   text += `${align('Total Deductions:', fmtAmt(totalDeductions))}\n\n`;
   text += `${align('NET SALES:', fmtAmt(report.NetSales))}\n`;
   text += `${line}\n`;
-  text += `VAT DETAILS (So far today)\n\n`;
-  text += `${align('VATable Sales:', fmtAmt(report.VAT?.VATable || 0))}\n`;
-  text += `${align('VAT Amount (12%):', fmtAmt(report.VAT?.VATAmount || 0))}\n`;
-  text += `${align('VAT-Exempt Sales:', fmtAmt(report.VAT?.Exempt || 0))}\n`;
-  const zeroRatedVal = (report.VAT as any)?.ZeroRated || (report.VAT as any)?.zero_rated || 0;
-  text += `${align('Zero-Rated Sales:', fmtAmt(zeroRatedVal))}\n`;
-  text += `${line}\n`;
+  if (businessSettings?.is_vat_registered !== false) {
+    text += `VAT DETAILS (So far today)\n\n`;
+    text += `${align('VATable Sales:', fmtAmt(report.VAT?.VATable || 0))}\n`;
+    text += `${align('VAT Amount (12%):', fmtAmt(report.VAT?.VATAmount || 0))}\n`;
+    text += `${align('VAT-Exempt Sales:', fmtAmt(report.VAT?.Exempt || 0))}\n`;
+    const zeroRatedVal = (report.VAT as any)?.ZeroRated || (report.VAT as any)?.zero_rated || 0;
+    text += `${align('Zero-Rated Sales:', fmtAmt(zeroRatedVal))}\n`;
+    text += `${line}\n`;
+  }
 
   if (report.Collections) {
     text += `CASH DRAWER COLLECTIONS\n\n`;

@@ -41,6 +41,7 @@ export function mapSaleDetailsToReceipt(details: SaleDetailsResponse): ReceiptDa
     let businessName: string | undefined = undefined;
     let businessAddress1: string | undefined = undefined;
     let tin: string | undefined = undefined;
+    let isVatRegistered: boolean | undefined = undefined;
     let min: string | undefined = undefined;
     let ptuIssuedBy: string | undefined = undefined;
     let softwareProviderName: string | undefined = undefined;
@@ -55,6 +56,7 @@ export function mapSaleDetailsToReceipt(details: SaleDetailsResponse): ReceiptDa
             businessName = settings.business_name || undefined;
             businessAddress1 = settings.address || undefined;
             tin = settings.tin || undefined;
+            isVatRegistered = settings.is_vat_registered !== undefined ? Boolean(settings.is_vat_registered) : undefined;
             min = settings.min || undefined;
             ptuIssuedBy = settings.ptu_issued_by || undefined;
             softwareProviderName = settings.software_provider_name || undefined;
@@ -75,6 +77,7 @@ export function mapSaleDetailsToReceipt(details: SaleDetailsResponse): ReceiptDa
         businessName,
         businessAddress1,
         tin,
+        isVatRegistered,
         min,
         cashier: order.account_person_name || undefined,
         dateISO: order.created_at,
