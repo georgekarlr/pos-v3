@@ -44,7 +44,7 @@ export function buildEscposFromReceipt(data: ReceiptData): Uint8Array {
   pushText(storeName + '\n')
   parts.push(enc.bold(false))
   if (storeAddress1) pushText(storeAddress1 + '\n')
-  if (data.tin) pushText(`VAT Reg TIN: ${data.tin}\n`)
+  if (data.tin) pushText(`${data.isVatRegistered === false ? 'NON-VAT Reg TIN' : 'VAT Reg TIN'}: ${data.tin}\n`)
   if (data.min) pushText(`MIN: ${data.min}\n`)
   parts.push(enc.newline())
 
@@ -202,7 +202,7 @@ export function layoutReceiptLines(data: ReceiptData, design?: ReceiptDesign): s
     lines.push(text)
   }
   pushTotal('Subtotal', data.subtotal)
-  pushTotal('Tax', data.tax)
+  if (data.isVatRegistered !== false) pushTotal('Tax', data.tax)
   pushTotal('TOTAL', data.total)
   lines.push('')
   pushTotal('Total Paid', data.totalPaid)

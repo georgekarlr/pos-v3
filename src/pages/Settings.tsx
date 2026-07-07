@@ -20,7 +20,6 @@ function sampleReceipt(): ReceiptData {
     orderId: 1234,
     businessName: 'POS Pro Demo',
     businessAddress1: '123 Main St',
-    businessAddress2: 'City, Country',
     cashier: 'Admin',
     dateISO: now,
     lines: [
@@ -50,7 +49,7 @@ const Settings: React.FC = () => {
   const requestingAccountId = persona?.id || 0
 
   const [activeTab, setActiveTab] = useState<'scanner' | 'business' | 'terminals' | 'printer'>('scanner')
-  
+
   // Status states
   const [error, setError] = useState<string>('')
   const [success, setSuccess] = useState<string>('')
@@ -67,17 +66,18 @@ const Settings: React.FC = () => {
     software_provider_address: 'Your Company Address',
     software_provider_tin: '000-000-000-000',
     software_provider_accreditation_no: '00000000000000',
-    software_provider_date_issued: ''
+    software_provider_date_issued: '',
+    is_vat_registered: true
   })
 
   // Terminals state
   const [terminals, setTerminals] = useState<Terminal[]>([])
   const [selectedTerminalId, setSelectedTerminalId] = useState<number | null>(null)
-  
+
   // Modal states
   const [showCreateModal, setShowCreateModal] = useState<boolean>(false)
   const [showEditModal, setShowEditModal] = useState<boolean>(false)
-  
+
   // Terminal Form state
   const [terminalForm, setTerminalForm] = useState({
     terminal_id: 0,
@@ -158,7 +158,8 @@ const Settings: React.FC = () => {
       } else if (response.data) {
         setBusinessSettings({
           ...response.data,
-          software_provider_date_issued: response.data.software_provider_date_issued || ''
+          software_provider_date_issued: response.data.software_provider_date_issued || '',
+          is_vat_registered: response.data.is_vat_registered ?? true
         })
       }
     } catch (err: any) {
@@ -183,7 +184,7 @@ const Settings: React.FC = () => {
   const handleUpsertBusiness = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!isAdmin) return
-    
+
     setError('')
     setSuccess('')
     setLoading(true)
@@ -200,7 +201,8 @@ const Settings: React.FC = () => {
         p_software_provider_address: businessSettings.software_provider_address || null,
         p_software_provider_tin: businessSettings.software_provider_tin || null,
         p_software_provider_accreditation_no: businessSettings.software_provider_accreditation_no || null,
-        p_software_provider_date_issued: businessSettings.software_provider_date_issued || null
+        p_software_provider_date_issued: businessSettings.software_provider_date_issued || null,
+        p_is_vat_registered: businessSettings.is_vat_registered
       }
 
       const response = await SettingsService.upsertBusinessSettings(params)
@@ -335,7 +337,7 @@ const Settings: React.FC = () => {
           <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
           <p className="mt-1 text-sm text-gray-600">Configure your system preferences, business profile, and POS terminals.</p>
         </div>
-        
+
         {/* Permission Badge */}
         {!isAdmin && (
           <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 border border-amber-200 rounded-full text-amber-800 text-xs font-semibold">
@@ -365,47 +367,43 @@ const Settings: React.FC = () => {
         <nav className="flex space-x-8" aria-label="Tabs">
           <button
             onClick={() => { setActiveTab('scanner'); setError(''); setSuccess(''); }}
-            className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-all ${
-              activeTab === 'scanner'
+            className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-all ${activeTab === 'scanner'
                 ? 'border-blue-600 text-blue-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
+              }`}
           >
             <SettingsIcon className="h-4 w-4" />
             Scanner & Application
           </button>
-          
+
           <button
             onClick={() => { setActiveTab('business'); setError(''); setSuccess(''); }}
-            className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-all ${
-              activeTab === 'business'
+            className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-all ${activeTab === 'business'
                 ? 'border-blue-600 text-blue-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
+              }`}
           >
             <Store className="h-4 w-4" />
             Business Profile
           </button>
-          
+
           <button
             onClick={() => { setActiveTab('terminals'); setError(''); setSuccess(''); }}
-            className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-all ${
-              activeTab === 'terminals'
+            className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-all ${activeTab === 'terminals'
                 ? 'border-blue-600 text-blue-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
+              }`}
           >
             <Monitor className="h-4 w-4" />
             POS Terminals
           </button>
-          
+
           <button
             onClick={() => { setActiveTab('printer'); setError(''); setSuccess(''); }}
-            className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-all ${
-              activeTab === 'printer'
+            className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-all ${activeTab === 'printer'
                 ? 'border-blue-600 text-blue-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
+              }`}
           >
             <Printer className="h-4 w-4" />
             Receipt Printer
@@ -425,18 +423,17 @@ const Settings: React.FC = () => {
               </div>
               <div className="p-6">
                 <p className="text-sm text-gray-500 mb-6">
-                  Choose how you want to scan products in the POS. Hardware mode uses a physical scanner (keyboard wedge), 
+                  Choose how you want to scan products in the POS. Hardware mode uses a physical scanner (keyboard wedge),
                   while Camera mode uses your device's built-in camera.
                 </p>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <button
                     onClick={() => setScanMode('hardware')}
-                    className={`flex items-center gap-4 p-4 rounded-xl border-2 transition-all ${
-                      scanMode === 'hardware'
+                    className={`flex items-center gap-4 p-4 rounded-xl border-2 transition-all ${scanMode === 'hardware'
                         ? 'border-blue-600 bg-blue-50'
                         : 'border-gray-200 hover:border-blue-200 hover:bg-gray-50'
-                    }`}
+                      }`}
                   >
                     <div className={`p-3 rounded-lg ${scanMode === 'hardware' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-500'}`}>
                       <Keyboard className="h-6 w-6" />
@@ -454,11 +451,10 @@ const Settings: React.FC = () => {
 
                   <button
                     onClick={() => setScanMode('camera')}
-                    className={`flex items-center gap-4 p-4 rounded-xl border-2 transition-all ${
-                      scanMode === 'camera'
+                    className={`flex items-center gap-4 p-4 rounded-xl border-2 transition-all ${scanMode === 'camera'
                         ? 'border-blue-600 bg-blue-50'
                         : 'border-gray-200 hover:border-blue-200 hover:bg-gray-50'
-                    }`}
+                      }`}
                   >
                     <div className={`p-3 rounded-lg ${scanMode === 'camera' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-500'}`}>
                       <Camera className="h-6 w-6" />
@@ -476,7 +472,7 @@ const Settings: React.FC = () => {
                 </div>
               </div>
             </div>
-            
+
             {/* Active Register Terminal */}
             <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
               <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center gap-2">
@@ -551,7 +547,7 @@ const Settings: React.FC = () => {
                       className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-500"
                     />
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Tax Identification Number (TIN)</label>
                     <input
@@ -666,6 +662,54 @@ const Settings: React.FC = () => {
               </div>
             </div>
 
+            {/* VAT Registration Toggle */}
+            <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                <h2 className="text-lg font-semibold text-gray-800">Tax Configuration</h2>
+                <p className="text-xs text-gray-500 mt-1">Specify whether this business is VAT-registered. This affects how taxes are computed and printed on receipts.</p>
+              </div>
+              <div className="p-6">
+                <label
+                  htmlFor="is-vat-registered"
+                  className={`flex items-center justify-between gap-4 p-4 rounded-xl border-2 select-none transition-all ${!isAdmin ? 'cursor-default opacity-70' : 'cursor-pointer'
+                    } ${businessSettings.is_vat_registered
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-200 bg-gray-50'
+                    }`}
+                >
+                  <div>
+                    <p className="text-sm font-semibold text-gray-800">
+                      {businessSettings.is_vat_registered ? 'VAT-Registered Business' : 'Non-VAT / Exempt Business'}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {businessSettings.is_vat_registered
+                        ? 'Receipts will include 12% VAT breakdown.'
+                        : 'Receipts will not include a VAT line.'}
+                    </p>
+                  </div>
+                  {/* Toggle switch */}
+                  <div className="relative flex-shrink-0">
+                    <input
+                      id="is-vat-registered"
+                      type="checkbox"
+                      disabled={!isAdmin}
+                      checked={businessSettings.is_vat_registered}
+                      onChange={(e) => setBusinessSettings({ ...businessSettings, is_vat_registered: e.target.checked })}
+                      className="sr-only"
+                    />
+                    <div
+                      className={`w-11 h-6 rounded-full transition-colors ${businessSettings.is_vat_registered ? 'bg-blue-600' : 'bg-gray-300'
+                        }`}
+                    />
+                    <div
+                      className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${businessSettings.is_vat_registered ? 'translate-x-5' : 'translate-x-0'
+                        }`}
+                    />
+                  </div>
+                </label>
+              </div>
+            </div>
+
             {isAdmin && (
               <div className="flex justify-end">
                 <button
@@ -740,11 +784,10 @@ const Settings: React.FC = () => {
                           </td>
                           <td className="px-6 py-4 text-center">
                             <span
-                              className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold leading-5 ${
-                                t.is_active
+                              className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold leading-5 ${t.is_active
                                   ? 'bg-green-100 text-green-800'
                                   : 'bg-gray-100 text-gray-800'
-                              }`}
+                                }`}
                             >
                               {t.is_active ? 'Active' : 'Inactive'}
                             </span>
@@ -784,11 +827,10 @@ const Settings: React.FC = () => {
               <div className="inline-flex rounded-md shadow-sm border mb-6 bg-gray-50 p-0.5">
                 <button
                   type="button"
-                  className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
-                    printerTab === 'serial'
+                  className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${printerTab === 'serial'
                       ? 'bg-blue-600 text-white shadow-sm'
                       : 'bg-transparent text-gray-700 hover:text-gray-900'
-                  }`}
+                    }`}
                   onClick={() => setPrinterTab('serial')}
                   disabled={!capability.serial}
                   title={capability.serial ? '' : 'Web Serial not supported in this browser'}
@@ -797,11 +839,10 @@ const Settings: React.FC = () => {
                 </button>
                 <button
                   type="button"
-                  className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
-                    printerTab === 'usb'
+                  className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${printerTab === 'usb'
                       ? 'bg-blue-600 text-white shadow-sm'
                       : 'bg-transparent text-gray-700 hover:text-gray-900'
-                  }`}
+                    }`}
                   onClick={() => setPrinterTab('usb')}
                   disabled={!capability.usb}
                   title={capability.usb ? '' : 'WebUSB not supported in this browser'}
@@ -810,11 +851,10 @@ const Settings: React.FC = () => {
                 </button>
                 <button
                   type="button"
-                  className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
-                    printerTab === 'ble'
+                  className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${printerTab === 'ble'
                       ? 'bg-blue-600 text-white shadow-sm'
                       : 'bg-transparent text-gray-700 hover:text-gray-900'
-                  }`}
+                    }`}
                   onClick={() => setPrinterTab('ble')}
                   disabled={!capability.ble}
                   title={capability.ble ? '' : 'Web Bluetooth not supported in this browser'}

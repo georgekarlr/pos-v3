@@ -25,7 +25,8 @@ export interface ReceiptData {
     // Header fields
     businessName?: string
     businessAddress1?: string
-    tin?: string           // VAT Reg TIN
+    tin?: string           // TIN (VAT or NON-VAT)
+    isVatRegistered?: boolean  // controls TIN label and VAT breakdown visibility
     min?: string           // Machine Identification Number
     cashier?: string
     dateISO: string
@@ -67,7 +68,7 @@ const Receipt: React.FC<{ data: ReceiptData; className?: string }>
                 )}
                 {data.tin && (
                     <div className="text-[11px] leading-tight text-gray-600">
-                        VAT Reg TIN: {data.tin}
+                        {data.isVatRegistered === false ? 'NON-VAT Reg TIN' : 'VAT Reg TIN'}: {data.tin}
                     </div>
                 )}
                 {data.min && (
@@ -147,7 +148,9 @@ const Receipt: React.FC<{ data: ReceiptData; className?: string }>
 
             <div className="px-4 text-[12px] space-y-1">
                 <div className="flex justify-between"><span>Subtotal</span><span>{format(data.subtotal)}</span></div>
-                <div className="flex justify-between"><span>Tax (VAT)</span><span>{format(data.tax)}</span></div>
+                {data.isVatRegistered !== false && (
+                    <div className="flex justify-between"><span>Tax (VAT)</span><span>{format(data.tax)}</span></div>
+                )}
                 {data.scPwdDiscount !== undefined && data.scPwdDiscount > 0 && (
                     <div className="flex justify-between text-amber-700">
                         <span>SC/PWD Discount (20%)</span>
