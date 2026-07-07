@@ -16,6 +16,54 @@ export class PosService {
     // Check if online
     if (!navigator.onLine) {
       try {
+        // Retrieve and update cached terminal state sequentially
+        const terminalStateStr = localStorage.getItem(`terminal_state_${params.p_terminal_id}`);
+        let invoiceNumber = '0000000001';
+        let offlineGrandTotal = params.p_total;
+
+        if (terminalStateStr) {
+          const terminalState = JSON.parse(terminalStateStr);
+          const currentInvoiceNum = Number(terminalState.current_invoice_number || 0);
+          const expectedInvoiceNum = currentInvoiceNum + 1;
+          invoiceNumber = String(expectedInvoiceNum).padStart(10, '0');
+
+          const cumulativeGrandTotal = Number(terminalState.cumulative_grand_total || 0);
+          offlineGrandTotal = cumulativeGrandTotal + params.p_total;
+
+          // Update cached terminal state
+          terminalState.current_invoice_number = expectedInvoiceNum;
+          terminalState.next_invoice_number = String(expectedInvoiceNum + 1).padStart(10, '0');
+          terminalState.cumulative_grand_total = offlineGrandTotal;
+          localStorage.setItem(`terminal_state_${params.p_terminal_id}`, JSON.stringify(terminalState));
+        } else {
+          // Fallback if no specific cached state yet, check in cached active terminals
+          const cachedTerminalsStr = localStorage.getItem('cached_active_terminals');
+          if (cachedTerminalsStr) {
+            const terminals = JSON.parse(cachedTerminalsStr);
+            const term = terminals.find((t: any) => t.id === params.p_terminal_id);
+            if (term) {
+              const currentInvoiceNum = Number(term.current_invoice_number || 0);
+              const expectedInvoiceNum = currentInvoiceNum + 1;
+              invoiceNumber = String(expectedInvoiceNum).padStart(10, '0');
+
+              const cumulativeGrandTotal = Number(term.cumulative_grand_total || 0);
+              offlineGrandTotal = cumulativeGrandTotal + params.p_total;
+
+              // Initialize and save cached terminal state
+              const newState = {
+                terminal_id: term.id,
+                terminal_name: term.terminal_name || term.name,
+                min: term.min,
+                current_invoice_number: expectedInvoiceNum,
+                next_invoice_number: String(expectedInvoiceNum + 1).padStart(10, '0'),
+                cumulative_grand_total: offlineGrandTotal,
+                is_active: term.is_active
+              };
+              localStorage.setItem(`terminal_state_${params.p_terminal_id}`, JSON.stringify(newState));
+            }
+          }
+        }
+
         const offlineSaleId = await OfflineDB.saveSale({
           accountId: params.p_account_id,
           terminalId: params.p_terminal_id, // NEW
@@ -27,13 +75,18 @@ export class PosService {
           total_tendered: params.p_total_tendered,
           scPwdDiscount: params.p_sc_pwd_discount || 0, // NEW
           regularDiscount: params.p_regular_discount || 0, // NEW
-          createdAt: params.p_occurred_at || new Date().toISOString()
+          createdAt: params.p_occurred_at || new Date().toISOString(),
+          offlineInvoiceNumber: invoiceNumber,
+          offlineGrandTotal: offlineGrandTotal
         });
 
         const result: CreateSaleResult & { is_offline: boolean } = {
           success: true,
           message: 'Sale saved offline. Will sync when online.',
-          data: { order_id: offlineSaleId },
+          data: { 
+            order_id: offlineSaleId,
+            invoice_number: invoiceNumber
+          },
           is_offline: true
         };
 
@@ -57,7 +110,10 @@ export class PosService {
         p_total_tendered: params.p_total_tendered,
         p_sc_pwd_discount: params.p_sc_pwd_discount ?? 0, // NEW
         p_regular_discount: params.p_regular_discount ?? 0, // NEW
-        p_occurred_at: params.p_occurred_at ?? null
+        p_is_offline_sync: params.p_is_offline_sync ?? false, // NEW
+        p_occurred_at: params.p_occurred_at ?? null,
+        p_offline_invoice_number: params.p_offline_invoice_number ?? null, // NEW
+        p_offline_grand_total: params.p_offline_grand_total ?? null // NEW
       });
 
       if (error) {
@@ -77,6 +133,18 @@ export class PosService {
       // If the RPC internally caught an exception and returned success: false
       if (!result.success) {
         return { data: null, error: result.message };
+      }
+
+      // Fetch and update cached terminal state after a successful online sale
+      try {
+        const stateRes = await supabase.rpc('pos2_get_terminal_state', {
+          p_terminal_id: params.p_terminal_id
+        });
+        if (stateRes.data && stateRes.data.length > 0) {
+          localStorage.setItem(`terminal_state_${params.p_terminal_id}`, JSON.stringify(stateRes.data[0]));
+        }
+      } catch (err) {
+        console.error('Failed to update cached terminal state after online sale:', err);
       }
 
       return { data: { ...result, is_offline: false }, error: null };
@@ -139,6 +207,54 @@ export class PosService {
         console.error('Error reading cached active terminals on fallback:', e);
       }
       return { data: null, error: err.message || 'Failed to fetch active terminals.' };
+    }
+  }
+
+  /**
+   * Fetches the terminal state for a specific terminal.
+   */
+  static async getTerminalState(terminalId: number): Promise<ServiceResponse<any>> {
+    if (!navigator.onLine) {
+      try {
+        const cached = localStorage.getItem(`terminal_state_${terminalId}`);
+        if (cached) {
+          return { data: JSON.parse(cached), error: null };
+        }
+      } catch (err) {
+        console.error('Error reading cached terminal state:', err);
+      }
+      return { data: null, error: 'Offline and no cached terminal state found.' };
+    }
+
+    try {
+      const { data, error } = await supabase.rpc('pos2_get_terminal_state', {
+        p_terminal_id: terminalId
+      });
+
+      if (error) {
+        console.error('Error fetching terminal state:', error);
+        // Fallback to cache if error
+        const cached = localStorage.getItem(`terminal_state_${terminalId}`);
+        if (cached) {
+          return { data: JSON.parse(cached), error: null };
+        }
+        return { data: null, error: error.message };
+      }
+
+      if (data && data.length > 0) {
+        const state = data[0];
+        localStorage.setItem(`terminal_state_${terminalId}`, JSON.stringify(state));
+        return { data: state, error: null };
+      }
+
+      return { data: null, error: 'Terminal state not found.' };
+    } catch (err: any) {
+      console.error('Unexpected error fetching terminal state:', err);
+      const cached = localStorage.getItem(`terminal_state_${terminalId}`);
+      if (cached) {
+        return { data: JSON.parse(cached), error: null };
+      }
+      return { data: null, error: err.message || 'Failed to fetch terminal state.' };
     }
   }
 }

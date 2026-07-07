@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase'
 import { SaleDetailsResponse, SalesHistoryRow, RefundDetailRow } from '../types/sales'
+import { RecordManualSaleParams } from '../types/pos'
 
 export interface GetSalesHistoryParams {
   limit: number
@@ -139,6 +140,22 @@ export const salesService = {
     return {
       success: !!row?.success,
       message: row?.message || (row?.success ? 'Transaction successfully voided.' : 'Failed to void transaction.')
+    }
+  },
+
+  async recordManualSale(params: RecordManualSaleParams): Promise<{ success: boolean; message: string; data?: any }> {
+    const { data, error } = await supabase.rpc('pos2_record_manual_sale', params)
+
+    if (error) {
+      console.error('Error recording manual sale:', error)
+      return { success: false, message: error.message }
+    }
+
+    const row = Array.isArray(data) ? data[0] : data
+    return {
+      success: !!row?.success,
+      message: row?.message || (row?.success ? 'Manual receipt recorded successfully.' : 'Failed to record manual receipt.'),
+      data: row?.data || undefined
     }
   }
 }

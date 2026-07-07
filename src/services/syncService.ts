@@ -32,7 +32,10 @@ export const SyncService = {
             p_total_tendered: sale.total_tendered,
             p_sc_pwd_discount: sale.scPwdDiscount || 0, // NEW
             p_regular_discount: sale.regularDiscount || 0, // NEW
-            p_occurred_at: sale.createdAt
+            p_occurred_at: sale.createdAt,
+            p_is_offline_sync: true, // NEW
+            p_offline_invoice_number: sale.offlineInvoiceNumber || null, // NEW
+            p_offline_grand_total: sale.offlineGrandTotal || null // NEW
           });
 
           if (error || !data) {

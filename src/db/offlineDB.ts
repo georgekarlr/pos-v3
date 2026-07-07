@@ -13,6 +13,8 @@ export interface OfflineSale {
   scPwdDiscount?: number; // NEW
   regularDiscount?: number; // NEW
   createdAt: string;
+  offlineInvoiceNumber?: string; // NEW
+  offlineGrandTotal?: number; // NEW
 }
 
 export interface OfflineDebt {

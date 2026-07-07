@@ -37,6 +37,24 @@ export interface CreatePosSaleParams {
   p_sc_pwd_discount?: number; // NEW
   p_regular_discount?: number; // NEW
   p_occurred_at?: string | null;
+  p_is_offline_sync?: boolean; // NEW
+  p_offline_invoice_number?: string | null; // NEW
+  p_offline_grand_total?: number | null; // NEW
+}
+
+export interface RecordManualSaleParams {
+  p_account_id: number;
+  p_customer_id: number | null;
+  p_manual_or_number: string;
+  p_cart_items: { product_id: number; quantity: number }[];
+  p_payments: { amount: number; method: string; transaction_ref?: string }[];
+  p_notes?: string | null;
+  p_total: number;
+  p_tax: number;
+  p_total_tendered: number;
+  p_sc_pwd_discount?: number;
+  p_regular_discount?: number;
+  p_occurred_at: string; // Required for manual sale
 }
 
 // --- Result Interface ---

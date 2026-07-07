@@ -130,6 +130,16 @@ const POS: React.FC = () => {
     }
   }, [])
 
+  useEffect(() => {
+    if (selectedTerminalId && isOnline) {
+      PosService.getTerminalState(selectedTerminalId).then((res) => {
+        if (res.data) {
+          console.log('Fetched and cached terminal state:', res.data);
+        }
+      });
+    }
+  }, [selectedTerminalId, isOnline])
+
   // Filtering by name or barcode
   useEffect(() => {
     const q = query.trim().toLowerCase()
