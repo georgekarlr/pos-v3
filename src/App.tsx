@@ -26,6 +26,7 @@ import XReading from './pages/XReading'
 import ZReading from './pages/ZReading'
 import EJournal from './pages/EJournal'
 import Settings from './pages/Settings'
+import UserManual from './pages/UserManual'
 
 function App() {
   useEffect(() => {
@@ -188,6 +189,16 @@ function App() {
                 <PersonaProtectedRoute>
                   <Layout>
                     <Settings />
+                  </Layout>
+                </PersonaProtectedRoute>
+              </ProtectedRoute>
+            } />
+
+            <Route path="/user-manual" element={
+              <ProtectedRoute>
+                <PersonaProtectedRoute>
+                  <Layout>
+                    <UserManual />
                   </Layout>
                 </PersonaProtectedRoute>
               </ProtectedRoute>
