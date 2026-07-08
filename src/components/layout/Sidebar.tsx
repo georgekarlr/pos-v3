@@ -61,6 +61,7 @@ const adminNavigation: NavigationItem[] = [
       { name: 'E-Journal', href: '/reports-compliance/e-journal' },
     ]
   },
+  { name: 'User Manual', href: '/user-manual', icon: ClipboardList },
   { name: 'Settings', href: '/settings', icon: Settings },
   { name: 'Persona Management', href: '/persona-management', icon: Shield },
 ]
@@ -92,6 +93,7 @@ const staffNavigation: NavigationItem[] = [
       { name: 'X-Reading', href: '/reports-compliance/x-reading' },
     ]
   },
+  { name: 'User Manual', href: '/user-manual', icon: ClipboardList },
   { name: 'Settings', href: '/settings', icon: Settings },
 ]
 

@@ -13,7 +13,7 @@ export default defineConfig({
                 enabled: true,
             },
             manifest: {
-                name: 'POS Pro v3',
+                name: 'CPOS Pro',
                 short_name: 'PosProV3',
                 description: 'Online Point of Sale Application',
                 start_url: '/',

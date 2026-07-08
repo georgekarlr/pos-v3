@@ -35,12 +35,6 @@ export interface UpsertBusinessSettingsParams {
   p_tin?: string | null;
   p_min?: string | null;
   p_ptu_issued_by?: string | null;
-  p_software_provider_name?: string | null;
-  p_software_provider_address?: string | null;
-  p_software_provider_tin?: string | null;
-  p_software_provider_accreditation_no?: string | null;
-  p_software_provider_date_issued?: string | null;
-  p_is_vat_registered?: boolean;
 }
 
 export interface CreateTerminalParams {
