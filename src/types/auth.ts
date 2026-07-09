@@ -30,6 +30,7 @@ export interface AuthContextType {
   loading: boolean
   signUp: (email: string, password: string) => Promise<{ error: any | null }>
   signIn: (email: string, password: string) => Promise<{ error: any | null }>
+  signInWithGoogle: () => Promise<{ error: any | null }>
   signOut: () => Promise<void>
   
   // Persona authentication
