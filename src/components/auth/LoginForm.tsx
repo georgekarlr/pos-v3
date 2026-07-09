@@ -21,11 +21,11 @@ const LoginForm: React.FC = () => {
     setError('')
 
     const { error } = await signIn(email, password)
-    
+
     if (error) {
       setError(error.message)
     }
-    
+
     setLoading(false)
   }
 
@@ -36,7 +36,7 @@ const LoginForm: React.FC = () => {
         {/* Glowing Background Mesh */}
         <div className="absolute top-[-10%] right-[-10%] w-[350px] h-[350px] bg-gradient-to-br from-[#129CFF] to-blue-600 rounded-full filter blur-[110px] opacity-25 pointer-events-none" />
         <div className="absolute bottom-[-10%] left-[-10%] w-[350px] h-[350px] bg-gradient-to-tr from-[#D329D0] to-purple-600 rounded-full filter blur-[110px] opacity-20 pointer-events-none" />
-        
+
         {/* Subtle Grid overlay */}
         <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:24px_24px]" />
 
@@ -52,13 +52,13 @@ const LoginForm: React.FC = () => {
         <div className="my-auto relative z-10 space-y-6 max-w-md">
           <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-white/5 backdrop-blur-md border border-white/10 text-xs text-blue-300 font-medium">
             <Sparkles className="h-3.5 w-3.5 text-blue-400" />
-            <span>Modern Retail & Point of Sale v3</span>
+            <span>Modern Retail & Point of Sale</span>
           </div>
-          
+
           <h1 className="text-4xl font-extrabold tracking-tight leading-tight bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent">
             Empower your sales, instantly.
           </h1>
-          
+
           <p className="text-slate-400 text-sm leading-relaxed">
             A next-generation Point of Sale application designed for seamless transactions, client debt analytics, and robust offline operations.
           </p>

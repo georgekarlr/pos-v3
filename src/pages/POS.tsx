@@ -234,7 +234,7 @@ const POS: React.FC = () => {
   }, [orderQtyById, products])
 
   const subtotal = useMemo(() => cartLines.reduce((sum, l) => sum + l.product.base_price * l.qty, 0), [cartLines])
-  
+
   const tax = useMemo(() => {
     if (isScPwdDiscount) return 0
     return cartLines.reduce((sum, l) => sum + (l.product.base_price * l.qty) * (l.product.tax_rate / 100), 0)
@@ -253,7 +253,7 @@ const POS: React.FC = () => {
     const calculated = subtotal + tax - scPwdDiscountAmount - regularDiscountAmount
     return Math.max(0, calculated)
   }, [subtotal, tax, scPwdDiscountAmount, regularDiscountAmount])
-    {/**const totalPaid = useMemo(() => payments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0), [payments])
+  {/**const totalPaid = useMemo(() => payments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0), [payments])
   const itemsCount = useMemo(() => cartLines.reduce((sum, l) => sum + l.qty, 0), [cartLines])
      **/}
   const handleProductClick = (productId: number) => {
@@ -309,22 +309,22 @@ const POS: React.FC = () => {
       }));
 
       const { data: serviceData, error: serviceError } = await PosService.createSale({
-          p_account_id: persona.id!,
-          p_terminal_id: selectedTerminalId, // NEW
-          p_customer_id: null,
-          p_cart_items: cartPayload,
-          p_payments: payments.map(p => ({
-            amount: Number(p.amount),
-            method: p.method,
-            transaction_ref: p.transaction_ref
-          })),
-          p_notes: notes || null,
-          p_total: total,
-          p_tax: tax,
-          p_total_tendered: totalPaidFromUI,
-          p_sc_pwd_discount: scPwdDiscountAmount, // NEW
-          p_regular_discount: regularDiscountAmount // NEW
-        })
+        p_account_id: persona.id!,
+        p_terminal_id: selectedTerminalId, // NEW
+        p_customer_id: null,
+        p_cart_items: cartPayload,
+        p_payments: payments.map(p => ({
+          amount: Number(p.amount),
+          method: p.method,
+          transaction_ref: p.transaction_ref
+        })),
+        p_notes: notes || null,
+        p_total: total,
+        p_tax: tax,
+        p_total_tendered: totalPaidFromUI,
+        p_sc_pwd_discount: scPwdDiscountAmount, // NEW
+        p_regular_discount: regularDiscountAmount // NEW
+      })
 
 
       if (serviceError || !serviceData) {
@@ -422,7 +422,7 @@ const POS: React.FC = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <LoadingSpinner/>
+        <LoadingSpinner />
       </div>
     )
   }
@@ -430,79 +430,79 @@ const POS: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-          <div className="mb-4 flex flex-col items-center gap-3">
-              {!isOnline && (
-                <div className="w-full bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-center justify-between gap-2 text-amber-800 text-sm">
-                  <div className="flex items-center gap-2">
-                    <WifiOff className="h-4 w-4" />
-                    <span>Offline</span>
-                  </div>
-                  <button
-                    onClick={() => setOfflineSalesOpen(true)}
-                    className="px-3 py-1 bg-amber-100 hover:bg-amber-200 text-amber-900 rounded-md font-medium transition-colors border border-amber-300 whitespace-nowrap"
-                  >
-                    View Offline Sales
-                  </button>
-                </div>
-              )}
-              {pendingSalesCount > 0 && isOnline && (
-                <div className="w-full bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center justify-between gap-2 text-blue-800 text-sm">
-                  <div className="flex items-center gap-2">
-                    <RefreshCw className="h-4 w-4 animate-spin" />
-                    <span>Syncing {pendingSalesCount} offline sales...</span>
-                  </div>
-                  <button
-                    onClick={() => setOfflineSalesOpen(true)}
-                    className="px-3 py-1 bg-blue-100 hover:bg-blue-200 text-blue-900 rounded-md font-medium transition-colors border border-blue-300 whitespace-nowrap"
-                  >
-                    View Offline Sales
-                  </button>
-                </div>
-              )}
-              {!selectedTerminalId && !isLoading && (
-                <div className="w-full bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-center gap-2 text-amber-800 text-sm">
-                  <AlertCircle className="h-4 w-4 text-amber-600 flex-shrink-0 animate-pulse" />
-                  <span>No active terminal selected. Please select a terminal to process checkout transactions.</span>
-                </div>
-              )}
-              <div className="flex flex-wrap items-center justify-center gap-3 w-full">
-                <ActionModeBar value={selectedAction} onChange={setSelectedAction} />
-                
-                {/* Active Terminal Display */}
-                <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-gray-200 shadow-sm text-sm">
-                  <span className="text-gray-500 font-medium">Terminal:</span>
-                  <span className="font-semibold text-gray-900">
-                    {selectedTerminalId 
-                      ? (terminals.find(t => t.id === selectedTerminalId)?.terminal_name || 
-                         terminals.find(t => t.id === selectedTerminalId)?.name || 
-                         `Terminal #${selectedTerminalId}`)
-                      : 'None'}
-                  </span>
-                  <Link 
-                    to="/settings" 
-                    className="text-xs text-blue-600 hover:text-blue-800 hover:underline ml-1.5 border-l pl-1.5 border-gray-300 font-medium"
-                  >
-                    Change
-                  </Link>
-                </div>
-
-                {scanMode === 'camera' && (
-                  <button
-                    onClick={() => setIsCameraOpen(true)}
-                    className="px-4 py-2 text-sm font-medium flex items-center gap-2 rounded-lg border border-gray-200 bg-white shadow-sm text-blue-700 hover:bg-gray-50 transition-colors"
-                    title="Open Camera Scanner"
-                  >
-                    <Camera className="h-4 w-4" />
-                    <span>Open Scanner</span>
-                  </button>
-                )}
-                <ViewModeSwitcher value={viewMode} onChange={setViewMode} />
+        <div className="mb-4 flex flex-col items-center gap-3">
+          {!isOnline && (
+            <div className="w-full bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-center justify-between gap-2 text-amber-800 text-sm">
+              <div className="flex items-center gap-2">
+                <WifiOff className="h-4 w-4" />
+                <span>Offline</span>
               </div>
+              <button
+                onClick={() => setOfflineSalesOpen(true)}
+                className="px-3 py-1 bg-amber-100 hover:bg-amber-200 text-amber-900 rounded-md font-medium transition-colors border border-amber-300 whitespace-nowrap"
+              >
+                View Offline Sales
+              </button>
+            </div>
+          )}
+          {pendingSalesCount > 0 && isOnline && (
+            <div className="w-full bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center justify-between gap-2 text-blue-800 text-sm">
+              <div className="flex items-center gap-2">
+                <RefreshCw className="h-4 w-4 animate-spin" />
+                <span>Syncing {pendingSalesCount} offline sales...</span>
+              </div>
+              <button
+                onClick={() => setOfflineSalesOpen(true)}
+                className="px-3 py-1 bg-blue-100 hover:bg-blue-200 text-blue-900 rounded-md font-medium transition-colors border border-blue-300 whitespace-nowrap"
+              >
+                View Offline Sales
+              </button>
+            </div>
+          )}
+          {!selectedTerminalId && !isLoading && (
+            <div className="w-full bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-center gap-2 text-amber-800 text-sm">
+              <AlertCircle className="h-4 w-4 text-amber-600 flex-shrink-0 animate-pulse" />
+              <span>No active terminal selected. Please select a terminal to process checkout transactions.</span>
+            </div>
+          )}
+          <div className="flex flex-wrap items-center justify-center gap-3 w-full">
+            <ActionModeBar value={selectedAction} onChange={setSelectedAction} />
+
+            {/* Active Terminal Display */}
+            <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-gray-200 shadow-sm text-sm">
+              <span className="text-gray-500 font-medium">Terminal:</span>
+              <span className="font-semibold text-gray-900">
+                {selectedTerminalId
+                  ? (terminals.find(t => t.id === selectedTerminalId)?.terminal_name ||
+                    terminals.find(t => t.id === selectedTerminalId)?.name ||
+                    `Terminal #${selectedTerminalId}`)
+                  : 'None'}
+              </span>
+              <Link
+                to="/settings"
+                className="text-xs text-blue-600 hover:text-blue-800 hover:underline ml-1.5 border-l pl-1.5 border-gray-300 font-medium"
+              >
+                Change
+              </Link>
+            </div>
+
+            {scanMode === 'camera' && (
+              <button
+                onClick={() => setIsCameraOpen(true)}
+                className="px-4 py-2 text-sm font-medium flex items-center gap-2 rounded-lg border border-gray-200 bg-white shadow-sm text-blue-700 hover:bg-gray-50 transition-colors"
+                title="Open Camera Scanner"
+              >
+                <Camera className="h-4 w-4" />
+                <span>Open Scanner</span>
+              </button>
+            )}
+            <ViewModeSwitcher value={viewMode} onChange={setViewMode} />
           </div>
-          {/**<TotalsBar items={itemsCount} subtotal={subtotal} tax={tax} total={total} paid={totalPaid} />**/}
+        </div>
+        {/**<TotalsBar items={itemsCount} subtotal={subtotal} tax={tax} total={total} paid={totalPaid} />**/}
         <div className="mb-4 sm:mb-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              {/**<div>
+            {/**<div>
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Point of Sale</h1>
               <p className="mt-1 text-sm text-gray-500">Process new sales. Customer is optional and not required.</p>
             </div>**/}

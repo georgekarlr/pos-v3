@@ -14,7 +14,7 @@ export default defineConfig({
             },
             manifest: {
                 name: 'CPOS Pro',
-                short_name: 'PosProV3',
+                short_name: 'CPOS Pro',
                 description: 'Online Point of Sale Application',
                 start_url: '/',
                 scope: '/',
