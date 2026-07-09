@@ -55,6 +55,17 @@ const SignupForm: React.FC = () => {
               Sign in here
             </Link>
           </p>
+          <p className="mt-1 text-xs text-gray-500">
+            Need to manage your account or subscription?{' '}
+            <a
+              href="https://ceintelly.org"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-blue-600 hover:text-blue-500 transition-colors"
+            >
+              Manage here
+            </a>
+          </p>
         </div>
         
         <div className="bg-white py-8 px-6 shadow-lg rounded-xl border border-gray-100">

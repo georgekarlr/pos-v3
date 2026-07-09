@@ -13,6 +13,9 @@ export interface BusinessSettings {
   software_provider_date_issued: string | null; // format YYYY-MM-DD
   is_vat_registered: boolean;
   updated_at?: string;
+  billing_type?: string;
+  subscription_status?: string;
+  expiry_date?: string;
 }
 
 export interface Terminal {

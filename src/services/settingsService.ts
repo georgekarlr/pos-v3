@@ -7,17 +7,21 @@ import {
   CreateTerminalParams,
   UpdateTerminalParams
 } from '../types/settings';
+import {
+  getCachedBusinessSettings,
+  saveCachedBusinessSettings,
+  isSubscriptionExpired
+} from '../utils/settingsCache';
 
 export class SettingsService {
-  static async getBusinessSettings(): Promise<ServiceResponse<BusinessSettings | null>> {
+  static async getBusinessSettings(allowExpired = false): Promise<ServiceResponse<BusinessSettings | null>> {
     if (!navigator.onLine) {
-      try {
-        const cached = localStorage.getItem('cached_business_settings');
-        if (cached) {
-          return { data: JSON.parse(cached), error: null };
+      const settings = getCachedBusinessSettings(allowExpired);
+      if (settings) {
+        if (!allowExpired && isSubscriptionExpired(settings)) {
+          return { data: null, error: 'Subscription has expired. Access denied.' };
         }
-      } catch (err) {
-        console.error('Error reading cached business settings:', err);
+        return { data: settings, error: null };
       }
       return { data: null, error: 'Offline and no cached business settings found.' };
     }
@@ -26,31 +30,36 @@ export class SettingsService {
       const { data, error } = await supabase.rpc('pos2_get_business_settings');
       if (error) {
         console.error('Error fetching business settings:', error);
-        try {
-          const cached = localStorage.getItem('cached_business_settings');
-          if (cached) {
-            return { data: JSON.parse(cached), error: null };
+        const settings = getCachedBusinessSettings(allowExpired);
+        if (settings) {
+          if (!allowExpired && isSubscriptionExpired(settings)) {
+            return { data: null, error: 'Subscription has expired. Access denied.' };
           }
-        } catch (err) {
-          console.error('Error reading cached business settings on fallback:', err);
+          return { data: settings, error: null };
         }
         return { data: null, error: error.message };
       }
       
       const settings = data && data.length > 0 ? data[0] : null;
       if (settings) {
-        localStorage.setItem('cached_business_settings', JSON.stringify(settings));
+        settings.is_vat_registered = settings.billing_type === 'VAT';
+        
+        // Save to cache so it updates local state (e.g. after renewal or for Layout checking)
+        saveCachedBusinessSettings(settings);
+
+        if (!allowExpired && isSubscriptionExpired(settings)) {
+          return { data: null, error: 'Subscription has expired. Access denied.' };
+        }
       }
       return { data: settings, error: null };
     } catch (err: any) {
       console.error('Unexpected error fetching business settings:', err);
-      try {
-        const cached = localStorage.getItem('cached_business_settings');
-        if (cached) {
-          return { data: JSON.parse(cached), error: null };
+      const settings = getCachedBusinessSettings(allowExpired);
+      if (settings) {
+        if (!allowExpired && isSubscriptionExpired(settings)) {
+          return { data: null, error: 'Subscription has expired. Access denied.' };
         }
-      } catch (e) {
-        console.error('Error reading cached business settings on fallback:', e);
+        return { data: settings, error: null };
       }
       return { data: null, error: err.message || 'Failed to fetch business settings' };
     }
@@ -73,12 +82,13 @@ export class SettingsService {
       }
 
       const result = data[0];
-      if (result.success && result.data) {
-        localStorage.setItem('cached_business_settings', JSON.stringify(result.data));
-      } else if (result.success) {
-        const refreshResponse = await this.getBusinessSettings();
+      if (result.success) {
+        // Refresh with allowExpired = true since we want the latest settings to render on the settings page
+        const refreshResponse = await this.getBusinessSettings(true);
         if (refreshResponse.data) {
           result.data = refreshResponse.data;
+        } else if (refreshResponse.error) {
+          return { data: null, error: refreshResponse.error };
         }
       }
       return { data: result, error: null };

@@ -1,5 +1,6 @@
 import { ReceiptData, ReceiptLine, ReceiptPayment } from '../components/pos/Receipt'
 import { SaleDetailsResponse } from '../types/sales'
+import { getCachedBusinessSettings } from './settingsCache'
 
 export function mapSaleDetailsToReceipt(details: SaleDetailsResponse): ReceiptData {
     const order = details.order
@@ -50,9 +51,8 @@ export function mapSaleDetailsToReceipt(details: SaleDetailsResponse): ReceiptDa
     let softwareProviderAccreditationNo: string | undefined = undefined;
 
     try {
-        const cachedSettings = localStorage.getItem('cached_business_settings');
-        if (cachedSettings) {
-            const settings = JSON.parse(cachedSettings);
+        const settings = getCachedBusinessSettings();
+        if (settings) {
             businessName = settings.business_name || undefined;
             businessAddress1 = settings.address || undefined;
             tin = settings.tin || undefined;
@@ -65,7 +65,7 @@ export function mapSaleDetailsToReceipt(details: SaleDetailsResponse): ReceiptDa
             softwareProviderAccreditationNo = settings.software_provider_accreditation_no || undefined;
         }
     } catch (e) {
-        console.error('Error parsing cached business settings in mapping:', e);
+        console.error('Error reading cached business settings in mapping:', e);
     }
 
     return {

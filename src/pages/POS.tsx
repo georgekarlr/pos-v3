@@ -20,6 +20,7 @@ import { useHardwareScanner } from '../hooks/useHardwareScanner'
 import CameraScanner from '../components/pos/CameraScanner'
 import { useScannerSettings } from '../contexts/ScannerSettingsContext'
 import OfflineSalesModal from '../components/pos/OfflineSalesModal'
+import { getCachedBusinessSettings } from '../utils/settingsCache'
 
 const POS: React.FC = () => {
   const { persona } = useAuth()
@@ -354,9 +355,8 @@ const POS: React.FC = () => {
         let softwareProviderAccreditationNo: string | undefined;
 
         try {
-          const cachedSettings = localStorage.getItem('cached_business_settings');
-          if (cachedSettings) {
-            const settings = JSON.parse(cachedSettings);
+          const settings = getCachedBusinessSettings();
+          if (settings) {
             businessName = settings.business_name || 'Point of Sale';
             businessAddress1 = settings.address || undefined;
             tin = settings.tin || undefined;
@@ -368,7 +368,7 @@ const POS: React.FC = () => {
             softwareProviderAccreditationNo = settings.software_provider_accreditation_no || undefined;
           }
         } catch (e) {
-          console.error('Error parsing cached business settings in POS checkout:', e);
+          console.error('Error reading cached business settings in POS checkout:', e);
         }
 
         const receipt: ReceiptData = {
