@@ -28,6 +28,7 @@ import type { ReceiptData } from '../components/pos/Receipt'
 
 // Composable settings sub-components
 import { BusinessInfoForm } from '../components/settings/BusinessInfoForm'
+import { SubscriptionStatusCard } from '../components/settings/SubscriptionStatusCard'
 import { SoftwareProviderCard } from '../components/settings/SoftwareProviderCard'
 import { TaxConfigSection } from '../components/settings/TaxConfigSection'
 import {
@@ -174,7 +175,7 @@ const Settings: React.FC = () => {
   const loadBusinessSettings = async () => {
     setError('')
     try {
-      const response = await SettingsService.getBusinessSettings()
+      const response = await SettingsService.getBusinessSettings(true)
       if (response.error) {
         setError(response.error)
       } else if (response.data) {
@@ -594,6 +595,8 @@ const Settings: React.FC = () => {
               isAdmin={isAdmin}
               onChange={setBusinessSettings}
             />
+
+            <SubscriptionStatusCard settings={businessSettings} />
 
             <SoftwareProviderCard settings={businessSettings} />
 
