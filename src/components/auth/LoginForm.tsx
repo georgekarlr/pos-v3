@@ -43,6 +43,17 @@ const LoginForm: React.FC = () => {
               Sign up here
             </Link>
           </p>
+          <p className="mt-1 text-xs text-gray-500">
+            Need to manage your account or subscription?{' '}
+            <a
+              href="https://ceintelly.org"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-blue-600 hover:text-blue-500 transition-colors"
+            >
+              Manage here
+            </a>
+          </p>
         </div>
         
         <div className="bg-white py-8 px-6 shadow-lg rounded-xl border border-gray-100">
@@ -77,9 +88,19 @@ const LoginForm: React.FC = () => {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                Password
-              </label>
+              <div className="flex justify-between items-center mb-2">
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                  Password
+                </label>
+                <a
+                  href="https://ceintelly.org"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs font-medium text-blue-600 hover:text-blue-500 transition-colors"
+                >
+                  Forgot password?
+                </a>
+              </div>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Lock className="h-5 w-5 text-gray-400" />

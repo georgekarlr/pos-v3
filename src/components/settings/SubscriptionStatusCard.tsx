@@ -1,5 +1,5 @@
 import React from 'react'
-import { CreditCard, Calendar, CheckCircle2, AlertCircle, ShieldAlert } from 'lucide-react'
+import { CreditCard, Calendar, CheckCircle2, AlertCircle, ShieldAlert, ArrowRight } from 'lucide-react'
 import { BusinessSettings } from '../../types/settings'
 
 interface Props {
@@ -88,6 +88,48 @@ export const SubscriptionStatusCard: React.FC<Props> = ({ settings }) => {
               {formatExpiry(expiryDate)}
             </span>
           </div>
+        </div>
+
+        <div className="mt-6 pt-6 border-t border-gray-100">
+          {status.toLowerCase() === 'expired' ? (
+            <div className="p-4 rounded-xl bg-rose-50 border border-rose-100 flex flex-col sm:flex-row items-center justify-between gap-4 animate-pulse-once">
+              <div className="flex items-center gap-3 text-rose-800 text-sm">
+                <ShieldAlert className="w-5 h-5 flex-shrink-0 text-rose-500" />
+                <div>
+                  <span className="font-semibold block text-gray-900">Your subscription has expired</span>
+                  <span className="text-rose-600 text-xs font-normal">Renew now to reactivate register & back-office functionality.</span>
+                </div>
+              </div>
+              <a
+                href="https://ceintelly.org"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-semibold text-sm rounded-lg shadow-sm hover:shadow transition-colors"
+              >
+                Extend Subscription
+                <ArrowRight className="w-4 h-4" />
+              </a>
+            </div>
+          ) : (
+            <div className="p-4 rounded-xl bg-blue-50/30 border border-blue-100/50 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-3 text-gray-600 text-sm">
+                <CreditCard className="w-5 h-5 flex-shrink-0 text-blue-500" />
+                <div>
+                  <span className="font-semibold block text-gray-900">Manage or Extend Subscription</span>
+                  <span className="text-gray-500 text-xs font-normal">Update billing, change plans, or extend subscription at Ceintelly.</span>
+                </div>
+              </div>
+              <a
+                href="https://ceintelly.org"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm rounded-lg shadow-sm hover:shadow transition-colors"
+              >
+                Extend Subscription
+                <ArrowRight className="w-4 h-4" />
+              </a>
+            </div>
+          )}
         </div>
       </div>
     </div>
