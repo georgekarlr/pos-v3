@@ -452,7 +452,7 @@ const UserManual: React.FC = () => {
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = 'POS_Pro_v3_User_System_Manual.doc'
+    link.download = 'CPOS_User_System_Manual.doc'
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
