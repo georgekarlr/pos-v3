@@ -22,6 +22,7 @@ export interface ProductFormData {
   unit_type: ProductUnitType | null
   is_for_sale: boolean
   tax_type: ProductTaxType
+  is_active: boolean
 }
 
 const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onCancel, isAdmin }) => {
@@ -37,7 +38,8 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onCancel, 
     inventory_type: 'non_perishable',
     unit_type: null,
     is_for_sale: true,
-    tax_type: 'VATable'
+    tax_type: 'VATable',
+    is_active: true
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -56,7 +58,8 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onCancel, 
         inventory_type: product.inventory_type || 'non_perishable',
         unit_type: product.unit_type || null,
         is_for_sale: product.is_for_sale ?? true,
-        tax_type: product.tax_type || 'VATable'
+        tax_type: product.tax_type || 'VATable',
+        is_active: product.is_active ?? true
       })
     }
   }, [product])
@@ -323,6 +326,23 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onCancel, 
                 </label>
                 <p className="mt-1 text-xs text-gray-500 ml-6">
                   If disabled, this product will not appear in the POS for sale.
+                </p>
+              </div>
+
+              <div>
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="is_active"
+                    checked={formData.is_active}
+                    onChange={(e) => setFormData(prev => ({ ...prev, is_active: e.target.checked }))}
+                    disabled={!isAdmin}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <span className="text-sm font-medium text-gray-700">Active Status</span>
+                </label>
+                <p className="mt-1 text-xs text-gray-500 ml-6">
+                  If disabled, this product will be archived/hidden from the active product lists.
                 </p>
               </div>
 

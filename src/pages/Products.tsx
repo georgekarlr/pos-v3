@@ -22,7 +22,7 @@ const Products: React.FC = () => {
     setIsLoading(true)
     setError(null)
     try {
-      const response = await ProductService.getAllProducts()
+      const response = await ProductService.getAllProducts(50, 0, undefined, undefined, null)
       if (response.error) {
         setError(response.error)
       } else {
@@ -75,7 +75,8 @@ const Products: React.FC = () => {
           p_inventory_type: formData.inventory_type,
           p_unit_type: formData.unit_type,
           p_is_for_sale: formData.is_for_sale,
-          p_tax_type: formData.tax_type
+          p_tax_type: formData.tax_type,
+          p_is_active: formData.is_active
         })
 
         if (result.error) {

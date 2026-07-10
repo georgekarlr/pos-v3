@@ -180,7 +180,8 @@ const chapters: ManualChapter[] = [
           <tr><td>Inventory Type</td><td>Perishable (tracks batches and expiration dates) or Non-perishable (general stock count).</td></tr>
           <tr><td>Pricing Logic</td><td>Base Price is entered manually. Entering a Tax Rate (e.g. 12%) automatically computes and previews the tax-inclusive Display Price.</td></tr>
           <tr><td>Identifiers</td><td>SKU and Barcode inputs to hook items to POS barcode scan listeners.</td></tr>
-          <tr><td>Sale Status</td><td>A toggle to set products as Active/For Sale. Non-retail items (such as raw materials) can be configured and are filtered out from the cashier POS screen.</td></tr>
+          <tr><td>Sale Status</td><td>A toggle to set products as For Sale. Non-retail items (such as raw materials) can be configured and are filtered out from the cashier POS screen.</td></tr>
+          <tr><td>Active Status</td><td>A checkbox to set products as Active. Inactive (archived) items are hidden from all cashier POS and inventory screens, but remain editable by administrators.</td></tr>
         </tbody>
       </table>
     `
