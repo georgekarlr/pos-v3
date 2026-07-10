@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext'; import { Customer } from '../
 import CustomerList from '../components/customers/CustomerList';
 import CustomerFormModal from '../components/customers/CustomerFormModal'
 import DeleteCustomerModal from '../components/customers/DeleteCustomerModal';
+import CustomerFinancialSummaryModal from '../components/customers/CustomerFinancialSummaryModal';
 import { useCustomers } from '../hooks/useCustomers';
 
 const Customers: React.FC = () => {
@@ -18,13 +19,18 @@ const Customers: React.FC = () => {
         createCustomer,
         updateCustomer,
         deleteCustomer,
-        clearError
+        clearError,
+        financialSummary,
+        summaryLoading,
+        fetchFinancialSummary,
+        clearSummary,
     } = useCustomers();
 
     // Local State
     const [searchQuery, setSearchQuery] = useState('');
     const [isFormModalOpen, setIsFormModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
     const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
     const [isMutating, setIsMutating] = useState(false);
     const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
@@ -62,6 +68,17 @@ const Customers: React.FC = () => {
     const handleOpenDelete = (customer: Customer) => {
         setSelectedCustomer(customer);
         setIsDeleteModalOpen(true);
+    };
+
+    const handleViewSummary = async (customer: Customer) => {
+        setSelectedCustomer(customer);
+        setIsSummaryModalOpen(true);
+        await fetchFinancialSummary(customer.id);
+    };
+
+    const handleCloseSummary = () => {
+        setIsSummaryModalOpen(false);
+        clearSummary();
     };
 
     // Mutation Handlers
@@ -169,6 +186,7 @@ const Customers: React.FC = () => {
                     loading={loading}
                     onEdit={handleOpenEdit}
                     onDelete={handleOpenDelete}
+                    onViewSummary={handleViewSummary}
                 />
             </div>
 
@@ -187,6 +205,13 @@ const Customers: React.FC = () => {
                 onConfirm={handleDeleteConfirm}
                 customer={selectedCustomer}
                 isLoading={isMutating}
+            />
+
+            <CustomerFinancialSummaryModal
+                isOpen={isSummaryModalOpen}
+                onClose={handleCloseSummary}
+                summary={financialSummary}
+                isLoading={summaryLoading}
             />
 
         </div>

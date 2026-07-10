@@ -8,8 +8,24 @@ export const DebtSection: React.FC = () => {
         <strong>Route:</strong> <code className="bg-gray-100 px-1 rounded">/management/customers</code> | <strong>Access:</strong> Admin, Staff
       </p>
       <p>
-        Manage customer registration profiles: Name, Phone, Email, and physical Address. Includes actions to **Edit Details** and **Delete profile**.
+        Manage customer registration profiles: Name, Phone, Email, and physical Address. Includes actions to:
       </p>
+      <ul className="list-disc list-inside space-y-1 ml-2 mb-2">
+        <li><strong>Edit Details:</strong> Update customer contact info and address.</li>
+        <li><strong>Delete Profile:</strong> Permanently remove a customer registry profile.</li>
+        <li><strong>View Financial Overview:</strong> Click the <span className="font-semibold text-violet-600">TrendingUp graph icon</span> to open a unified financial snapshot.</li>
+      </ul>
+
+      <div className="bg-violet-50 border border-violet-150 rounded-xl p-3 my-2 text-xs text-violet-850">
+        <p className="font-bold mb-1">
+          📊 Unified Financial Snapshot Details:
+        </p>
+        <ul className="list-disc list-inside space-y-1">
+          <li><strong>Total Outstanding:</strong> The combined sum of the customer's running tab debt and remaining installment balances.</li>
+          <li><strong>Running Tab:</strong> Displays current balance, credit limit, and a ledger of unsettled purchases (items, purchase date, quantity, price, and subtotals).</li>
+          <li><strong>Active Installments:</strong> Individual status cards showing invoice #, financed amount, monthly due, remaining balance, and a progress tracker (months paid vs. contract duration).</li>
+        </ul>
+      </div>
 
       <h3 className="text-base font-semibold text-gray-800 mt-4">2. Debt Wizard</h3>
       <p>

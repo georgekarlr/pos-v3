@@ -6,7 +6,8 @@ import {
     UpdateCustomerParams,
     DeleteCustomerParams,
     CustomerMutationResult,
-    DeleteCustomerResult
+    DeleteCustomerResult,
+    CustomerFinancialSummary
 } from '../types/customer';
 
 export class CustomerService {
@@ -139,6 +140,34 @@ export class CustomerService {
             return { data: result, error: null };
         } catch (err: any) {
             console.error('Unexpected error deleting customer:', err);
+            return { data: null, error: err.message || 'An unexpected error occurred.' };
+        }
+    }
+
+    /**
+     * Fetches a unified financial snapshot for a customer:
+     * running-tab debt, active installment contracts, and grand total outstanding.
+     */
+    static async getFinancialSummary(
+        customerId: number
+    ): Promise<ServiceResponse<CustomerFinancialSummary>> {
+        try {
+            if (!navigator.onLine) {
+                return { data: null, error: 'Viewing financial summary requires an internet connection.' };
+            }
+
+            const { data, error } = await supabase.rpc('pos2_get_customer_financial_summary', {
+                p_customer_id: customerId,
+            });
+
+            if (error) {
+                console.error('Error fetching customer financial summary:', error);
+                return { data: null, error: error.message };
+            }
+
+            return { data: data as CustomerFinancialSummary, error: null };
+        } catch (err: any) {
+            console.error('Unexpected error fetching customer financial summary:', err);
             return { data: null, error: err.message || 'An unexpected error occurred.' };
         }
     }

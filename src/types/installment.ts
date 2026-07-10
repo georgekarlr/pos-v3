@@ -43,6 +43,37 @@ export interface CustomerInstallments {
   contracts: InstallmentContract[];
 }
 
+// ---- All-Contracts List (paginated admin view) ----
+
+/** A single row returned by pos2_get_all_installment_contracts */
+export interface InstallmentContractSummary {
+  contract_id: number;
+  invoice_number: string;
+  customer_id: number;
+  customer_name: string;
+  phone_number: string;
+  date_created: string;
+  total_contract_value: number;
+  downpayment_amount: number;
+  financed_amount: number;
+  total_interest_amount: number;
+  months_to_pay: number;
+  monthly_due: number;
+  /** Sum of all payments made across the contract's schedules */
+  total_paid: number;
+  /** Remaining balance = (financed + interest) - total_paid */
+  remaining_balance: number;
+  status: ContractStatus;
+}
+
+export interface GetAllInstallmentContractsParams {
+  p_requesting_account_id: number;
+  p_limit: number;
+  p_offset: number;
+  p_search_term?: string | null;
+  p_status_filter?: ContractStatus | null;
+}
+
 // ---- Service Params & Results ----
 
 export interface CreateInstallmentSaleParams {

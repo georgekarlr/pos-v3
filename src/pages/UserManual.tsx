@@ -73,13 +73,14 @@ const chapters: ManualChapter[] = [
     rawHtml: `
       <h2>2. Getting Started — Authentication & Personas</h2>
       <h3>1. User Authentication (Login & Signup)</h3>
-      <p>The first layer of security uses Supabase email-based accounts. All users must register and sign in to connect to the store environment.</p>
+      <p>The first layer of security uses Supabase email-based and Google OAuth accounts. All users must register and sign in to connect to the store environment.</p>
       <ul>
-        <li><strong>Login Page:</strong> Enter your registered store email and password. Click "Sign In".</li>
-        <li><strong>Signup Page:</strong> If you are a new tenant or account holder, register your email, password, and click "Sign Up" to establish your workspace database.</li>
+        <li><strong>Email & Password Login:</strong> Enter your registered store email and password. Click "Sign In".</li>
+        <li><strong>Google Sign-In:</strong> Click the "Sign In with Google" button to authenticate seamlessly using your corporate or personal Google account.</li>
+        <li><strong>Signup Page:</strong> If you are a new tenant or account holder, register via email/password by clicking "Sign Up", or use "Sign Up with Google" to automatically link your Google profile.</li>
       </ul>
       <div class="note">
-        <strong>Note:</strong> Your login account is your Supabase user account (email-based). This is separate from the persona/role used inside the app.
+        <strong>Note:</strong> Your login account is your Supabase user account. This is separate from the persona/role used inside the app.
       </div>
       <h3>2. Role Selection (Personas)</h3>
       <p>Once signed in to the main user account, the system prompts for a <strong>Persona</strong> to dictate operational limits (Role-Based Access Control).</p>
@@ -257,7 +258,12 @@ const chapters: ManualChapter[] = [
       <h2>8. Customer Debt & Wizard</h2>
       <h3>1. Customers Directory</h3>
       <p><strong>Route:</strong> <code>/management/customers</code> | <strong>Access:</strong> Admin, Staff</p>
-      <p>Manage customer registration profiles: Name, Phone, Email, and physical Address. Includes actions to Edit Details and Delete profile.</p>
+      <p>Manage customer registration profiles: Name, Phone, Email, and physical Address. Includes actions to:</p>
+      <ul>
+        <li><strong>Edit Details:</strong> Update customer contact info and address.</li>
+        <li><strong>Delete Profile:</strong> Permanently remove a customer profile (only if there are no outstanding financial ties).</li>
+        <li><strong>Financial Overview:</strong> Click the TrendingUp graph icon to open a unified financial snapshot containing a combined Total Outstanding amount (running tab balance + remaining installment balances), running tab balance details, credit limit, unsettled item registers, and a status summary of active installment contracts.</li>
+      </ul>
       <h3>2. Debt Wizard</h3>
       <p><strong>Route:</strong> <code>/debt-management/wizard</code></p>
       <p>A 4-step wizard to file an official credit transaction:</p>
@@ -295,14 +301,23 @@ const chapters: ManualChapter[] = [
       <h2>9. Installment Plans & Interests</h2>
       <p><strong>Route:</strong> <code>/installments</code> | <strong>Access:</strong> Admin, Staff</p>
       <p>Installments support purchasing inventory items via custom layaway contracts with monthly payments.</p>
-      <h3>1. Creating an Installment Sale</h3>
-      <p>Select a customer first, then click + New Installment Sale to configure cart items, downpayment, months to pay, and a flat interest percentage rate applied to the financed balance (Financed = Cart Total – Downpayment).</p>
-      <div class="note">
-        The dialog computes and updates the Monthly Due amount and Total Interest Amount in real-time before saving the contract.
-      </div>
-      <h3>2. Contract Schedule Logs</h3>
-      <p>Selecting a contract reveals a breakdown table of schedules: Month number, Due Date, Amount Due, Amount Paid, and Payment Status (Pending, Partial, Paid, Late, or Defaulted).</p>
-      <h3>3. Contract Operations</h3>
+      <h3>1. Contracts Directory Layout</h3>
+      <p>The page is split into two functional panels:</p>
+      <ul>
+        <li><strong>Left Panel (Contracts List):</strong> Shows all system layaway contracts (paginated, 20 items per page). It features a debounced search filter (by customer or invoice), status tabs (All, Active, Completed, Defaulted), and a payment progress bar tracking total paid amount and percentage.</li>
+        <li><strong>Right Panel (Contract Detail):</strong> Displays schedules and actions for the selected contract. If no contract is selected, it hosts the "+ New Installment Sale" wizard trigger.</li>
+      </ul>
+      <h3>2. Creating an Installment Sale</h3>
+      <p>Click **+ New Installment Sale** in the right panel to launch the 4-step creation wizard:</p>
+      <ol>
+        <li><strong>Customer:</strong> Search and select from the registered customer profiles.</li>
+        <li><strong>Products:</strong> Add catalog products and specify item quantities.</li>
+        <li><strong>Terms:</strong> Configure the downpayment amount, payment method (Cash, GCash, Card, etc.), contract duration (months), and flat interest rate (%).</li>
+        <li><strong>Confirm:</strong> Review the calculated monthly due and total interest (computed in real-time) before creating the contract.</li>
+      </ol>
+      <h3>3. Contract Schedule Logs</h3>
+      <p>Selecting a contract from the list reveals its schedule breakdown: Month number, Due Date, Amount Due, Amount Paid, and Payment Status (Pending, Partial, Paid, Late, or Defaulted).</p>
+      <h3>4. Contract Operations</h3>
       <table>
         <thead>
           <tr>
@@ -349,8 +364,16 @@ const chapters: ManualChapter[] = [
         <li><strong>Business Profile (Admin Only):</strong> Configure Business Name, Address, TIN, MIN, and PTU authority. Toggle VAT Registered.</li>
         <li><strong>Register Terminals (Admin Only):</strong> Create and edit terminals. Select a terminal to assign the current browser device to that register instance.</li>
         <li><strong>Receipt Printer Tab:</strong> Set up connection configs: Serial (Baud Rate), USB (using WebUSB; requires Chrome or Edge), and Bluetooth (BLE Service/Characteristic UUIDs). Click Save & Connect to pair, and Test Print.</li>
+        <li><strong>Subscription & Billing Status:</strong> Displays active account tier, billing type (VAT-registered or Non-VAT), subscription status (Active, Trial, Expired), and the expiry or renewal timestamp. Features an external link to Ceintelly to extend billing or change plans.</li>
       </ul>
-      <h3>2. Staff Accounts Registry</h3>
+      <h3>2. Subscription Expiry Enforcement</h3>
+      <p>The system enforces strict payment validation:</p>
+      <ul>
+        <li><strong>Blocking Redirect:</strong> If subscription status is marked as Expired, an overlay blocks all core actions (POS register, sales listings, reports).</li>
+        <li><strong>Limited Settings View:</strong> Admins can still access the Settings page to inspect settings fields and click Extend Subscription to renew via the external payment portal.</li>
+        <li><strong>Service-level Restriction:</strong> Core database services deny execution of new operations if the tenant subscription is expired.</li>
+      </ul>
+      <h3>3. Staff Accounts Registry</h3>
       <p><strong>Route:</strong> <code>/persona-management</code> | <strong>Access:</strong> Admin only</p>
       <p>Lists all registered staff users, passwords, display names, and roles. Manage creation, modification, credential resets, and account deletions.</p>
     `
