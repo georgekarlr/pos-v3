@@ -20,13 +20,37 @@ export class ProductService {
     limit: number = 50,
     offset: number = 0,
     searchTerm?: string,
-    filterForSale?: boolean
+    filterForSale?: boolean,
+    filterActive?: boolean | null
   ): Promise<ServiceResponse<Product[]>> {
     // Offline: serve from IndexedDB cache
     if (!navigator.onLine) {
       try {
-        const cached = await OfflineDB.getProducts();
+        let cached = await OfflineDB.getProducts();
         if (cached && cached.length > 0) {
+          // Apply local filters since we are offline
+          if (searchTerm) {
+            const term = searchTerm.toLowerCase();
+            cached = cached.filter(p =>
+              p.name.toLowerCase().includes(term) ||
+              (p.sku && p.sku.toLowerCase().includes(term)) ||
+              (p.barcode && p.barcode.toLowerCase().includes(term))
+            );
+          }
+          if (filterForSale !== undefined && filterForSale !== null) {
+            cached = cached.filter(p => p.is_for_sale === filterForSale);
+          }
+          if (filterActive !== undefined && filterActive !== null) {
+            cached = cached.filter(p => p.is_active === filterActive);
+          } else if (filterActive === undefined) {
+            // Default to true as in SQL
+            cached = cached.filter(p => p.is_active === true);
+          }
+          // Sort by name like SQL does
+          cached.sort((a, b) => a.name.localeCompare(b.name));
+          // Apply pagination
+          cached = cached.slice(offset, offset + limit);
+
           return { data: cached, error: null };
         }
       } catch (cacheErr) {
@@ -40,7 +64,8 @@ export class ProductService {
         p_limit: limit,
         p_offset: offset,
         p_search_term: searchTerm || null,
-        p_filter_for_sale: filterForSale ?? null
+        p_filter_for_sale: filterForSale ?? null,
+        p_filter_active: filterActive === undefined ? true : filterActive
       });
 
       if (error) {
@@ -142,7 +167,8 @@ export class ProductService {
         p_inventory_type: params.p_inventory_type,
         p_unit_type: params.p_unit_type,
         p_is_for_sale: params.p_is_for_sale,
-        p_tax_type: params.p_tax_type
+        p_tax_type: params.p_tax_type,
+        p_is_active: params.p_is_active
       });
 
       if (error) {

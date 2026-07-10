@@ -81,6 +81,7 @@ export interface CreatePosProductParams {
 
 export interface UpdatePosProductParams extends CreatePosProductParams {
   p_product_id: number;
+  p_is_active: boolean;
 }
 
 // --- Result Interface ---
