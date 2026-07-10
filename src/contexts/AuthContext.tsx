@@ -26,40 +26,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { persona, loading: personaStorageLoading, savePersona, clearPersona } = usePersonaStorage(user?.email || null)
 
   useEffect(() => {
-    const fetchSettings = async () => {
-      if (navigator.onLine) {
-        try {
-          await SettingsService.getBusinessSettings(true)
-        } catch (err) {
-          console.error('Failed to fetch business settings on session initialization:', err)
-        }
-      }
-    }
-
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
       setUser(session?.user ?? null)
-      if (session) {
-        fetchSettings()
-      }
       setLoading(false)
     })
 
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session)
       setUser(session?.user ?? null)
-      if (event === 'SIGNED_IN' && session) {
-        await fetchSettings()
-      }
       setLoading(false)
     })
 
     return () => subscription.unsubscribe()
   }, [])
+
+  // Watch session state to load business settings in the background without deadlocking the auth listener
+  useEffect(() => {
+    const fetchSettings = async () => {
+      if (session && navigator.onLine) {
+        try {
+          await SettingsService.getBusinessSettings(true)
+        } catch (err) {
+          console.error('Failed to fetch business settings on session update:', err)
+        }
+      }
+    }
+    fetchSettings()
+  }, [session])
 
   // Account authentication methods
   const signUp = async (email: string, password: string) => {

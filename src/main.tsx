@@ -29,10 +29,11 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
     });
 
     // Auto-reload page when service worker is updated (only if previously controlled to avoid reload loops)
+    const hadController = !!navigator.serviceWorker.controller;
     let refreshing = false;
     navigator.serviceWorker.addEventListener('controllerchange', () => {
       if (refreshing) return;
-      if (navigator.serviceWorker.controller) {
+      if (hadController) {
         refreshing = true;
         window.location.reload();
       }
