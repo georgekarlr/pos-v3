@@ -35,7 +35,7 @@ export const CatalogSection: React.FC = () => {
               ['Inventory Type', 'Perishable (tracks batches and expiration dates) or Non-perishable (general stock count).'],
               ['Pricing Logic', 'Base Price is entered manually. Entering a Tax Rate (e.g. 12%) automatically computes and previews the tax-inclusive Display Price.'],
               ['Identifiers', 'SKU and Barcode inputs to hook items to POS barcode scan listeners.'],
-              ['Sale Status', 'A simple toggle to set products as Active/For Sale or disable them from showing in the POS grid.']
+              ['Sale Status', "A toggle to set products as Active/For Sale. Non-retail items (such as raw materials) can be configured and are filtered out from the cashier POS screen."]
             ].map(([param, desc]) => (
               <tr key={param} className="hover:bg-gray-50">
                 <td className="px-3 py-2 font-semibold text-gray-800 whitespace-nowrap">{param}</td>

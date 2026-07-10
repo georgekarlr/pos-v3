@@ -180,7 +180,7 @@ const chapters: ManualChapter[] = [
           <tr><td>Inventory Type</td><td>Perishable (tracks batches and expiration dates) or Non-perishable (general stock count).</td></tr>
           <tr><td>Pricing Logic</td><td>Base Price is entered manually. Entering a Tax Rate (e.g. 12%) automatically computes and previews the tax-inclusive Display Price.</td></tr>
           <tr><td>Identifiers</td><td>SKU and Barcode inputs to hook items to POS barcode scan listeners.</td></tr>
-          <tr><td>Sale Status</td><td>A simple toggle to set products as Active/For Sale or disable them from showing in the POS grid.</td></tr>
+          <tr><td>Sale Status</td><td>A toggle to set products as Active/For Sale. Non-retail items (such as raw materials) can be configured and are filtered out from the cashier POS screen.</td></tr>
         </tbody>
       </table>
     `
@@ -195,7 +195,7 @@ const chapters: ManualChapter[] = [
       <h3>1. Stock Status Indicators</h3>
       <p>Each product shows a visual badge representing availability status: Healthy, Low Stock, or Out of Stock.</p>
       <h3>2. Batch Tracking &amp; Expirations</h3>
-      <p>For perishable items, the system requires batch tracking. Each batch has a unique identification key, quantity, and expiration timestamp. Sales automatically deduct stock from the earliest expiring batch (FIFO logic).</p>
+      <p>For perishable items, the system requires batch tracking. Each batch has a unique identification key, quantity, and expiration timestamp. Sales automatically deduct stock from the earliest expiring batch (FIFO logic). The total product stock calculation automatically excludes expired batches (where the expiration date has passed).</p>
       <h3>3. Stock Adjustments</h3>
       <table>
         <thead>

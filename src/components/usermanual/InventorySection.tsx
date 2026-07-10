@@ -24,6 +24,7 @@ export const InventorySection: React.FC = () => {
       <ul className="list-disc list-inside space-y-1 ml-2">
         <li>Each batch has a unique identification key, quantity, and expiration timestamp.</li>
         <li>Sales automatically deduct stock from the earliest expiring batch (FIFO logic).</li>
+        <li>The total product stock calculation automatically excludes expired batches (where the expiration date has passed).</li>
       </ul>
 
       <h3 className="text-base font-semibold text-gray-800 mt-4">3. Stock Adjustments</h3>
