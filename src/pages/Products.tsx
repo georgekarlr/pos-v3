@@ -5,7 +5,7 @@ import ProductList from '../components/products/ProductList'
 import ProductForm, { ProductFormData } from '../components/products/ProductForm'
 import LoadingSpinner from '../components/LoadingSpinner'
 import { Plus, AlertCircle, RefreshCw } from 'lucide-react'
-import {ProductService} from "../services/productService.ts";
+import { ProductService } from "../services/productService.ts";
 
 const Products: React.FC = () => {
   const { persona } = useAuth()
