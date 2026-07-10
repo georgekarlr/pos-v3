@@ -16,13 +16,19 @@ const Products: React.FC = () => {
   const [showForm, setShowForm] = useState(false)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
+  // Filters State
+  const [searchQuery, setSearchQuery] = useState('')
+  const [forSaleFilter, setForSaleFilter] = useState<'all' | 'for_sale' | 'not_for_sale'>('all')
+  const [activeFilter, setActiveFilter] = useState<'all' | 'active' | 'inactive'>('all')
+  const [inventoryTypeFilter, setInventoryTypeFilter] = useState<'all' | 'perishable' | 'non_perishable'>('all')
+
   const isAdmin = persona?.type === 'admin'
 
   const loadProducts = async () => {
     setIsLoading(true)
     setError(null)
     try {
-      const response = await ProductService.getAllProducts(50, 0, undefined, undefined, null)
+      const response = await ProductService.getAllProducts(1000, 0, undefined, undefined, null)
       if (response.error) {
         setError(response.error)
       } else {
@@ -125,6 +131,18 @@ const Products: React.FC = () => {
     }
   }
 
+  const filteredProducts = products.filter((p) => {
+    const q = searchQuery.trim().toLowerCase()
+    const matchesSearch = q === '' ||
+      p.name.toLowerCase().includes(q) ||
+      (p.sku ? p.sku.toLowerCase().includes(q) : false) ||
+      (p.barcode ? p.barcode.toLowerCase().includes(q) : false)
+    const matchesForSale = forSaleFilter === 'all' || (forSaleFilter === 'for_sale' ? p.is_for_sale : !p.is_for_sale)
+    const matchesActive = activeFilter === 'all' || (activeFilter === 'active' ? p.is_active : !p.is_active)
+    const matchesType = inventoryTypeFilter === 'all' || p.inventory_type === inventoryTypeFilter
+    return matchesSearch && matchesForSale && matchesActive && matchesType
+  })
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -202,7 +220,78 @@ const Products: React.FC = () => {
           )}
         </div>
 
-        <ProductList products={products} onEdit={handleEditProduct} isAdmin={isAdmin} />
+        {/* Filters Panel */}
+        <div className="bg-white border border-gray-200 rounded-lg p-4 mb-6 shadow-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Search Products</label>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search name, SKU, barcode..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Active Status</label>
+              <select
+                value={activeFilter}
+                onChange={(e) => setActiveFilter(e.target.value as 'all' | 'active' | 'inactive')}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              >
+                <option value="all">All (Active & Archived)</option>
+                <option value="active">Active Only</option>
+                <option value="inactive">Archived Only</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Sale Status</label>
+              <select
+                value={forSaleFilter}
+                onChange={(e) => setForSaleFilter(e.target.value as 'all' | 'for_sale' | 'not_for_sale')}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              >
+                <option value="all">All Sale Statuses</option>
+                <option value="for_sale">For Sale Only</option>
+                <option value="not_for_sale">Not For Sale Only</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Inventory Type</label>
+              <select
+                value={inventoryTypeFilter}
+                onChange={(e) => setInventoryTypeFilter(e.target.value as 'all' | 'perishable' | 'non_perishable')}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              >
+                <option value="all">All Inventory Types</option>
+                <option value="non_perishable">Non-Perishable</option>
+                <option value="perishable">Perishable</option>
+              </select>
+            </div>
+          </div>
+
+          {(searchQuery || activeFilter !== 'all' || forSaleFilter !== 'all' || inventoryTypeFilter !== 'all') && (
+            <div className="mt-3 flex justify-end">
+              <button
+                onClick={() => {
+                  setSearchQuery('');
+                  setActiveFilter('all');
+                  setForSaleFilter('all');
+                  setInventoryTypeFilter('all');
+                }}
+                className="text-xs text-blue-600 hover:text-blue-800 font-medium transition-colors"
+              >
+                Clear Filters
+              </button>
+            </div>
+          )}
+        </div>
+
+        <ProductList products={filteredProducts} onEdit={handleEditProduct} isAdmin={isAdmin} />
 
         {showForm && (
           <ProductForm
