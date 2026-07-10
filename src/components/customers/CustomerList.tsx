@@ -1,5 +1,5 @@
 import React from 'react';
-import { Edit2, Trash2, Phone, Mail, MapPin, Calendar, Users, Loader2 } from 'lucide-react';
+import { Edit2, Trash2, Phone, Mail, MapPin, Calendar, Users, Loader2, TrendingUp } from 'lucide-react';
 import { Customer } from '../../types/customer';
 
 interface CustomerListProps {
@@ -7,9 +7,10 @@ interface CustomerListProps {
     loading: boolean;
     onEdit: (customer: Customer) => void;
     onDelete: (customer: Customer) => void;
+    onViewSummary?: (customer: Customer) => void;
 }
 
-const CustomerList: React.FC<CustomerListProps> = ({ customers, loading, onEdit, onDelete }) => {
+const CustomerList: React.FC<CustomerListProps> = ({ customers, loading, onEdit, onDelete, onViewSummary }) => {
     if (loading) {
         return (
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-12 flex flex-col items-center justify-center text-gray-400">
@@ -116,6 +117,15 @@ const CustomerList: React.FC<CustomerListProps> = ({ customers, loading, onEdit,
                                     {/* Actions */}
                                     <td className="px-6 py-4 align-top text-right">
                                         <div className="flex items-center justify-end gap-2">
+                                            {onViewSummary && (
+                                                <button
+                                                    onClick={() => onViewSummary(customer)}
+                                                    className="p-1.5 text-gray-400 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-colors"
+                                                    title="View Financial Overview"
+                                                >
+                                                    <TrendingUp size={18} />
+                                                </button>
+                                            )}
                                             <button
                                                 onClick={() => onEdit(customer)}
                                                 className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"

@@ -2,6 +2,8 @@ import { supabase } from '../lib/supabase';
 import { ServiceResponse } from '../types/pos';
 import {
   CustomerInstallments,
+  InstallmentContractSummary,
+  GetAllInstallmentContractsParams,
   CreateInstallmentSaleParams,
   CreateInstallmentSaleResult,
   PayInstallmentScheduleParams,
@@ -36,6 +38,38 @@ export class InstallmentService {
       return { data: data as CustomerInstallments, error: null };
     } catch (err: any) {
       console.error('Unexpected error fetching customer installments:', err);
+      return { data: null, error: err.message || 'An unexpected error occurred.' };
+    }
+  }
+
+  /**
+   * Fetches a paginated, filterable list of all installment contracts (admin-only).
+   * Replaces the separate search-customers + search-contracts pattern.
+   */
+  static async getAllContracts(
+    params: GetAllInstallmentContractsParams
+  ): Promise<ServiceResponse<InstallmentContractSummary[]>> {
+    try {
+      if (!navigator.onLine) {
+        return { data: null, error: 'Viewing contracts requires an internet connection.' };
+      }
+
+      const { data, error } = await supabase.rpc('pos2_get_all_installment_contracts', {
+        p_requesting_account_id: params.p_requesting_account_id,
+        p_limit: params.p_limit,
+        p_offset: params.p_offset,
+        p_search_term: params.p_search_term ?? null,
+        p_status_filter: params.p_status_filter ?? null,
+      });
+
+      if (error) {
+        console.error('Error fetching all installment contracts:', error);
+        return { data: null, error: error.message };
+      }
+
+      return { data: (data ?? []) as InstallmentContractSummary[], error: null };
+    } catch (err: any) {
+      console.error('Unexpected error fetching all installment contracts:', err);
       return { data: null, error: err.message || 'An unexpected error occurred.' };
     }
   }

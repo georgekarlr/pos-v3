@@ -1,20 +1,19 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   CreditCard,
   Plus,
   AlertCircle,
   X,
   CheckCircle2,
-  FileText,
   Loader2,
   ArrowLeft,
+  ChevronDown,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useInstallments } from '../hooks/useInstallments';
-import { CustomerSearchResult } from '../types/debt';
-import { InstallmentContract, CreateInstallmentSaleParams } from '../types/installment';
-import CustomerSearchPanel from '../components/installments/CustomerSearchPanel';
-import ContractList from '../components/installments/ContractList';
+import { useAllInstallmentContracts } from '../hooks/useAllInstallmentContracts';
+import { InstallmentContractSummary, CreateInstallmentSaleParams } from '../types/installment';
+import AllContractsList from '../components/installments/AllContractsList';
 import ContractDetail from '../components/installments/ContractDetail';
 import PaymentModal from '../components/installments/PaymentModal';
 import CreateInstallmentModal from '../components/installments/CreateInstallmentModal';
@@ -23,22 +22,40 @@ import DebtRecoveryModal from '../components/installments/DebtRecoveryModal';
 
 const Installments: React.FC = () => {
   const { persona } = useAuth();
+
+  // --- All-contracts list (search + filter + pagination) ---
+  const {
+    contracts,
+    loading: listLoading,
+    error: listError,
+    page,
+    hasMore,
+    searchTerm,
+    statusFilter,
+    load: loadAllContracts,
+    nextPage,
+    prevPage,
+    setSearch,
+    setStatusFilter,
+  } = useAllInstallmentContracts({ pageSize: 20 });
+
+  // --- Per-contract detail (schedules + actions) ---
   const {
     installments,
     selectedContract,
-    loading,
-    error,
+    loading: detailLoading,
+    error: detailError,
     setSelectedContract,
     loadCustomerInstallments,
     createSale,
     paySchedule,
     writeOff,
     recoverDebt,
-    clearError,
-    reset,
+    clearError: clearDetailError,
   } = useInstallments();
 
-  const [selectedCustomer, setSelectedCustomer] = useState<CustomerSearchResult | null>(null);
+  const [selectedSummary, setSelectedSummary] = useState<InstallmentContractSummary | null>(null);
+  const [contractsOpen, setContractsOpen] = useState(true);
   const [showPayModal, setShowPayModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showWriteOffModal, setShowWriteOffModal] = useState(false);
@@ -54,20 +71,34 @@ const Installments: React.FC = () => {
     setTimeout(() => setToast(null), 4000);
   };
 
-  const handleSelectCustomer = async (customer: CustomerSearchResult) => {
-    setSelectedCustomer(customer);
-    reset();
-    await loadCustomerInstallments(customer.customer_id);
+  // Initial load
+  useEffect(() => {
+    if (persona?.id) loadAllContracts(persona.id);
+  }, [persona?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // When a summary row is selected: load that customer's full installment detail
+  // then pick the matching contract from the schedules data.
+  const handleSelectSummary = async (summary: InstallmentContractSummary) => {
+    setSelectedSummary(summary);
+    setSelectedContract(null);
+    await loadCustomerInstallments(summary.customer_id);
   };
 
-  const handleSelectContract = (contract: InstallmentContract) => {
-    setSelectedContract(contract);
-  };
+  // After installments load, auto-select the matching contract
+  useEffect(() => {
+    if (!selectedSummary || !installments) return;
+    const match = installments.contracts.find(
+      (c) => c.contract_id === selectedSummary.contract_id
+    );
+    if (match) setSelectedContract(match);
+  }, [installments, selectedSummary]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleBackToList = () => {
     setSelectedContract(null);
+    setSelectedSummary(null);
   };
 
+  // --- Payment ---
   const handlePayConfirm = async (amount: number, method: string) => {
     if (!selectedContract || !persona?.id) return;
     setPayLoading(true);
@@ -82,13 +113,15 @@ const Installments: React.FC = () => {
 
     if (result.success) {
       showToast('success', 'Payment processed successfully!');
-      // Refresh selected contract from updated installments
       setSelectedContract(null);
+      setSelectedSummary(null);
+      if (persona?.id) loadAllContracts(persona.id);
     } else {
       showToast('error', result.message);
     }
   };
 
+  // --- Write-off ---
   const handleWriteOffConfirm = async (reason: string) => {
     if (!selectedContract || !persona?.id) return;
     setWriteOffLoading(true);
@@ -103,11 +136,14 @@ const Installments: React.FC = () => {
     if (result.success) {
       showToast('success', 'Contract successfully written off as bad debt!');
       setSelectedContract(null);
+      setSelectedSummary(null);
+      if (persona?.id) loadAllContracts(persona.id);
     } else {
       showToast('error', result.message);
     }
   };
 
+  // --- Debt recovery ---
   const handleRecoveryConfirm = async (amount: number, method: string, notes: string) => {
     if (!selectedContract || !persona?.id) return;
     setRecoveryLoading(true);
@@ -124,11 +160,14 @@ const Installments: React.FC = () => {
     if (result.success) {
       showToast('success', 'Installment bad debt recovery processed successfully!');
       setSelectedContract(null);
+      setSelectedSummary(null);
+      if (persona?.id) loadAllContracts(persona.id);
     } else {
       showToast('error', result.message);
     }
   };
 
+  // --- Create sale ---
   const handleCreateSale = async (params: Omit<CreateInstallmentSaleParams, 'p_account_id'>) => {
     if (!persona?.id) return { success: false, message: 'No active persona.' };
     setCreateLoading(true);
@@ -138,11 +177,12 @@ const Installments: React.FC = () => {
     if (result.success) {
       setShowCreateModal(false);
       showToast('success', 'Installment contract created successfully!');
-      // Refresh customer data if one is loaded
-      if (selectedCustomer) await loadCustomerInstallments(selectedCustomer.customer_id);
+      if (persona?.id) loadAllContracts(persona.id);
     }
     return result;
   };
+
+  const accountId = persona?.id ?? 0;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -183,13 +223,13 @@ const Installments: React.FC = () => {
         </div>
       </div>
 
-      {/* Global Error */}
-      {error && (
+      {/* Detail-level error banner */}
+      {detailError && (
         <div className="max-w-7xl mx-auto px-6 mt-4">
           <div className="flex items-start gap-3 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
             <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />
-            <p className="flex-1">{error}</p>
-            <button onClick={clearError}><X size={16} /></button>
+            <p className="flex-1">{detailError}</p>
+            <button onClick={clearDetailError}><X size={16} /></button>
           </div>
         </div>
       )}
@@ -198,51 +238,65 @@ const Installments: React.FC = () => {
       <div className="max-w-7xl mx-auto px-6 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-          {/* Left Panel — Customer Search & Contract List */}
-          <div className="lg:col-span-4 space-y-5">
-            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
-              <h2 className="text-sm font-bold text-gray-700 uppercase tracking-wide mb-4">Search Customer</h2>
-              <CustomerSearchPanel
-                onSelectCustomer={handleSelectCustomer}
-                selectedCustomerId={selectedCustomer?.customer_id ?? null}
-              />
-            </div>
-
-            {selectedCustomer && (
-              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
-                <div className="flex items-center justify-between mb-4">
+          {/* Left Panel — All Contracts List */}
+          <div className="lg:col-span-4">
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+              {/* Collapsible header */}
+              <button
+                onClick={() => setContractsOpen((o) => !o)}
+                className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors"
+              >
+                <div className="flex items-center gap-2">
                   <h2 className="text-sm font-bold text-gray-700 uppercase tracking-wide">
                     Contracts
                   </h2>
-                  {loading && <Loader2 size={16} className="animate-spin text-indigo-500" />}
+                  {listLoading && <Loader2 size={13} className="animate-spin text-indigo-400" />}
+                  {!listLoading && contracts.length > 0 && (
+                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-bold">
+                      {contracts.length}
+                    </span>
+                  )}
                 </div>
+                <ChevronDown
+                  size={16}
+                  className={`text-gray-400 transition-transform duration-300 ${contractsOpen ? 'rotate-180' : 'rotate-0'}`}
+                />
+              </button>
 
-                {loading && !installments ? (
-                  <div className="py-12 flex items-center justify-center">
-                    <Loader2 size={24} className="animate-spin text-indigo-400" />
-                  </div>
-                ) : (
-                  <ContractList
-                    contracts={installments?.contracts || []}
-                    selectedContractId={selectedContract?.contract_id ?? null}
-                    onSelectContract={handleSelectContract}
+              {/* Collapsible body */}
+              <div
+                className={`transition-all duration-300 ease-in-out overflow-hidden ${
+                  contractsOpen ? 'max-h-[9999px] opacity-100' : 'max-h-0 opacity-0'
+                }`}
+              >
+                <div className="px-5 pb-5">
+                  <AllContractsList
+                    contracts={contracts}
+                    selectedContractId={selectedSummary?.contract_id ?? null}
+                    loading={listLoading}
+                    error={listError}
+                    page={page}
+                    hasMore={hasMore}
+                    searchTerm={searchTerm}
+                    statusFilter={statusFilter}
+                    onSelectContract={handleSelectSummary}
+                    onSearchChange={(term) => setSearch(term, accountId)}
+                    onStatusFilterChange={(status) => setStatusFilter(status, accountId)}
+                    onNextPage={() => nextPage(accountId)}
+                    onPrevPage={() => prevPage(accountId)}
                   />
-                )}
+                </div>
               </div>
-            )}
-
-            {!selectedCustomer && (
-              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8 flex flex-col items-center text-center text-gray-400">
-                <FileText size={40} className="mb-3 opacity-20" />
-                <p className="text-sm font-medium">Search for a customer above</p>
-                <p className="text-xs mt-1">Their installment contracts will appear here</p>
-              </div>
-            )}
+            </div>
           </div>
 
           {/* Right Panel — Contract Detail */}
           <div className="lg:col-span-8">
-            {selectedContract ? (
+            {detailLoading && !selectedContract ? (
+              <div className="h-full min-h-[400px] bg-white rounded-2xl border border-gray-200 shadow-sm flex items-center justify-center">
+                <Loader2 size={28} className="animate-spin text-indigo-400" />
+              </div>
+            ) : selectedContract ? (
               <div className="space-y-4">
                 {/* Back button on mobile */}
                 <button
@@ -258,7 +312,11 @@ const Installments: React.FC = () => {
                     <div>
                       <h2 className="font-bold text-gray-900">Invoice #{selectedContract.invoice_number}</h2>
                       <p className="text-xs text-gray-500 mt-0.5">
-                        Contract #{selectedContract.contract_id} · {new Date(selectedContract.date_purchased).toLocaleDateString('en-PH', { dateStyle: 'long' })}
+                        Contract #{selectedContract.contract_id} ·{' '}
+                        {new Date(selectedContract.date_purchased).toLocaleDateString('en-PH', { dateStyle: 'long' })}
+                        {selectedSummary && (
+                          <> · <span className="font-medium text-gray-700">{selectedSummary.customer_name}</span></>
+                        )}
                       </p>
                     </div>
                   </div>
@@ -279,20 +337,14 @@ const Installments: React.FC = () => {
                   <CreditCard size={28} className="opacity-40" />
                 </div>
                 <p className="text-base font-semibold text-gray-600">Select a contract</p>
-                <p className="text-sm mt-1">
-                  {selectedCustomer
-                    ? 'Choose a contract from the left to view its schedule.'
-                    : 'Search for a customer to get started.'}
-                </p>
-                {!selectedCustomer && (
-                  <button
-                    onClick={() => setShowCreateModal(true)}
-                    className="mt-6 flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition shadow-sm"
-                  >
-                    <Plus size={16} />
-                    New Installment Sale
-                  </button>
-                )}
+                <p className="text-sm mt-1">Choose a contract from the list to view its schedule.</p>
+                <button
+                  onClick={() => setShowCreateModal(true)}
+                  className="mt-6 flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition shadow-sm"
+                >
+                  <Plus size={16} />
+                  New Installment Sale
+                </button>
               </div>
             )}
           </div>

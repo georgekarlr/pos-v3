@@ -5,13 +5,18 @@ import {
     Customer,
     CreateCustomerParams,
     UpdateCustomerParams,
-    DeleteCustomerParams
+    DeleteCustomerParams,
+    CustomerFinancialSummary,
 } from '../types/customer';
 
 export const useCustomers = () => {
     const [customers, setCustomers] = useState<Customer[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    // Financial summary — isolated state so it doesn't pollute the list
+    const [financialSummary, setFinancialSummary] = useState<CustomerFinancialSummary | null>(null);
+    const [summaryLoading, setSummaryLoading] = useState(false);
 
     // 1. Fetch & Search Customers
     const fetchCustomers = useCallback(async (searchQuery: string = '') => {
@@ -108,7 +113,26 @@ export const useCustomers = () => {
         return { success: false, message: fallbackError };
     };
 
+    // 5. Fetch Financial Summary (new API)
+    const fetchFinancialSummary = useCallback(async (customerId: number) => {
+        setSummaryLoading(true);
+        setFinancialSummary(null);
+
+        const { data, error: svcError } = await CustomerService.getFinancialSummary(customerId);
+
+        setSummaryLoading(false);
+
+        if (svcError) {
+            setError(svcError);
+            return { success: false };
+        }
+
+        setFinancialSummary(data);
+        return { success: true };
+    }, []);
+
     const clearError = () => setError(null);
+    const clearSummary = () => setFinancialSummary(null);
 
     return {
         customers,
@@ -118,6 +142,11 @@ export const useCustomers = () => {
         createCustomer,
         updateCustomer,
         deleteCustomer,
-        clearError
+        clearError,
+        // Financial summary
+        financialSummary,
+        summaryLoading,
+        fetchFinancialSummary,
+        clearSummary,
     };
 };

@@ -8,8 +8,9 @@ export const AuthSection: React.FC = () => {
         The first layer of security uses Supabase email-based accounts. All users must register and sign in to connect to the store environment.
       </p>
       <ul className="list-disc list-inside space-y-1 ml-2">
-        <li><strong>Login Page:</strong> Enter your registered store email and password. Click "Sign In".</li>
-        <li><strong>Signup Page:</strong> If you are a new tenant or account holder, register your email, password, and click "Sign Up" to establish your workspace database.</li>
+        <li><strong>Email & Password Login:</strong> Enter your registered store email and password. Click "Sign In".</li>
+        <li><strong>Google Sign-In:</strong> Click the "Sign In with Google" button to authenticate seamlessly using your corporate or personal Google account.</li>
+        <li><strong>Signup Page:</strong> If you are a new tenant or account holder, you can register via email and password by clicking "Sign Up", or use "Sign Up with Google" to automatically link your Google profile.</li>
       </ul>
 
       <h3 className="text-base font-semibold text-gray-800 mt-4">2. Role Selection (Personas)</h3>

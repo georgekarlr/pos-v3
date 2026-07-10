@@ -36,9 +36,26 @@ export const SettingsSection: React.FC = () => {
             Set up connection configs: **Serial** (Baud Rate), **USB** (using WebUSB; requires Chrome or Edge), and **Bluetooth** (BLE Service/Characteristic UUIDs). Click **Save &amp; Connect** to pair, and **Test Print** to request a mock receipt printing page.
           </p>
         </div>
+
+        <div className="border border-gray-200 rounded-lg p-3 bg-gray-50/50">
+          <h4 className="font-semibold text-gray-800">💳 Subscription &amp; Billing Status</h4>
+          <p className="text-xs text-gray-600 mt-1">
+            Displays active account tier, billing type (VAT-registered or Non-VAT), subscription status (Active, Trial, Expired), and the expiry or renewal timestamp. Features an external link to Ceintelly to extend billing or change plans.
+          </p>
+        </div>
       </div>
 
-      <h3 className="text-base font-semibold text-gray-800 mt-4">2. Staff Accounts Registry</h3>
+      <h3 className="text-base font-semibold text-gray-800 mt-4">2. Subscription Expiry Enforcement</h3>
+      <p>
+        The system enforces strict payment validation:
+      </p>
+      <ul className="list-disc list-inside space-y-1 ml-2 text-xs">
+        <li><strong>Blocking Redirect:</strong> If subscription status is marked as **Expired**, an overlay blocks all core actions (POS register, sales listings, reports).</li>
+        <li><strong>Limited Settings View:</strong> Admins can still access `/settings` to inspect account settings, business registration fields, and click **Extend Subscription** to renew via the external payment portal.</li>
+        <li><strong>Service-level Restriction:</strong> Core database services deny execution of new operations if the tenant subscription is expired.</li>
+      </ul>
+
+      <h3 className="text-base font-semibold text-gray-800 mt-4">3. Staff Accounts Registry</h3>
       <p>
         <strong>Route:</strong> <code className="bg-gray-100 px-1 rounded">/persona-management</code> | <strong>Access:</strong> Admin only
       </p>
