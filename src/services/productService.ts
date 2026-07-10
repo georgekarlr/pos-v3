@@ -112,6 +112,7 @@ export class ProductService {
    * Requires Admin permissions.
    */
   static async createProduct(params: CreatePosProductParams): Promise<ServiceResponse<PosProductOperationResult>> {
+    console.log("params: ", params)
     try {
       const { data, error } = await supabase.rpc('pos2_create_product', {
         p_account_id: params.p_account_id,
