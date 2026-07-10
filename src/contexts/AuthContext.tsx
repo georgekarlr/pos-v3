@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { AuthContextType, PersonaData, User, Session } from '../types/auth'
 import { usePersonaStorage } from '../hooks/usePersonaStorage'
 import { PersonaService } from '../services/personaService'
+import { SettingsService } from '../services/settingsService'
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
@@ -25,10 +26,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { persona, loading: personaStorageLoading, savePersona, clearPersona } = usePersonaStorage(user?.email || null)
 
   useEffect(() => {
+    const fetchSettings = async () => {
+      if (navigator.onLine) {
+        try {
+          await SettingsService.getBusinessSettings(true)
+        } catch (err) {
+          console.error('Failed to fetch business settings on session initialization:', err)
+        }
+      }
+    }
+
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
       setUser(session?.user ?? null)
+      if (session) {
+        fetchSettings()
+      }
       setLoading(false)
     })
 
@@ -38,6 +52,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       setSession(session)
       setUser(session?.user ?? null)
+      if (event === 'SIGNED_IN' && session) {
+        await fetchSettings()
+      }
       setLoading(false)
     })
 
