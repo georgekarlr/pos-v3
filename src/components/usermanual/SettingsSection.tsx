@@ -40,7 +40,7 @@ export const SettingsSection: React.FC = () => {
         <div className="border border-gray-200 rounded-lg p-3 bg-gray-50/50">
           <h4 className="font-semibold text-gray-800">💳 Subscription &amp; Billing Status</h4>
           <p className="text-xs text-gray-600 mt-1">
-            Displays active account tier, billing type (VAT-registered or Non-VAT), subscription status (Active, Trial, Expired), and the expiry or renewal timestamp. Features an external link to Ceintelly to extend billing or change plans.
+            Displays active account tier, billing type (VAT-registered or Non-VAT), subscription status (Active, Trial, Expired), and the expiry or renewal timestamp. The latest subscription details and expiration date are automatically retrieved from the online database and cached locally on user login. Features an external link to Ceintelly to extend billing or change plans.
           </p>
         </div>
       </div>
