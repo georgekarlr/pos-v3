@@ -6,6 +6,7 @@ export interface Customer {
     phone_number: string;
     email: string | null;
     address: string | null;
+    total_loyalty_points: number; // accumulated loyalty points balance
     created_at: string;
 }
 
@@ -75,4 +76,16 @@ export interface CustomerFinancialSummary {
     total_outstanding_amount: number;
     running_tab_debt: CustomerRunningTabDebt;
     active_installments: CustomerActiveInstallment[];
+}
+
+// ---- Loyalty Transactions ----
+
+export interface LoyaltyTransaction {
+    id: number;
+    customer_id: number;
+    order_id: number | null;
+    transaction_type: 'EARN' | 'REDEEM';
+    points: number;
+    description: string | null;
+    created_at: string;
 }

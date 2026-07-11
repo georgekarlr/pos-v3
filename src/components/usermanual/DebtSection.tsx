@@ -14,6 +14,7 @@ export const DebtSection: React.FC = () => {
         <li><strong>Edit Details:</strong> Update customer contact info and address.</li>
         <li><strong>Delete Profile:</strong> Permanently remove a customer registry profile.</li>
         <li><strong>View Financial Overview:</strong> Click the <span className="font-semibold text-violet-600">TrendingUp graph icon</span> to open a unified financial snapshot.</li>
+        <li><strong>Loyalty Points Indicator:</strong> View the customer's total accumulated rewards balance directly in the list table and the Expanded Details card view.</li>
       </ul>
 
       <div className="bg-violet-50 border border-violet-150 rounded-xl p-3 my-2 text-xs text-violet-850">

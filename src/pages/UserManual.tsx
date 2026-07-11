@@ -141,16 +141,24 @@ const chapters: ManualChapter[] = [
         <li><strong>Hardware Scanner:</strong> Plug-and-play keyboard emulation HID scanners. Set scanner mode to "Hardware" in Settings. Scans trigger the current action mode instantly.</li>
         <li><strong>Camera Scanner:</strong> Activate by toggling "Camera Scanner" in Settings. Click **Open Scanner** on the POS page to scan barcodes using your tablet/phone built-in camera feed. Supports single and multi-barcode scan queues.</li>
       </ul>
-      <h3>4. Cart calculations, Discounts, and Payments</h3>
+      <h3>4. Cart Calculations, Discounts, and Loyalty</h3>
       <p><strong>Discount Types:</strong></p>
       <ul>
-        <li><strong>Senior Citizen (SC) / Person with Disability (PWD):</strong> Applies a 20% discount on VAT-exclusive price and waives tax calculations for BIR compliance.</li>
+        <li><strong>Senior Citizen (SC) / Person with Disability (PWD):</strong> Applies a 20% discount on VAT-exclusive price and waives tax calculations for BIR compliance.
+          <br/><em>⚠ BIR Compliance:</em> You must provide the beneficiary's <strong>Full Name</strong> and <strong>ID Number</strong> during checkout. The checkout action is disabled until both are entered.
+        </li>
         <li><strong>Regular Discount:</strong> A manual fixed Peso amount deducted from the grand total.</li>
+      </ul>
+      <p><strong>Loyalty Program:</strong></p>
+      <ul>
+        <li><strong>Customer ID:</strong> Entering a registered Customer ID displays their current points balance.</li>
+        <li><strong>Earn:</strong> Earn points automatically at a rate of 1 point per ₱1 of the net total.</li>
+        <li><strong>Redeem:</strong> Redeem points to reduce the order total (1 point = ₱1 discount). Max redemption is limited to their points balance.</li>
       </ul>
       <p><strong>Split Payments:</strong></p>
       <p>Click "+ Add Payment" to allocate split payments (e.g. paying PHP 500 in Cash and PHP 200 via GCash). Enter Cash Tendered to automatically show change due.</p>
       <p><strong>Completion:</strong></p>
-      <p>Ensure an active terminal is selected. Click "Complete Sale" to trigger the database transaction, update inventory batches, and open the ESC/POS Receipt printing prompt.</p>
+      <p>Ensure an active terminal is selected. Click "Complete Sale" to trigger the database transaction, update inventory batches, log loyalty points, and open the ESC/POS Receipt printing prompt.</p>
     `
   },
   {
@@ -263,13 +271,14 @@ const chapters: ManualChapter[] = [
       <ul>
         <li><strong>Edit Details:</strong> Update customer contact info and address.</li>
         <li><strong>Delete Profile:</strong> Permanently remove a customer profile (only if there are no outstanding financial ties).</li>
+        <li><strong>Loyalty Points Indicator:</strong> View the customer's total accumulated rewards balance directly in the list table and the expanded details drawer.</li>
         <li><strong>Financial Overview:</strong> Click the TrendingUp graph icon to open a unified financial snapshot containing a combined Total Outstanding amount (running tab balance + remaining installment balances), running tab balance details, credit limit, unsettled item registers, and a status summary of active installment contracts.</li>
       </ul>
       <h3>2. Debt Wizard</h3>
       <p><strong>Route:</strong> <code>/debt-management/wizard</code></p>
       <p>A 4-step wizard to file an official credit transaction:</p>
       <ol>
-        <li><strong>Customer:</strong> Search and select from the registry, or immediately click "+ Add New Customer" to register a profile.</li>
+        <li><strong>Customer:</strong> Search and select from the registry (displays loyalty points balance alongside their current ledger balance), or immediately click "+ Add New Customer" to register a profile.</li>
         <li><strong>Items:</strong> Add catalog items to the debt order. This records product units being released on credit.</li>
         <li><strong>Loan:</strong> Set an optional Cash Loan Amount (e.g. lending money), add descriptive notes, and select the transaction date.</li>
         <li><strong>Summary:</strong> Displays total items, cash loan value, and customer detail. Click Submit to create the debt record.</li>

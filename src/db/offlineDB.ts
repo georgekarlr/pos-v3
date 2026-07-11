@@ -3,19 +3,28 @@ import { Product } from '../types/product';
 export interface OfflineSale {
   id?: number;
   accountId: number;
-  terminalId: number; // NEW
+  terminalId: number;
+  customerId?: number | null;           // NEW: for loyalty
   cart: any[];
   payments: any[];
   notes: string | null;
   total: number;
   tax: number | null;
   total_tendered: number;
-  scPwdDiscount?: number; // NEW
-  regularDiscount?: number; // NEW
+  // BIR Compliance
+  scPwdDiscount?: number;
+  scPwdIdNumber?: string | null;        // NEW
+  scPwdName?: string | null;            // NEW
+  regularDiscount?: number;
+  // Loyalty Program
+  loyaltyPointsEarned?: number;         // NEW
+  loyaltyPointsRedeemed?: number;       // NEW
+  // Offline Sync
   createdAt: string;
-  offlineInvoiceNumber?: string; // NEW
-  offlineGrandTotal?: number; // NEW
+  offlineInvoiceNumber?: string;
+  offlineGrandTotal?: number;
 }
+
 
 export interface OfflineDebt {
   id?: number;

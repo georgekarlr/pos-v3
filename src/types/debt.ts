@@ -3,6 +3,7 @@ export interface CustomerSearchResult {
   full_name: string;
   phone_number: string;
   current_balance: number;
+  total_loyalty_points: number; // NEW
 }
 
 export interface CustomerListItem {
@@ -13,6 +14,7 @@ export interface CustomerListItem {
   address: string;
   created_at: string;
   current_balance: number;
+  total_loyalty_points: number; // NEW
 }
 
 export interface CreateCustomerDebtParams {
