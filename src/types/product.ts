@@ -59,6 +59,7 @@ export interface Product {
   unit_type: ProductUnitType | null;
   is_for_sale: boolean;
   tax_type: ProductTaxType;
+  is_sc_pwd_eligible: boolean;
 }
 
 // --- Parameter Interfaces ---
@@ -77,6 +78,7 @@ export interface CreatePosProductParams {
   p_unit_type: ProductUnitType | null;
   p_is_for_sale: boolean;
   p_tax_type: ProductTaxType;
+  p_is_sc_pwd_eligible: boolean;
 }
 
 export interface UpdatePosProductParams extends CreatePosProductParams {

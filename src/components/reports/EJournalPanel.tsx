@@ -27,6 +27,7 @@ const EVENT_COLORS: Record<string, string> = {
   SETTINGS_CHANGE: 'bg-yellow-100 text-yellow-700',
   COLLECTION: 'bg-teal-100 text-teal-700',
   SYSTEM_UPDATE: 'bg-amber-100 text-amber-700',
+  MANUAL_SALE_ENTRY: 'bg-indigo-100 text-indigo-700',
 }
 
 const EventBadge: React.FC<{ type: string }> = ({ type }) => (
@@ -133,7 +134,7 @@ const EJournalPanel: React.FC = () => {
 
       const detailsObj = row.details || {}
 
-      if (row.event_type === 'SALE') {
+      if (row.event_type === 'SALE' || row.event_type === 'MANUAL_SALE_ENTRY') {
         const invoiceNo = detailsObj.invoice_number || detailsObj.invoice_no || 'N/A'
         const customerName = detailsObj.customer_name || 'Walk-in'
         text += `Invoice No: ${invoiceNo}\n`
@@ -161,7 +162,16 @@ const EJournalPanel: React.FC = () => {
         text += `  Gross Amount:        ${Number(detailsObj.gross_amount || detailsObj.total_amount || detailsObj.subtotal || 0).toFixed(2).padStart(10)}\n`
         text += `  Discounts:           ${totalDiscounts.toFixed(2).padStart(10)}\n`
         text += `  Net Amount:          ${Number(detailsObj.net_amount || detailsObj.total_amount || detailsObj.total || 0).toFixed(2).padStart(10)}\n`
-        text += `  Total VAT:           ${totalVat.toFixed(2).padStart(10)}\n\n`
+        text += `  Total VAT:           ${totalVat.toFixed(2).padStart(10)}\n`
+        if (detailsObj.sc_pwd_id || detailsObj.sc_pwd_name) {
+          text += `  SC/PWD ID:           ${(detailsObj.sc_pwd_id || 'N/A')}\n`
+          text += `  SC/PWD Name:         ${(detailsObj.sc_pwd_name || 'N/A')}\n`
+        }
+        if (detailsObj.points_earned || detailsObj.points_redeemed) {
+          text += `  Loyalty Earned:      ${Number(detailsObj.points_earned || 0).toFixed(2)}\n`
+          text += `  Loyalty Redeemed:    ${Number(detailsObj.points_redeemed || 0).toFixed(2)}\n`
+        }
+        text += `\n`
 
         const payments = Array.isArray(detailsObj.payments) ? detailsObj.payments : []
         if (payments.length > 0) {

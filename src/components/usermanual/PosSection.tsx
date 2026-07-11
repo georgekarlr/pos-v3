@@ -35,7 +35,7 @@ export const PosSection: React.FC = () => {
         <div>
           <p className="font-semibold">SC/PWD Discount (20% + VAT Exempt)</p>
           <p className="text-xs mt-0.5">
-            Toggle the <strong>SC/PWD Discount</strong> checkbox in the Checkout modal. When enabled, the system applies a 20% discount on the VAT-exclusive base price and makes all VATable items VAT-exempt — both required for BIR compliance.
+            Toggle the <strong>SC/PWD Discount</strong> checkbox in the Checkout modal. When enabled, the system applies a 20% discount on the VAT-exclusive base price and makes all VATable items VAT-exempt for <strong>eligible products</strong> — both required for BIR compliance.
           </p>
           <p className="text-xs mt-1 text-amber-700 font-medium">
             ⚠ BIR Compliance: You must enter the SC/PWD beneficiary's <strong>Full Name</strong> and <strong>ID/Card Number</strong>. The "Complete Sale" button stays disabled until both fields are filled.

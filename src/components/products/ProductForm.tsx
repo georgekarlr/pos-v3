@@ -23,6 +23,7 @@ export interface ProductFormData {
   is_for_sale: boolean
   tax_type: ProductTaxType
   is_active: boolean
+  is_sc_pwd_eligible: boolean
 }
 
 const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onCancel, isAdmin }) => {
@@ -39,7 +40,8 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onCancel, 
     unit_type: null,
     is_for_sale: true,
     tax_type: 'VATable',
-    is_active: true
+    is_active: true,
+    is_sc_pwd_eligible: true
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -59,7 +61,8 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onCancel, 
         unit_type: product.unit_type || null,
         is_for_sale: product.is_for_sale ?? true,
         tax_type: product.tax_type || 'VATable',
-        is_active: product.is_active ?? true
+        is_active: product.is_active ?? true,
+        is_sc_pwd_eligible: product.is_sc_pwd_eligible ?? true
       })
     }
   }, [product])
@@ -343,6 +346,23 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onCancel, 
                 </label>
                 <p className="mt-1 text-xs text-gray-500 ml-6">
                   If disabled, this product will be archived/hidden from the active product lists.
+                </p>
+              </div>
+
+              <div>
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="is_sc_pwd_eligible"
+                    checked={formData.is_sc_pwd_eligible}
+                    onChange={(e) => setFormData(prev => ({ ...prev, is_sc_pwd_eligible: e.target.checked }))}
+                    disabled={!isAdmin}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <span className="text-sm font-medium text-gray-700">SC/PWD Discount Eligible</span>
+                </label>
+                <p className="mt-1 text-xs text-gray-500 ml-6">
+                  If enabled, this product will be eligible for Senior Citizen and PWD discounts.
                 </p>
               </div>
 

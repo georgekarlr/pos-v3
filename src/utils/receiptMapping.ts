@@ -20,6 +20,7 @@ export function mapSaleDetailsToReceipt(details: SaleDetailsResponse): ReceiptDa
             unitPrice: unit,
             baseUnitPrice: baseUnit,  // VAT-exclusive; used when SC/PWD discount is active
             lineTotal: Number(total),
+            isScPwdEligible: it.tax_type_at_purchase === 'VAT-Exempt',
             refundedQty,
             refundedAmount
         }

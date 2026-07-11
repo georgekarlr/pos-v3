@@ -72,7 +72,11 @@ export interface RecordManualSaleParams {
   p_tax: number;
   p_total_tendered: number;
   p_sc_pwd_discount?: number;
+  p_sc_pwd_id_number?: string | null;
+  p_sc_pwd_name?: string | null;
   p_regular_discount?: number;
+  p_loyalty_points_earned?: number;
+  p_loyalty_points_redeemed?: number;
   p_occurred_at: string; // Required for manual sale
 }
 

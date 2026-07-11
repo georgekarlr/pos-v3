@@ -237,6 +237,18 @@ const POS: React.FC = () => {
 
   const clearAll = () => setOrderQtyById({})
 
+  const handleClosePayment = () => {
+    setPaymentOpen(false)
+    setIsScPwdDiscount(false)
+    setScPwdIdNumber('')
+    setScPwdName('')
+    setRegularDiscount('')
+    setLoyaltyPointsRedeemed(0)
+    setCustomerId(null)
+    setPayments([])
+    setNotes('')
+  }
+
   const cartLines: CartLine[] = useMemo(() => {
     const ids = Object.keys(orderQtyById).map(Number)
     return ids
@@ -247,14 +259,37 @@ const POS: React.FC = () => {
   const subtotal = useMemo(() => cartLines.reduce((sum, l) => sum + l.product.base_price * l.qty, 0), [cartLines])
 
   const tax = useMemo(() => {
-    if (isScPwdDiscount) return 0
-    return cartLines.reduce((sum, l) => sum + (l.product.base_price * l.qty) * (l.product.tax_rate / 100), 0)
+    const settings = getCachedBusinessSettings();
+    const billingType = settings?.billing_type || 'NON-VAT';
+
+    return cartLines.reduce((sum, l) => {
+      // SC/PWD logic: if discount is applied AND item is eligible, VAT is stripped
+      if (isScPwdDiscount && l.product.is_sc_pwd_eligible) {
+        return sum;
+      }
+      
+      // Normal tax logic
+      if (billingType === 'VAT' && l.product.tax_type === 'VATable') {
+        return sum + (l.product.base_price * l.qty) * (l.product.tax_rate / 100);
+      }
+      
+      return sum;
+    }, 0);
   }, [cartLines, isScPwdDiscount])
 
   const scPwdDiscountAmount = useMemo(() => {
-    if (!isScPwdDiscount) return 0
-    return subtotal * 0.20
-  }, [subtotal, isScPwdDiscount])
+    if (!isScPwdDiscount) return 0;
+    
+    // Server logic: v_server_calculated_sc_discount := v_server_calculated_sc_discount + (v_line_gross * 0.20);
+    // where v_line_gross = v_product.base_price * cart_item.quantity;
+    // only if v_product.is_sc_pwd_eligible = TRUE
+    return cartLines.reduce((sum, l) => {
+      if (l.product.is_sc_pwd_eligible) {
+        return sum + (l.product.base_price * l.qty) * 0.20;
+      }
+      return sum;
+    }, 0);
+  }, [cartLines, isScPwdDiscount])
 
   const regularDiscountAmount = useMemo(() => {
     return Number(regularDiscount) || 0
@@ -368,16 +403,17 @@ const POS: React.FC = () => {
       } else {
         const result = serviceData;
         setSuccessMessage('Sale created successfully');
-        setPaymentOpen(false); // Close payment modal on success
+        handleClosePayment(); // Reset states and close modal
 
         // Build receipt data BEFORE clearing local state
-        const lines = cartLines.map(l => ({
+        const lines: ReceiptLine[] = cartLines.map(l => ({
           name: l.product.name,
           qty: l.qty,
           unitType: l.product.unit_type,
           unitPrice: l.product.display_price,       // VAT-inclusive (used for normal sales)
           baseUnitPrice: l.product.base_price,      // VAT-exclusive (used for SC/PWD sales)
           lineTotal: l.product.display_price * l.qty,
+          isScPwdEligible: l.product.is_sc_pwd_eligible,
         }));
         const totalPaidLocal = totalPaidFromUI;
         const change = Math.max(0, totalPaidLocal - total);
@@ -437,18 +473,8 @@ const POS: React.FC = () => {
         };
         setReceiptData(receipt)
         setReceiptOpen(true)
+        setOrderQtyById({}) // Clear cart after success and receipt generation
 
-        // Reset state
-        setOrderQtyById({})
-        setPayments([])
-        setNotes('')
-        setIsScPwdDiscount(false)
-        setScPwdIdNumber('')
-        setScPwdName('')
-        setRegularDiscount('')
-        setCustomerId(null)
-        setCustomerLoyaltyBalance(0)
-        setLoyaltyPointsRedeemed(0)
         // Silent refresh to update stock without closing receipt modal
         loadProducts(true)
         setTimeout(() => setSuccessMessage(null), 3000)
@@ -699,7 +725,7 @@ const POS: React.FC = () => {
       {/* Payment modal */}
       <PaymentModal
         open={paymentOpen}
-        onClose={() => setPaymentOpen(false)}
+        onClose={handleClosePayment}
         total={total}
         subtotal={subtotal}
         tax={tax}
