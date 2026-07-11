@@ -111,6 +111,7 @@ export const ReportService = {
       p_start_date: start_date ?? null,
       p_end_date: end_date ?? null,
     })
+    console.log('data e-journal', data);
     if (error) { console.error('Error fetching E-Journal:', error); throw new Error(error.message) }
     return (data || []) as EJournalRow[]
   },

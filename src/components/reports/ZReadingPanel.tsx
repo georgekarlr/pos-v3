@@ -7,8 +7,9 @@ import { Terminal, BusinessSettings } from '../../types/settings'
 import { ZReadingResult } from '../../types/report'
 import ReportCard from './ReportCard'
 import LoadingSpinner from '../LoadingSpinner'
+import { FormatDateTime } from '../../utils/formatDateTime'
 
-const todayISO = () => new Date().toISOString().slice(0, 10)
+const todayISO = FormatDateTime.formatLocalTimestampForDatabase(new Date()).slice(0, 10)
 
 const generateZReadingText = (
   report: ZReadingResult,
@@ -187,7 +188,7 @@ const ZReadingPanel: React.FC = () => {
 
   const [terminals, setTerminals] = useState<Terminal[]>([])
   const [terminalId, setTerminalId] = useState<number | ''>('')
-  const [date, setDate] = useState(todayISO())
+  const [date, setDate] = useState(todayISO)
   const [loading, setLoading] = useState(false)
   const [terminalLoading, setTerminalLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -282,7 +283,7 @@ const ZReadingPanel: React.FC = () => {
               id="z-reading-date"
               type="date"
               value={date}
-              max={todayISO()}
+              max={todayISO}
               onChange={e => { setDate(e.target.value); setConfirming(false) }}
               disabled={loading}
               className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none disabled:bg-gray-50"

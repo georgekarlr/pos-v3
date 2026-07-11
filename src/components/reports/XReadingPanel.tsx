@@ -6,8 +6,9 @@ import { Terminal, BusinessSettings } from '../../types/settings'
 import { XReadingResult } from '../../types/report'
 import ReportCard from './ReportCard'
 import LoadingSpinner from '../LoadingSpinner'
+import { FormatDateTime } from '../../utils/formatDateTime'
 
-const todayISO = () => new Date().toISOString().slice(0, 10)
+const todayISO = FormatDateTime.formatLocalTimestampForDatabase(new Date()).slice(0, 10)
 
 const generateXReadingText = (
   report: XReadingResult,
@@ -31,15 +32,6 @@ const generateXReadingText = (
   };
   const fmtAmt = (n: number) => `PHP ${fmtVal(n)}`;
 
-  const formatDate = (dateStr: string) => {
-    try {
-      const d = new Date(dateStr);
-      if (isNaN(d.getTime())) return dateStr;
-      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    } catch {
-      return dateStr;
-    }
-  };
 
   const formatTime = (dateStr: string) => {
     try {
@@ -75,7 +67,7 @@ const generateXReadingText = (
   text += `${line}\n`;
   text += `${align('Terminal:', report.Terminal?.Name || 'Register 01')}\n`;
   text += `${align('Cashier:', report.Terminal?.CashierName || 'Juan Dela Cruz')}\n`;
-  text += `${align('Date:', formatDate(report.GeneratedAt))}\n`;
+  text += `${align('Date:', FormatDateTime.formatLocalTimestampForDatabase(report.GeneratedAt).slice(0, 10))}\n`;
   text += `${align('Time Printed:', formatTime(report.GeneratedAt))}\n`;
   text += `${line}\n`;
   text += `TRANSACTION RANGE (So far today)\n`;
@@ -149,7 +141,7 @@ const XReadingPanel: React.FC = () => {
 
   const [terminals, setTerminals] = useState<Terminal[]>([])
   const [terminalId, setTerminalId] = useState<number | ''>('')
-  const [date, setDate] = useState(todayISO())
+  const [date, setDate] = useState(todayISO)
   const [loading, setLoading] = useState(false)
   const [terminalLoading, setTerminalLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -158,6 +150,7 @@ const XReadingPanel: React.FC = () => {
 
   // Fetch terminal list and settings on mount
   useEffect(() => {
+    console.log(todayISO)
     SettingsService.getTerminals().then(({ data }) => {
       if (data && data.length > 0) {
         setTerminals(data)
@@ -227,7 +220,7 @@ const XReadingPanel: React.FC = () => {
               id="x-reading-date"
               type="date"
               value={date}
-              max={todayISO()}
+              max={todayISO}
               onChange={e => setDate(e.target.value)}
               disabled={loading}
               className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:bg-gray-50"

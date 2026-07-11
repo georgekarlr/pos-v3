@@ -5,16 +5,17 @@ import { ProductService } from '../services/productService';
 import { OfflineDB } from '../db/offlineDB';
 import { Product } from '../types/product';
 import { CustomerSearchResult } from '../types/debt';
-import { 
-  User, 
-  Search, 
-  Plus, 
-  ShoppingCart, 
-  Banknote, 
-  FileText, 
-  ChevronRight, 
-  ChevronLeft, 
-  CheckCircle2, 
+import { FormatDateTime } from '../utils/formatDateTime';
+import {
+  User,
+  Search,
+  Plus,
+  ShoppingCart,
+  Banknote,
+  FileText,
+  ChevronRight,
+  ChevronLeft,
+  CheckCircle2,
   Loader2,
   Trash2,
   AlertCircle,
@@ -51,7 +52,7 @@ const DebtWizard: React.FC = () => {
   // Loan state
   const [cashLoanAmount, setCashLoanAmount] = useState<number>(0);
   const [description, setDescription] = useState('');
-  const [occurredAt, setOccurredAt] = useState<string>(new Date().toISOString().slice(0, 16));
+  const [occurredAt, setOccurredAt] = useState<string>(FormatDateTime.formatLocalTimestampForDatabase(new Date()));
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
   // Load products once
@@ -108,9 +109,9 @@ const DebtWizard: React.FC = () => {
     setCart(prev => {
       const existing = prev.find(item => item.product.id === product.id);
       if (existing) {
-        return prev.map(item => 
-          item.product.id === product.id 
-            ? { ...item, quantity: item.quantity + 1 } 
+        return prev.map(item =>
+          item.product.id === product.id
+            ? { ...item, quantity: item.quantity + 1 }
             : item
         );
       }
@@ -133,7 +134,7 @@ const DebtWizard: React.FC = () => {
 
     const nextQty = Math.min(item.product.total_stock, quantity);
 
-    setCart(prev => prev.map(item => 
+    setCart(prev => prev.map(item =>
       item.product.id === productId ? { ...item, quantity: nextQty } : item
     ));
   };
@@ -163,7 +164,7 @@ const DebtWizard: React.FC = () => {
       })),
       p_cash_loan_amount: cashLoanAmount,
       p_description: description,
-      p_occurred_at: occurredAt ? new Date(occurredAt).toISOString() : null
+      p_occurred_at: occurredAt ? FormatDateTime.formatLocalTimestampForDatabase(new Date(occurredAt)) : null
     };
 
     const { data, error: submitError } = await DebtService.createCustomerAndAddDebt(params);
@@ -236,9 +237,8 @@ const DebtWizard: React.FC = () => {
         ].map((step, idx) => (
           <React.Fragment key={step.id}>
             <div className={`flex flex-col items-center min-w-[80px] ${currentStep === step.id ? 'text-indigo-600' : 'text-gray-400'}`}>
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 ${
-                currentStep === step.id ? 'bg-indigo-100 border-2 border-indigo-600' : 'bg-gray-100 border-2 border-transparent'
-              }`}>
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 ${currentStep === step.id ? 'bg-indigo-100 border-2 border-indigo-600' : 'bg-gray-100 border-2 border-transparent'
+                }`}>
                 <step.icon size={20} />
               </div>
               <span className="text-xs font-medium">{step.label}</span>
@@ -264,7 +264,7 @@ const DebtWizard: React.FC = () => {
           <div className="p-6">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-lg font-semibold text-gray-800">Select Customer</h2>
-              <button 
+              <button
                 onClick={() => setIsNewCustomer(!isNewCustomer)}
                 className="text-sm font-medium text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
               >
@@ -297,9 +297,8 @@ const DebtWizard: React.FC = () => {
                     <button
                       key={c.customer_id}
                       onClick={() => setSelectedCustomer(c)}
-                      className={`w-full p-4 text-left flex justify-between items-center hover:bg-gray-50 transition-colors ${
-                        selectedCustomer?.customer_id === c.customer_id ? 'bg-indigo-50 border-indigo-200' : ''
-                      }`}
+                      className={`w-full p-4 text-left flex justify-between items-center hover:bg-gray-50 transition-colors ${selectedCustomer?.customer_id === c.customer_id ? 'bg-indigo-50 border-indigo-200' : ''
+                        }`}
                     >
                       <div>
                         <p className="font-semibold text-gray-900">{c.full_name}</p>
@@ -307,11 +306,10 @@ const DebtWizard: React.FC = () => {
                       </div>
                       <div className="text-right">
                         <p className="text-xs text-gray-400 uppercase font-bold">Balance</p>
-                        <p className={`font-mono ${
-                          c.current_balance > 0 ? 'text-red-600' : 
-                          c.current_balance < 0 ? 'text-green-600' : 
-                          'text-gray-400'
-                        }`}>
+                        <p className={`font-mono ${c.current_balance > 0 ? 'text-red-600' :
+                          c.current_balance < 0 ? 'text-green-600' :
+                            'text-gray-400'
+                          }`}>
                           {c.current_balance.toFixed(2)}
                         </p>
                       </div>
@@ -338,7 +336,7 @@ const DebtWizard: React.FC = () => {
                     required
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
                     value={newCustomer.full_name}
-                    onChange={(e) => setNewCustomer({...newCustomer, full_name: e.target.value})}
+                    onChange={(e) => setNewCustomer({ ...newCustomer, full_name: e.target.value })}
                   />
                 </div>
                 <div>
@@ -348,7 +346,7 @@ const DebtWizard: React.FC = () => {
                     required
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
                     value={newCustomer.phone_number}
-                    onChange={(e) => setNewCustomer({...newCustomer, phone_number: e.target.value})}
+                    onChange={(e) => setNewCustomer({ ...newCustomer, phone_number: e.target.value })}
                   />
                 </div>
                 <div>
@@ -357,7 +355,7 @@ const DebtWizard: React.FC = () => {
                     type="email"
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
                     value={newCustomer.email}
-                    onChange={(e) => setNewCustomer({...newCustomer, email: e.target.value})}
+                    onChange={(e) => setNewCustomer({ ...newCustomer, email: e.target.value })}
                   />
                 </div>
                 <div>
@@ -366,7 +364,7 @@ const DebtWizard: React.FC = () => {
                     type="text"
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
                     value={newCustomer.address}
-                    onChange={(e) => setNewCustomer({...newCustomer, address: e.target.value})}
+                    onChange={(e) => setNewCustomer({ ...newCustomer, address: e.target.value })}
                   />
                 </div>
               </div>
@@ -378,7 +376,7 @@ const DebtWizard: React.FC = () => {
         {currentStep === 'items' && (
           <div className="p-6">
             <h2 className="text-lg font-semibold text-gray-800 mb-6">Select Products</h2>
-            
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Product Search & List */}
               <div className="space-y-4">
@@ -461,7 +459,7 @@ const DebtWizard: React.FC = () => {
         {currentStep === 'loan' && (
           <div className="p-6">
             <h2 className="text-lg font-semibold text-gray-800 mb-6">Loan & Transaction Details</h2>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="space-y-4">
                 <div>
@@ -533,7 +531,7 @@ const DebtWizard: React.FC = () => {
         {currentStep === 'summary' && (
           <div className="p-6">
             <h2 className="text-lg font-semibold text-gray-800 mb-6">Review & Confirm</h2>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="space-y-6">
                 <div>
@@ -615,7 +613,7 @@ const DebtWizard: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="mt-8 text-xs text-gray-400 text-center italic">
                   By clicking "Confirm Debt", you are recording this transaction to the customer's debt account.
                 </div>

@@ -2,6 +2,7 @@ import { supabase } from '../lib/supabase';
 import { OfflineDB } from '../db/offlineDB';
 import { ServiceResponse } from '../types/pos';
 import { CreateCustomerDebtParams, CustomerSearchResult, DebtOperationResult, CustomerListItem, ManageDebtAccountParams, ManageDebtAccountResult, CustomerDebtDetails } from '../types/debt';
+import { FormatDateTime } from '../utils/formatDateTime';
 
 export class DebtService {
   static async getCustomers(params: { limit: number; offset: number; searchTerm?: string }): Promise<ServiceResponse<CustomerListItem[]>> {
@@ -63,7 +64,7 @@ export class DebtService {
             items: params.p_items_to_debt || [],
             cash_loan_amount: params.p_cash_loan_amount || 0,
             description: params.p_description || null,
-            occurredAt: params.p_occurred_at || new Date().toISOString()
+            occurredAt: params.p_occurred_at || FormatDateTime.formatLocalTimestampForDatabase(new Date())
           });
 
           return {

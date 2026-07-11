@@ -51,7 +51,12 @@ export function buildEscposFromReceipt(data: ReceiptData): Uint8Array {
   // Meta
   parts.push(enc.align('left'))
   const date = new Date(data.dateISO)
-  pushText(`Order: #${data.orderId ?? '—'}\n`)
+  if (data.invoiceNumber) {
+    pushText(`Invoice #: ${data.invoiceNumber}\n`)
+  } else {
+    pushText(`Order: #${data.orderId ?? '—'}\n`)
+  }
+  if (data.terminalId) pushText(`Terminal: #${data.terminalId}\n`)
   pushText(`Date: ${date.toLocaleDateString()} ${date.toLocaleTimeString()}\n`)
   if (data.cashier) pushText(`Cashier: ${data.cashier}\n`)
   parts.push(enc.newline())
@@ -178,14 +183,19 @@ export function layoutReceiptLines(data: ReceiptData, design?: ReceiptDesign): s
   lines.push(head)
   if (d.showHeaderSeparator) lines.push(sep)
 
+  // SC/PWD sales are VAT-exempt: print base (VAT-exclusive) prices
+  const isScPwd = (data.scPwdDiscount ?? 0) > 0
+
   for (const l of data.lines) {
+    const effectiveUnitPrice = isScPwd && l.baseUnitPrice != null ? l.baseUnitPrice : l.unitPrice
+    const effectiveLineTotal = isScPwd && l.baseUnitPrice != null ? l.baseUnitPrice * l.qty : l.lineTotal
     const row = joinColumns([
       alignText(l.name, d.itemWidth!, d.itemAlign!),
       alignText(String(l.qty), d.qtyWidth!, d.qtyAlign!),
-      alignText(money(l.lineTotal), d.totalWidth!, d.totalAlign!),
+      alignText(money(effectiveLineTotal), d.totalWidth!, d.totalAlign!),
     ], spacing)
     lines.push(row)
-    lines.push(alignText(`@ ${money(l.unitPrice)}`, d.paperWidth!, 'left'))
+    lines.push(alignText(`@ ${money(effectiveUnitPrice)}`, d.paperWidth!, 'left'))
     if (l.refundedAmount && l.refundedAmount > 0) {
       lines.push(alignText(`Refunded -${money(l.refundedAmount)}`, d.paperWidth!, 'left'))
     }
@@ -201,13 +211,32 @@ export function layoutReceiptLines(data: ReceiptData, design?: ReceiptDesign): s
     const text = alignText(lbl, Math.max(0, left), 'left') + v
     lines.push(text)
   }
-  pushTotal('Subtotal', data.subtotal)
-  if (data.isVatRegistered !== false) pushTotal('Tax', data.tax)
-  pushTotal('TOTAL', data.total)
-  lines.push('')
+  pushTotal(isScPwd ? 'Subtotal (VAT Exempt)' : 'Subtotal', data.subtotal)
+  // For SC/PWD sales, VAT is fully removed by law — do not print a VAT line
+  if (!isScPwd && data.isVatRegistered !== false) pushTotal('Tax (VAT)', data.tax)
+  if (isScPwd && (data.scPwdDiscount ?? 0) > 0) pushTotal('Less: SC/PWD Discount (20%)', -(data.scPwdDiscount!))
+  lines.push('='.repeat(d.paperWidth!))
+  pushTotal('TOTAL DUE', data.total)
+  lines.push('='.repeat(d.paperWidth!))
   pushTotal('Total Paid', data.totalPaid)
   pushTotal('Change', data.change)
   lines.push('')
+
+  // VAT Breakdown
+  if (data.isVatRegistered !== false) {
+    const vatableAmt = data.vatableAmount  ?? (!isScPwd ? Math.max(0, data.subtotal - data.tax) : 0)
+    const vatAmt     = data.vatAmount      ?? (!isScPwd ? data.tax : 0)
+    const vatExempt  = data.vatExemptAmount ?? (isScPwd ? data.subtotal : 0)
+    const zeroRated  = data.zeroRatedAmount ?? 0
+    lines.push('='.repeat(d.paperWidth!))
+    lines.push(alignText('VAT BREAKDOWN', d.paperWidth!, 'center'))
+    pushTotal('VATable Sales', vatableAmt)
+    pushTotal('VAT Amount (12%)', vatAmt)
+    pushTotal('VAT-Exempt Sales', vatExempt)
+    pushTotal('Zero-Rated Sales', zeroRated)
+    lines.push('='.repeat(d.paperWidth!))
+    lines.push('')
+  }
 
   return lines
 }

@@ -58,7 +58,18 @@ const CreateInstallmentModal: React.FC<CreateInstallmentModalProps> = ({
   const [downpaymentMethod, setDownpaymentMethod] = useState('Cash');
   const [monthsToPay, setMonthsToPay] = useState('12');
   const [interestRate, setInterestRate] = useState('0'); // NEW: Interest Rate State
-  const [occurredAt, setOccurredAt] = useState(new Date().toISOString().slice(0, 16));
+  const [occurredAt, setOccurredAt] = useState(() => {
+    const d = new Date()
+
+    return (
+      `${d.getFullYear()}-` +
+      `${String(d.getMonth() + 1).padStart(2, '0')}-` +
+      `${String(d.getDate()).padStart(2, '0')}T` +
+      `${String(d.getHours()).padStart(2, '0')}:` +
+      `${String(d.getMinutes()).padStart(2, '0')}:` +
+      `${String(d.getSeconds()).padStart(2, '0')}`
+    )
+  });
 
   // Load products and terminals once
   useEffect(() => {

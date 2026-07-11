@@ -26,11 +26,11 @@ const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({ product, onCl
     const formatCurrency = (amount: number) =>
         new Intl.NumberFormat('en-US', { style: 'currency', currency: 'PHP' }).format(amount)
 
-    const formatDate = (dateStr: string) => 
-        new Date(dateStr).toLocaleDateString('en-US', { 
-            year: 'numeric', 
-            month: 'short', 
-            day: 'numeric' 
+    const formatDate = (dateStr: string) =>
+        new Date(dateStr).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
         })
 
     const getDaysToExpire = (dateStr: string) => {
@@ -121,13 +121,12 @@ const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({ product, onCl
                                         <label className="text-xs text-gray-500 block mb-1">Tax Type</label>
                                         <div>
                                             <span
-                                                className={`inline-flex px-2 py-0.5 text-xs font-bold rounded-full ${
-                                                    product.tax_type === 'VATable'
+                                                className={`inline-flex px-2 py-0.5 text-xs font-bold rounded-full ${product.tax_type === 'VATable'
                                                         ? 'bg-blue-100 text-blue-800 border border-blue-200'
                                                         : product.tax_type === 'VAT-Exempt'
-                                                        ? 'bg-amber-100 text-amber-800 border border-amber-200'
-                                                        : 'bg-purple-100 text-purple-800 border border-purple-200'
-                                                }`}
+                                                            ? 'bg-amber-100 text-amber-800 border border-amber-200'
+                                                            : 'bg-purple-100 text-purple-800 border border-purple-200'
+                                                    }`}
                                             >
                                                 {product.tax_type || 'VATable'}
                                             </span>
@@ -139,7 +138,7 @@ const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({ product, onCl
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div>
                                 <h4 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
                                     <Info className="h-4 w-4" />
@@ -148,9 +147,8 @@ const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({ product, onCl
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <label className="text-xs text-gray-500 block mb-1">Inventory Type</label>
-                                        <span className={`inline-flex px-2 py-1 rounded-md text-[10px] font-bold uppercase ${
-                                            product.inventory_type === 'perishable' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'
-                                        }`}>
+                                        <span className={`inline-flex px-2 py-1 rounded-md text-[10px] font-bold uppercase ${product.inventory_type === 'perishable' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'
+                                            }`}>
                                             {product.inventory_type.replace('_', '-')}
                                         </span>
                                     </div>
@@ -175,10 +173,9 @@ const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({ product, onCl
                                             <span className="text-3xl font-extrabold text-gray-900">{product.total_stock}</span>
                                             <span className="ml-1.5 text-gray-500 text-sm font-medium">{product.unit_type || 'units'}</span>
                                         </div>
-                                        <div className={`px-2.5 py-1 rounded-full text-xs font-bold ${
-                                            product.total_stock > 10 ? 'bg-green-100 text-green-700' : 
-                                            product.total_stock > 0 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'
-                                        }`}>
+                                        <div className={`px-2.5 py-1 rounded-full text-xs font-bold ${product.total_stock > 10 ? 'bg-green-100 text-green-700' :
+                                                product.total_stock > 0 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'
+                                            }`}>
                                             {product.total_stock > 10 ? 'HEALTHY' : product.total_stock > 0 ? 'LOW STOCK' : 'OUT OF STOCK'}
                                         </div>
                                     </div>
@@ -207,11 +204,10 @@ const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({ product, onCl
                                         product.stock_batches.map((batch) => {
                                             const daysLeft = batch.expiration_date ? getDaysToExpire(batch.expiration_date) : null
                                             const isExpired = daysLeft !== null && daysLeft < 0
-                                            
+
                                             return (
-                                                <div key={batch.batch_id} className={`p-3 rounded-xl border transition-all ${
-                                                    isExpired ? 'bg-red-50 border-red-100' : 'bg-white border-gray-200 hover:border-blue-300'
-                                                }`}>
+                                                <div key={batch.batch_id} className={`p-3 rounded-xl border transition-all ${isExpired ? 'bg-red-50 border-red-100' : 'bg-white border-gray-200 hover:border-blue-300'
+                                                    }`}>
                                                     <div className="flex items-center justify-between gap-4">
                                                         <div className="flex-1">
                                                             <div className="flex items-center gap-2 mb-1">
@@ -246,9 +242,8 @@ const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({ product, onCl
                                                                     </div>
                                                                 ) : (
                                                                     <div className="flex flex-col items-end">
-                                                                        <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold uppercase mb-1 ${
-                                                                            daysLeft <= 7 ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'
-                                                                        }`}>
+                                                                        <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold uppercase mb-1 ${daysLeft <= 7 ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'
+                                                                            }`}>
                                                                             {daysLeft <= 0 ? 'Today' : `In ${daysLeft} days`}
                                                                         </span>
                                                                         <span className="text-[10px] font-medium text-gray-500">
