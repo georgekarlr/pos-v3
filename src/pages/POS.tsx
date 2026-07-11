@@ -55,7 +55,6 @@ const POS: React.FC = () => {
   // Customer & Loyalty state
   const [customerId, setCustomerId] = useState<number | null>(null)
   const [customerLoyaltyBalance, setCustomerLoyaltyBalance] = useState<number>(0)
-  const [loyaltyPointsRedeemed, setLoyaltyPointsRedeemed] = useState<number>(0)
 
   // Receipt & Payment modal state
   const [receiptOpen, setReceiptOpen] = useState(false)
@@ -243,7 +242,6 @@ const POS: React.FC = () => {
     setScPwdIdNumber('')
     setScPwdName('')
     setRegularDiscount('')
-    setLoyaltyPointsRedeemed(0)
     setCustomerId(null)
     setPayments([])
     setNotes('')
@@ -296,9 +294,9 @@ const POS: React.FC = () => {
   }, [regularDiscount])
 
   const total = useMemo(() => {
-    const calculated = subtotal + tax - scPwdDiscountAmount - regularDiscountAmount - loyaltyPointsRedeemed
+    const calculated = subtotal + tax - scPwdDiscountAmount - regularDiscountAmount
     return Math.max(0, calculated)
-  }, [subtotal, tax, scPwdDiscountAmount, regularDiscountAmount, loyaltyPointsRedeemed])
+  }, [subtotal, tax, scPwdDiscountAmount, regularDiscountAmount])
 
   // Loyalty points earned: 1 point per ₱1 of net total
   const loyaltyPointsEarned = useMemo(() => {
@@ -309,7 +307,6 @@ const POS: React.FC = () => {
   useEffect(() => {
     if (customerId === null) {
       setCustomerLoyaltyBalance(0)
-      setLoyaltyPointsRedeemed(0)
       return
     }
     CustomerService.getCustomerById(customerId).then(res => {
@@ -394,7 +391,7 @@ const POS: React.FC = () => {
         p_regular_discount: regularDiscountAmount,
         // Loyalty
         p_loyalty_points_earned: loyaltyPointsEarned,
-        p_loyalty_points_redeemed: loyaltyPointsRedeemed,
+        p_loyalty_points_redeemed: 0,
       })
 
 
@@ -754,8 +751,6 @@ const POS: React.FC = () => {
         onCustomerIdChange={setCustomerId}
         customerLoyaltyBalance={customerLoyaltyBalance}
         loyaltyPointsEarned={loyaltyPointsEarned}
-        loyaltyPointsRedeemed={loyaltyPointsRedeemed}
-        onLoyaltyRedemptionChange={setLoyaltyPointsRedeemed}
       />
 
       <OfflineSalesModal

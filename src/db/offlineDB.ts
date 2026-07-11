@@ -45,6 +45,7 @@ export class IndexedDBService {
   private salesStore = 'offline-sales';
   private productsStore = 'products';
   private debtsStore = 'offline-debts';
+  private customersStore = 'customers';
 
   private async getDB(): Promise<IDBDatabase> {
     return new Promise((resolve, reject) => {
@@ -63,6 +64,9 @@ export class IndexedDBService {
         }
         if (!db.objectStoreNames.contains(this.debtsStore)) {
           db.createObjectStore(this.debtsStore, { keyPath: 'id', autoIncrement: true });
+        }
+        if (!db.objectStoreNames.contains(this.customersStore)) {
+          db.createObjectStore(this.customersStore, { keyPath: 'id' });
         }
       };
     });
@@ -166,6 +170,34 @@ export class IndexedDBService {
       const request = store.delete(id);
 
       request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async saveCustomers(customers: any[]): Promise<void> {
+    const db = await this.getDB();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(this.customersStore, 'readwrite');
+      const store = transaction.objectStore(this.customersStore);
+
+      store.clear();
+      customers.forEach(customer => {
+        store.put(customer);
+      });
+
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+    });
+  }
+
+  async getCustomers(): Promise<any[]> {
+    const db = await this.getDB();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(this.customersStore, 'readonly');
+      const store = transaction.objectStore(this.customersStore);
+      const request = store.getAll();
+
+      request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error);
     });
   }
