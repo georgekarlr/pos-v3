@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { ServiceResponse } from '../types/pos';
+import { OfflineDB } from '../db/offlineDB';
 import {
     Customer,
     CreateCustomerParams,
@@ -55,7 +56,13 @@ export class CustomerService {
     ): Promise<ServiceResponse<Customer>> {
         try {
             if (!navigator.onLine) {
-                return { data: null, error: 'Fetching customer details requires an internet connection.' };
+                // Try to find in local cache
+                const localCustomers = await OfflineDB.getCustomers();
+                const found = localCustomers.find(c => c.id === customerId);
+                if (found) {
+                    return { data: found as Customer, error: null };
+                }
+                return { data: null, error: 'Customer not found in local cache while offline.' };
             }
 
             const { data, error } = await supabase.rpc('pos2_get_customer_by_id', {

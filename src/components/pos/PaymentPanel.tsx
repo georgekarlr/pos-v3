@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react'
 import { Plus, Trash2, Award, CreditCard, User } from 'lucide-react'
 import { PaymentInput } from '../../types/pos'
+import CustomerSearch from './CustomerSearch'
 
 interface PaymentPanelProps {
     // --- Totals ---
@@ -36,8 +37,6 @@ interface PaymentPanelProps {
     // --- Loyalty Points ---
     customerLoyaltyBalance: number   // current points the customer holds
     loyaltyPointsEarned: number      // computed from total
-    loyaltyPointsRedeemed: number
-    onLoyaltyRedemptionChange: (pts: number) => void
 }
 
 const formatCurrency = (n: number) => `₱${n.toFixed(2)}`
@@ -71,8 +70,6 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
     onCustomerIdChange,
     customerLoyaltyBalance,
     loyaltyPointsEarned,
-    loyaltyPointsRedeemed,
-    onLoyaltyRedemptionChange,
 }) => {
     const { totalPaid, totalChangeDue } = useMemo(() => {
         let paid = 0
@@ -102,10 +99,6 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
         })
     }
 
-    const handleLoyaltyRedeemChange = (val: string) => {
-        const pts = Math.max(0, Math.min(Number(val) || 0, customerLoyaltyBalance))
-        onLoyaltyRedemptionChange(pts)
-    }
 
     return (
         <div className="bg-white max-w-2xl mx-auto">
@@ -208,25 +201,15 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
                         Loyalty Program
                     </h4>
 
-                    {/* Customer ID input */}
-                    <div className="flex items-center gap-3">
-                        <User className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                        <div className="flex-1">
-                            <label className="block text-xs font-medium text-gray-600 mb-1">
-                                Customer ID <span className="text-gray-400">(optional — required for loyalty)</span>
-                            </label>
-                            <input
-                                type="number"
-                                min="1"
-                                placeholder="Enter customer ID"
-                                value={customerId ?? ''}
-                                onChange={e => {
-                                    const v = e.target.value
-                                    onCustomerIdChange(v ? Number(v) : null)
-                                }}
-                                className="w-full rounded-md border-gray-300 shadow-sm text-sm focus:border-blue-500 focus:ring-blue-500"
-                            />
-                        </div>
+                    {/* Customer search */}
+                    <div className="space-y-1">
+                        <label className="block text-xs font-medium text-gray-600">
+                            Search Customer <span className="text-gray-400">(optional — required for loyalty)</span>
+                        </label>
+                        <CustomerSearch 
+                            selectedCustomerId={customerId}
+                            onSelectCustomer={(c) => onCustomerIdChange(c ? c.id : null)}
+                        />
                     </div>
 
                     {customerId !== null ? (
@@ -244,51 +227,9 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
                                 <span>Points Earned (this sale)</span>
                                 <span className="font-semibold text-green-600">+{formatPts(loyaltyPointsEarned)}</span>
                             </div>
-
-                            {/* Redemption */}
-                            {customerLoyaltyBalance > 0 && (
-                                <div className="space-y-1.5">
-                                    <label className="block text-xs font-medium text-gray-600">
-                                        Redeem Points <span className="text-gray-400">(1 pt = ₱1 discount)</span>
-                                    </label>
-                                    <div className="flex items-center gap-2">
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            max={customerLoyaltyBalance}
-                                            step="1"
-                                            placeholder="0"
-                                            value={loyaltyPointsRedeemed || ''}
-                                            onChange={e => handleLoyaltyRedeemChange(e.target.value)}
-                                            className="flex-1 rounded-md border-gray-300 shadow-sm text-sm focus:border-blue-500 focus:ring-blue-500"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => onLoyaltyRedemptionChange(customerLoyaltyBalance)}
-                                            className="px-2.5 py-1.5 text-xs rounded-md border border-yellow-300 bg-yellow-50 text-yellow-700 hover:bg-yellow-100 transition-colors whitespace-nowrap"
-                                        >
-                                            Use All
-                                        </button>
-                                        {loyaltyPointsRedeemed > 0 && (
-                                            <button
-                                                type="button"
-                                                onClick={() => onLoyaltyRedemptionChange(0)}
-                                                className="px-2.5 py-1.5 text-xs rounded-md border border-gray-300 bg-white text-gray-600 hover:bg-gray-100 transition-colors"
-                                            >
-                                                Clear
-                                            </button>
-                                        )}
-                                    </div>
-                                    {loyaltyPointsRedeemed > 0 && (
-                                        <p className="text-xs text-blue-600 font-medium">
-                                            -{formatCurrency(loyaltyPointsRedeemed)} discount applied from loyalty
-                                        </p>
-                                    )}
-                                </div>
-                            )}
                         </div>
                     ) : (
-                        <p className="text-xs text-gray-400 italic">Enter a customer ID above to earn or redeem loyalty points.</p>
+                        <p className="text-xs text-gray-400 italic">Select a customer above to earn or redeem loyalty points.</p>
                     )}
                 </div>
 
@@ -384,12 +325,6 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
                         <div className="flex justify-between text-xs text-blue-700">
                             <span>Regular Discount</span>
                             <span>-{formatCurrency(Number(regularDiscount))}</span>
-                        </div>
-                    )}
-                    {loyaltyPointsRedeemed > 0 && (
-                        <div className="flex justify-between text-xs text-yellow-700">
-                            <span>Loyalty Points Redeemed ({formatPts(loyaltyPointsRedeemed)})</span>
-                            <span>-{formatCurrency(loyaltyPointsRedeemed)}</span>
                         </div>
                     )}
                     <div className="border-t border-gray-100 my-1" />

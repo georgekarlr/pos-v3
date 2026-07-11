@@ -39,8 +39,6 @@ interface PaymentModalProps {
     onCustomerIdChange: (id: number | null) => void
     customerLoyaltyBalance: number
     loyaltyPointsEarned: number
-    loyaltyPointsRedeemed: number
-    onLoyaltyRedemptionChange: (pts: number) => void
 }
 
 const PaymentModal: React.FC<PaymentModalProps> = (props) => {
@@ -103,8 +101,6 @@ const PaymentModal: React.FC<PaymentModalProps> = (props) => {
                             onCustomerIdChange={props.onCustomerIdChange}
                             customerLoyaltyBalance={props.customerLoyaltyBalance}
                             loyaltyPointsEarned={props.loyaltyPointsEarned}
-                            loyaltyPointsRedeemed={props.loyaltyPointsRedeemed}
-                            onLoyaltyRedemptionChange={props.onLoyaltyRedemptionChange}
                         />
                     </div>
                 </div>
