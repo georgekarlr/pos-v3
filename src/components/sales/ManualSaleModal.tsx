@@ -6,6 +6,7 @@ import { Product } from '../../types/product'
 import { CustomerSearchResult } from '../../types/debt'
 import { salesService } from '../../services/salesService'
 import { RecordManualSaleParams } from '../../types/pos'
+import { FormatDateTime } from '../../utils/formatDateTime'
 
 interface ManualSaleModalProps {
   open: boolean
@@ -32,15 +33,15 @@ const ManualSaleModal: React.FC<ManualSaleModalProps> = ({ open, onClose, onSucc
 
   // Form Fields
   const [manualOrNumber, setManualOrNumber] = useState('')
-  const [occurredAt, setOccurredAt] = useState(new Date().toISOString().slice(0, 16))
+  const [occurredAt, setOccurredAt] = useState(FormatDateTime.formatLocalTimestampForDatabase(new Date()))
   const [notes, setNotes] = useState('')
   const [scPwdDiscount, setScPwdDiscount] = useState(0)
   const [regularDiscount, setRegularDiscount] = useState(0)
-  
+
   // Cart & Payments
   const [cart, setCart] = useState<CartItem[]>([])
   const [payments, setPayments] = useState<PaymentItem[]>([{ amount: 0, method: 'Cash', transaction_ref: '' }])
-  
+
   // Product Search
   const [productSearch, setProductSearch] = useState('')
   const [productResults, setProductResults] = useState<Product[]>([])
@@ -63,7 +64,7 @@ const ManualSaleModal: React.FC<ManualSaleModalProps> = ({ open, onClose, onSucc
       setScPwdDiscount(0)
       setRegularDiscount(0)
       setSelectedCustomer(null)
-      setOccurredAt(new Date().toISOString().slice(0, 16))
+      setOccurredAt(FormatDateTime.formatLocalTimestampForDatabase(new Date()))
     } else {
       setShow(false)
     }
@@ -163,7 +164,7 @@ const ManualSaleModal: React.FC<ManualSaleModalProps> = ({ open, onClose, onSucc
       setError('Total tendered is less than total amount due')
       return
     }
-    
+
     setLoading(true)
     setError(null)
 
@@ -201,11 +202,11 @@ const ManualSaleModal: React.FC<ManualSaleModalProps> = ({ open, onClose, onSucc
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div 
+      <div
         className={`absolute inset-0 bg-gray-900/60 transition-opacity duration-300 ${show ? 'opacity-100' : 'opacity-0'}`}
         onClick={onClose}
       />
-      
+
       <div className={`relative bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col transition-all duration-300 ${show ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
         <div className="px-6 py-4 border-b flex items-center justify-between bg-gray-50">
           <h3 className="text-xl font-bold text-gray-900">Record Manual Receipt</h3>
@@ -272,7 +273,7 @@ const ManualSaleModal: React.FC<ManualSaleModalProps> = ({ open, onClose, onSucc
                     {customerResults.length > 0 && (
                       <ul className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-40 overflow-auto">
                         {customerResults.map(c => (
-                          <li 
+                          <li
                             key={c.customer_id}
                             onClick={() => { setSelectedCustomer(c); setCustomerSearch(''); setCustomerResults([]) }}
                             className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm"
@@ -315,7 +316,7 @@ const ManualSaleModal: React.FC<ManualSaleModalProps> = ({ open, onClose, onSucc
                 {productResults.length > 0 && (
                   <ul className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-60 overflow-auto">
                     {productResults.map(p => (
-                      <li 
+                      <li
                         key={p.id}
                         onClick={() => addToCart(p)}
                         className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex justify-between items-center"
@@ -431,25 +432,25 @@ const ManualSaleModal: React.FC<ManualSaleModalProps> = ({ open, onClose, onSucc
               </div>
               <div className="flex justify-between text-sm">
                 <div className="flex flex-col">
-                   <span className="text-gray-500">SC/PWD Discount</span>
-                   <input 
-                      type="number" 
-                      value={scPwdDiscount} 
-                      onChange={e => setScPwdDiscount(Number(e.target.value))}
-                      className="w-24 text-xs p-1 border rounded"
-                    />
+                  <span className="text-gray-500">SC/PWD Discount</span>
+                  <input
+                    type="number"
+                    value={scPwdDiscount}
+                    onChange={e => setScPwdDiscount(Number(e.target.value))}
+                    className="w-24 text-xs p-1 border rounded"
+                  />
                 </div>
                 <span className="text-red-600">-₱{scPwdDiscount.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <div className="flex flex-col">
-                   <span className="text-gray-500">Regular Discount</span>
-                   <input 
-                      type="number" 
-                      value={regularDiscount} 
-                      onChange={e => setRegularDiscount(Number(e.target.value))}
-                      className="w-24 text-xs p-1 border rounded"
-                    />
+                  <span className="text-gray-500">Regular Discount</span>
+                  <input
+                    type="number"
+                    value={regularDiscount}
+                    onChange={e => setRegularDiscount(Number(e.target.value))}
+                    className="w-24 text-xs p-1 border rounded"
+                  />
                 </div>
                 <span className="text-red-600">-₱{regularDiscount.toFixed(2)}</span>
               </div>

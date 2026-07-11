@@ -9,6 +9,7 @@ export function mapSaleDetailsToReceipt(details: SaleDetailsResponse): ReceiptDa
 
     const lines: ReceiptLine[] = items.map((it) => {
         const unit = Number(it.price_at_purchase || 0)
+        const baseUnit = it.base_price_at_purchase != null ? Number(it.base_price_at_purchase) : undefined
         const total = (it.line_total ?? (it.quantity && it.price_at_purchase ? it.quantity * it.price_at_purchase : 0)) || 0
         const refundedQty = Number(it.refunded_quantity || 0)
         const refundedAmount = refundedQty > 0 ? refundedQty * unit : undefined
@@ -17,6 +18,7 @@ export function mapSaleDetailsToReceipt(details: SaleDetailsResponse): ReceiptDa
             qty: it.quantity,
             unitType: it.unit_type,
             unitPrice: unit,
+            baseUnitPrice: baseUnit,  // VAT-exclusive; used when SC/PWD discount is active
             lineTotal: Number(total),
             refundedQty,
             refundedAmount

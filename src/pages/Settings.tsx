@@ -36,6 +36,7 @@ import {
   EditTerminalModal,
   TerminalFormState,
 } from '../components/settings/TerminalModals'
+import { FormatDateTime } from '../utils/formatDateTime'
 
 // ---------------------------------------------------------------------------
 // Printer helpers
@@ -51,7 +52,7 @@ const defaultBLE: BLEConfig = {
 }
 
 function sampleReceipt(): ReceiptData {
-  const now = new Date().toISOString()
+  const now = FormatDateTime.formatLocalTimestampForDatabase(new Date())
   return {
     orderId: 1234,
     businessName: 'POS Pro Demo',
@@ -438,11 +439,10 @@ const Settings: React.FC = () => {
             <button
               key={id}
               onClick={() => { setActiveTab(id); clearAlerts() }}
-              className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-all ${
-                activeTab === id
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
+              className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-all ${activeTab === id
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
             >
               {icon}
               {label}
@@ -492,24 +492,21 @@ const Settings: React.FC = () => {
                     <button
                       key={mode}
                       onClick={() => setScanMode(mode)}
-                      className={`flex items-center gap-4 p-4 rounded-xl border-2 transition-all ${
-                        scanMode === mode
-                          ? 'border-blue-600 bg-blue-50'
-                          : 'border-gray-200 hover:border-blue-200 hover:bg-gray-50'
-                      }`}
+                      className={`flex items-center gap-4 p-4 rounded-xl border-2 transition-all ${scanMode === mode
+                        ? 'border-blue-600 bg-blue-50'
+                        : 'border-gray-200 hover:border-blue-200 hover:bg-gray-50'
+                        }`}
                     >
                       <div
-                        className={`p-3 rounded-lg ${
-                          scanMode === mode ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-500'
-                        }`}
+                        className={`p-3 rounded-lg ${scanMode === mode ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-500'
+                          }`}
                       >
                         {icon}
                       </div>
                       <div className="text-left">
                         <div
-                          className={`font-bold ${
-                            scanMode === mode ? 'text-blue-900' : 'text-gray-900'
-                          }`}
+                          className={`font-bold ${scanMode === mode ? 'text-blue-900' : 'text-gray-900'
+                            }`}
                         >
                           {title}
                         </div>
@@ -573,9 +570,8 @@ const Settings: React.FC = () => {
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Scanner Status</span>
                   <span
-                    className={`font-medium ${
-                      scanMode === 'hardware' ? 'text-green-600' : 'text-blue-600'
-                    }`}
+                    className={`font-medium ${scanMode === 'hardware' ? 'text-green-600' : 'text-blue-600'
+                      }`}
                   >
                     {scanMode === 'hardware' ? 'Ready (Hardware)' : 'Ready (Camera)'}
                   </span>
@@ -694,11 +690,10 @@ const Settings: React.FC = () => {
                           </td>
                           <td className="px-6 py-4 text-center">
                             <span
-                              className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold leading-5 ${
-                                t.is_active
-                                  ? 'bg-green-100 text-green-800'
-                                  : 'bg-gray-100 text-gray-800'
-                              }`}
+                              className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold leading-5 ${t.is_active
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-gray-100 text-gray-800'
+                                }`}
                             >
                               {t.is_active ? 'Active' : 'Inactive'}
                             </span>
@@ -752,11 +747,10 @@ const Settings: React.FC = () => {
                     disabled={!cap}
                     onClick={() => setPrinterTab(id)}
                     title={cap ? '' : `${label} not supported in this browser`}
-                    className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
-                      printerTab === id
-                        ? 'bg-blue-600 text-white shadow-sm'
-                        : 'bg-transparent text-gray-700 hover:text-gray-900'
-                    }`}
+                    className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${printerTab === id
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : 'bg-transparent text-gray-700 hover:text-gray-900'
+                      }`}
                   >
                     {label}
                   </button>

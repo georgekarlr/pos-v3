@@ -8,6 +8,7 @@ import {
   SalesByStaffRow,
   SalesOverTimeRow
 } from '../types/report'
+import { FormatDateTime } from '../utils/formatDateTime'
 
 const toISOStartOfDay = (dateStr: string) => {
   const d = new Date(dateStr + 'T00:00:00')
@@ -32,8 +33,8 @@ const Reports: React.FC = () => {
   const isAdmin = persona?.type === 'admin'
 
   // Filters
-  const todayISO = new Date().toISOString().slice(0, 10)
-  const thirtyDaysAgoISO = new Date(Date.now() - 29 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+  const todayISO = FormatDateTime.formatLocalTimestampForDatabase(new Date())
+  const thirtyDaysAgoISO = FormatDateTime.formatLocalTimestampForDatabase(new Date(Date.now() - 29 * 24 * 60 * 60 * 1000))
 
   const [startDate, setStartDate] = useState(thirtyDaysAgoISO)
   const [endDate, setEndDate] = useState(todayISO)
@@ -62,7 +63,7 @@ const Reports: React.FC = () => {
   }, [salesOverTime])
 
   const selectedQuickRange = useMemo(() => {
-    const today = new Date().toISOString().slice(0, 10)
+    const today = FormatDateTime.formatLocalTimestampForDatabase(new Date()).slice(0, 10)
     const start = new Date(startDate)
     const end = new Date(endDate)
     const diffDays = Math.round((end.getTime() - start.getTime()) / (24 * 60 * 60 * 1000)) + 1

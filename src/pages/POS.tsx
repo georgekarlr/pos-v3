@@ -21,6 +21,7 @@ import CameraScanner from '../components/pos/CameraScanner'
 import { useScannerSettings } from '../contexts/ScannerSettingsContext'
 import OfflineSalesModal from '../components/pos/OfflineSalesModal'
 import { getCachedBusinessSettings } from '../utils/settingsCache'
+import { FormatDateTime } from '../utils/formatDateTime'
 
 const POS: React.FC = () => {
   const { persona } = useAuth()
@@ -339,7 +340,8 @@ const POS: React.FC = () => {
           name: l.product.name,
           qty: l.qty,
           unitType: l.product.unit_type,
-          unitPrice: l.product.display_price,
+          unitPrice: l.product.display_price,       // VAT-inclusive (used for normal sales)
+          baseUnitPrice: l.product.base_price,      // VAT-exclusive (used for SC/PWD sales)
           lineTotal: l.product.display_price * l.qty,
         }));
         const totalPaidLocal = totalPaidFromUI;
@@ -381,7 +383,7 @@ const POS: React.FC = () => {
           tin,
           min,
           cashier: persona.personName || persona.loginName || undefined,
-          dateISO: new Date().toISOString(),
+          dateISO: FormatDateTime.formatLocalTimestampForDatabase(new Date()),
           lines,
           subtotal,
           tax,

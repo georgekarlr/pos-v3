@@ -55,9 +55,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, isAdmin, onAdjust, o
                         <div className="mt-1 text-xs text-gray-500 flex items-center justify-between">
                             <span>SKU: {product.sku || 'N/A'}</span>
                             {product.inventory_type && (
-                                <span className={`font-bold uppercase text-[10px] ${
-                                    product.inventory_type === 'perishable' ? 'text-orange-600' : 'text-blue-600'
-                                }`}>
+                                <span className={`font-bold uppercase text-[10px] ${product.inventory_type === 'perishable' ? 'text-orange-600' : 'text-blue-600'
+                                    }`}>
                                     {product.inventory_type.replace('_', '-')}
                                 </span>
                             )}
@@ -98,7 +97,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, isAdmin, onAdjust, o
                                                     </span>
                                                 </div>
                                             </div>
-                                            
+
                                             {isAdmin && (
                                                 <div className="flex items-center gap-1">
                                                     {onAdjustBatch && (

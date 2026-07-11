@@ -5,6 +5,7 @@ import type {
   CreateSaleResult,
   ServiceResponse
 } from '../types/pos.ts';
+import { FormatDateTime } from '../utils/formatDateTime';
 
 export class PosService {
 
@@ -13,6 +14,7 @@ export class PosService {
    * Handles server-side validation of totals and taxes.
    */
   static async createSale(params: CreatePosSaleParams): Promise<ServiceResponse<CreateSaleResult & { is_offline?: boolean }>> {
+    console.log('params', params)
     // Check if online
     if (!navigator.onLine) {
       try {
@@ -75,7 +77,7 @@ export class PosService {
           total_tendered: params.p_total_tendered,
           scPwdDiscount: params.p_sc_pwd_discount || 0, // NEW
           regularDiscount: params.p_regular_discount || 0, // NEW
-          createdAt: params.p_occurred_at || new Date().toISOString(),
+          createdAt: params.p_occurred_at || FormatDateTime.formatLocalTimestampForDatabase(new Date()),
           offlineInvoiceNumber: invoiceNumber,
           offlineGrandTotal: offlineGrandTotal
         });
@@ -83,7 +85,7 @@ export class PosService {
         const result: CreateSaleResult & { is_offline: boolean } = {
           success: true,
           message: 'Sale saved offline. Will sync when online.',
-          data: { 
+          data: {
             order_id: offlineSaleId,
             invoice_number: invoiceNumber
           },
@@ -116,6 +118,8 @@ export class PosService {
         p_offline_grand_total: params.p_offline_grand_total ?? null // NEW
       });
 
+      console.log('data', data)
+      console.log('error', error)
       if (error) {
         console.error('Error creating sale:', error);
         return { data: null, error: error.message };
