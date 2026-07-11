@@ -127,7 +127,8 @@ export class ProductService {
         p_inventory_type: params.p_inventory_type,
         p_unit_type: params.p_unit_type,
         p_is_for_sale: params.p_is_for_sale,
-        p_tax_type: params.p_tax_type
+        p_tax_type: params.p_tax_type,
+        p_is_sc_pwd_eligible: params.p_is_sc_pwd_eligible
       });
 
       if (error) {
@@ -169,7 +170,8 @@ export class ProductService {
         p_unit_type: params.p_unit_type,
         p_is_for_sale: params.p_is_for_sale,
         p_tax_type: params.p_tax_type,
-        p_is_active: params.p_is_active
+        p_is_active: params.p_is_active,
+        p_is_sc_pwd_eligible: params.p_is_sc_pwd_eligible
       });
 
       if (error) {

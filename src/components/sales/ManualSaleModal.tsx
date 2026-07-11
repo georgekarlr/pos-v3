@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect } from 'react'
 import { XMarkIcon, PlusIcon, TrashIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline'
 import { ProductService } from '../../services/productService'
 import { DebtService } from '../../services/debtService'
@@ -7,23 +7,13 @@ import { CustomerSearchResult } from '../../types/debt'
 import { salesService } from '../../services/salesService'
 import { RecordManualSaleParams } from '../../types/pos'
 import { FormatDateTime } from '../../utils/formatDateTime'
+import { useManualSale } from '../../hooks/useManualSale'
 
 interface ManualSaleModalProps {
   open: boolean
   onClose: () => void
   onSuccess: () => void
   accountId: number
-}
-
-interface CartItem {
-  product: Product
-  quantity: number
-}
-
-interface PaymentItem {
-  amount: number
-  method: string
-  transaction_ref: string
 }
 
 const ManualSaleModal: React.FC<ManualSaleModalProps> = ({ open, onClose, onSuccess, accountId }) => {
@@ -35,12 +25,6 @@ const ManualSaleModal: React.FC<ManualSaleModalProps> = ({ open, onClose, onSucc
   const [manualOrNumber, setManualOrNumber] = useState('')
   const [occurredAt, setOccurredAt] = useState(FormatDateTime.formatLocalTimestampForDatabase(new Date()))
   const [notes, setNotes] = useState('')
-  const [scPwdDiscount, setScPwdDiscount] = useState(0)
-  const [regularDiscount, setRegularDiscount] = useState(0)
-
-  // Cart & Payments
-  const [cart, setCart] = useState<CartItem[]>([])
-  const [payments, setPayments] = useState<PaymentItem[]>([{ amount: 0, method: 'Cash', transaction_ref: '' }])
 
   // Product Search
   const [productSearch, setProductSearch] = useState('')
@@ -50,20 +34,48 @@ const ManualSaleModal: React.FC<ManualSaleModalProps> = ({ open, onClose, onSucc
   // Customer Search
   const [customerSearch, setCustomerSearch] = useState('')
   const [customerResults, setCustomerResults] = useState<CustomerSearchResult[]>([])
-  const [selectedCustomer, setSelectedCustomer] = useState<CustomerSearchResult | null>(null)
   const [searchingCustomers, setSearchingCustomers] = useState(false)
+
+  // Use the Composable Hook for State and Calculations
+  const {
+    cart,
+    payments,
+    isScPwdDiscount,
+    setIsScPwdDiscount,
+    scPwdDiscountAmount,
+    scPwdIdNumber,
+    setScPwdIdNumber,
+    scPwdName,
+    setScPwdName,
+    regularDiscount,
+    setRegularDiscount,
+    loyaltyPointsEarned,
+    setLoyaltyPointsEarned,
+    loyaltyPointsRedeemed,
+    setLoyaltyPointsRedeemed,
+    selectedCustomer,
+    setSelectedCustomer,
+    subtotal,
+    tax,
+    total,
+    totalTendered,
+    changeDue,
+    addToCart,
+    removeFromCart,
+    updateQuantity,
+    addPayment,
+    removePayment,
+    updatePayment,
+    reset
+  } = useManualSale()
 
   useEffect(() => {
     if (open) {
       setTimeout(() => setShow(true), 10)
       setError(null)
       setManualOrNumber('')
-      setCart([])
-      setPayments([{ amount: 0, method: 'Cash', transaction_ref: '' }])
+      reset()
       setNotes('')
-      setScPwdDiscount(0)
-      setRegularDiscount(0)
-      setSelectedCustomer(null)
       setOccurredAt(FormatDateTime.formatLocalTimestampForDatabase(new Date()))
     } else {
       setShow(false)
@@ -98,56 +110,16 @@ const ManualSaleModal: React.FC<ManualSaleModalProps> = ({ open, onClose, onSucc
     return () => clearTimeout(delayDebounceFn)
   }, [customerSearch])
 
-  const subtotal = useMemo(() => {
-    return cart.reduce((acc, item) => acc + (item.product.base_price * item.quantity), 0)
-  }, [cart])
-
-  const tax = useMemo(() => {
-    return cart.reduce((acc, item) => {
-      if (item.product.tax_type === 'VATable' && scPwdDiscount === 0) {
-        return acc + (item.product.base_price * item.quantity * (item.product.tax_rate / 100))
-      }
-      return acc
-    }, 0)
-  }, [cart, scPwdDiscount])
-
-  const total = useMemo(() => {
-    return (subtotal + tax) - scPwdDiscount - regularDiscount
-  }, [subtotal, tax, scPwdDiscount, regularDiscount])
-
-  const totalTendered = useMemo(() => {
-    return payments.reduce((acc, p) => acc + (Number(p.amount) || 0), 0)
-  }, [payments])
-
-  const addToCart = (product: Product) => {
-    const existing = cart.find(c => c.product.id === product.id)
-    if (existing) {
-      setCart(cart.map(c => c.product.id === product.id ? { ...c, quantity: c.quantity + 1 } : c))
-    } else {
-      setCart([...cart, { product, quantity: 1 }])
-    }
+  const handleAddToCart = (product: Product) => {
+    addToCart(product)
     setProductSearch('')
     setProductResults([])
   }
 
-  const removeFromCart = (productId: number) => {
-    setCart(cart.filter(c => c.product.id !== productId))
-  }
-
-  const updateQuantity = (productId: number, qty: number) => {
-    setCart(cart.map(c => c.product.id === productId ? { ...c, quantity: Math.max(0.01, qty) } : c))
-  }
-
-  const addPayment = () => {
-    setPayments([...payments, { amount: 0, method: 'Cash', transaction_ref: '' }])
-  }
-
-  const removePayment = (index: number) => {
-    setPayments(payments.filter((_, i) => i !== index))
-  }
-
-  const updatePayment = (index: number, field: keyof PaymentItem, value: any) => {
-    setPayments(payments.map((p, i) => i === index ? { ...p, [field]: value } : p))
+  const handleSelectCustomer = (customer: CustomerSearchResult) => {
+    setSelectedCustomer(customer)
+    setCustomerSearch('')
+    setCustomerResults([])
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -158,6 +130,14 @@ const ManualSaleModal: React.FC<ManualSaleModalProps> = ({ open, onClose, onSucc
     }
     if (cart.length === 0) {
       setError('Cart is empty')
+      return
+    }
+    if (isScPwdDiscount && (!scPwdIdNumber.trim() || !scPwdName.trim())) {
+      setError('SC/PWD Name and ID Number must be provided when applying an SC/PWD discount')
+      return
+    }
+    if ((loyaltyPointsEarned > 0 || loyaltyPointsRedeemed > 0) && !selectedCustomer) {
+      setError('A customer must be selected to earn or redeem loyalty points')
       return
     }
     if (totalTendered < total - 0.01) {
@@ -178,9 +158,13 @@ const ManualSaleModal: React.FC<ManualSaleModalProps> = ({ open, onClose, onSucc
       p_total: total,
       p_tax: tax,
       p_total_tendered: totalTendered,
-      p_sc_pwd_discount: scPwdDiscount,
+      p_sc_pwd_discount: scPwdDiscountAmount,
+      p_sc_pwd_id_number: isScPwdDiscount ? scPwdIdNumber : null,
+      p_sc_pwd_name: isScPwdDiscount ? scPwdName : null,
       p_regular_discount: regularDiscount,
-      p_occurred_at: new Date(occurredAt).toISOString()
+      p_loyalty_points_earned: loyaltyPointsEarned,
+      p_loyalty_points_redeemed: loyaltyPointsRedeemed,
+      p_occurred_at: FormatDateTime.formatLocalTimestampForDatabase(new Date(occurredAt)),
     }
 
     try {
@@ -275,7 +259,7 @@ const ManualSaleModal: React.FC<ManualSaleModalProps> = ({ open, onClose, onSucc
                         {customerResults.map(c => (
                           <li
                             key={c.customer_id}
-                            onClick={() => { setSelectedCustomer(c); setCustomerSearch(''); setCustomerResults([]) }}
+                            onClick={() => handleSelectCustomer(c)}
                             className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm"
                           >
                             {c.full_name} ({c.phone_number})
@@ -286,6 +270,66 @@ const ManualSaleModal: React.FC<ManualSaleModalProps> = ({ open, onClose, onSucc
                   </>
                 )}
               </div>
+
+              {isScPwdDiscount && (
+                <div className="p-3 border border-orange-200 bg-orange-50/50 rounded-md space-y-3">
+                  <h4 className="text-xs font-bold text-orange-800 uppercase tracking-wider">BIR SC/PWD Compliance</h4>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700">ID Number</label>
+                      <input
+                        type="text"
+                        required
+                        value={scPwdIdNumber}
+                        onChange={e => setScPwdIdNumber(e.target.value)}
+                        placeholder="ID No."
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700">Full Name</label>
+                      <input
+                        type="text"
+                        required
+                        value={scPwdName}
+                        onChange={e => setScPwdName(e.target.value)}
+                        placeholder="Name"
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-xs"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {selectedCustomer && (
+                <div className="p-3 border border-blue-200 bg-blue-50/50 rounded-md space-y-3">
+                  <h4 className="text-xs font-bold text-blue-800 uppercase tracking-wider">Loyalty Program</h4>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700">Earned Points</label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={loyaltyPointsEarned}
+                        onChange={e => setLoyaltyPointsEarned(Number(e.target.value))}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700">Redeemed Points</label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={loyaltyPointsRedeemed}
+                        onChange={e => setLoyaltyPointsRedeemed(Number(e.target.value))}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-xs"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div>
                 <label className="block text-sm font-medium text-gray-700">Notes</label>
@@ -318,7 +362,7 @@ const ManualSaleModal: React.FC<ManualSaleModalProps> = ({ open, onClose, onSucc
                     {productResults.map(p => (
                       <li
                         key={p.id}
-                        onClick={() => addToCart(p)}
+                        onClick={() => handleAddToCart(p)}
                         className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex justify-between items-center"
                       >
                         <div className="text-sm">
@@ -340,7 +384,7 @@ const ManualSaleModal: React.FC<ManualSaleModalProps> = ({ open, onClose, onSucc
                     <div key={item.product.id} className="p-3 flex items-center justify-between gap-2 bg-white">
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-gray-900 truncate">{item.product.name}</p>
-                        <p className="text-xs text-gray-500">₱{item.product.base_price.toFixed(2)} / {item.product.unit_type}</p>
+                        <p className="text-xs text-gray-500">₱{item.product.display_price.toFixed(2)} / {item.product.unit_type}</p>
                       </div>
                       <div className="flex items-center gap-2">
                         <input
@@ -432,15 +476,18 @@ const ManualSaleModal: React.FC<ManualSaleModalProps> = ({ open, onClose, onSucc
               </div>
               <div className="flex justify-between text-sm">
                 <div className="flex flex-col">
-                  <span className="text-gray-500">SC/PWD Discount</span>
-                  <input
-                    type="number"
-                    value={scPwdDiscount}
-                    onChange={e => setScPwdDiscount(Number(e.target.value))}
-                    className="w-24 text-xs p-1 border rounded"
-                  />
+                  <span className="text-gray-500 font-medium">Apply SC/PWD Discount?</span>
+                  <label className="inline-flex items-center mt-1 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={isScPwdDiscount}
+                      onChange={e => setIsScPwdDiscount(e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  </label>
                 </div>
-                <span className="text-red-600">-₱{scPwdDiscount.toFixed(2)}</span>
+                <span className="text-red-600 font-bold">-₱{scPwdDiscountAmount.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <div className="flex flex-col">
@@ -465,7 +512,7 @@ const ManualSaleModal: React.FC<ManualSaleModalProps> = ({ open, onClose, onSucc
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">Change Due</span>
                 <span className={totalTendered - total >= 0 ? 'text-green-600' : 'text-red-600'}>
-                  ₱{Math.max(0, totalTendered - total).toFixed(2)}
+                  ₱{changeDue.toFixed(2)}
                 </span>
               </div>
             </div>

@@ -36,6 +36,7 @@ export const CatalogSection: React.FC = () => {
               ['Pricing Logic', 'Base Price is entered manually. Entering a Tax Rate (e.g. 12%) automatically computes and previews the tax-inclusive Display Price.'],
               ['Identifiers', 'SKU and Barcode inputs to hook items to POS barcode scan listeners.'],
               ['Sale Status', 'A toggle to set products as For Sale. Non-retail items (such as raw materials) can be configured and are filtered out from the cashier POS screen.'],
+              ['SC/PWD Eligibility', 'A toggle to mark products as eligible for Senior Citizen and PWD discounts. Ineligible products will not receive the 20% discount even if the discount is applied at checkout.'],
               ['Active Status', 'A checkbox to set products as Active. Inactive (archived) items are hidden from all cashier POS and inventory screens, but remain editable by administrators.']
             ].map(([param, desc]) => (
               <tr key={param} className="hover:bg-gray-50">

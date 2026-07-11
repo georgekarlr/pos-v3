@@ -7,6 +7,7 @@ export interface ReceiptLine {
     unitPrice: number        // display price (VAT-inclusive)
     baseUnitPrice?: number  // base price (VAT-exclusive); used when SC/PWD discount is active
     lineTotal: number
+    isScPwdEligible?: boolean // NEW: tracks if THIS specific item was eligible for SC/PWD
     // Optional refund info per item (shown on Sales History receipts)
     refundedQty?: number
     refundedAmount?: number
@@ -126,11 +127,12 @@ const Receipt: React.FC<{ data: ReceiptData; className?: string }>
                 </div>
                 <div className="mt-1 space-y-1">
                     {data.lines.map((l, i) => {
-                        // When SC/PWD discount is active, display VAT-exclusive base prices
-                        const effectiveUnitPrice = isScPwd && l.baseUnitPrice != null
+                        // When SC/PWD discount is active, display VAT-exclusive base prices ONLY for eligible items
+                        const itemIsDiscounted = isScPwd && l.isScPwdEligible
+                        const effectiveUnitPrice = itemIsDiscounted && l.baseUnitPrice != null
                             ? l.baseUnitPrice
                             : l.unitPrice
-                        const effectiveLineTotal = isScPwd && l.baseUnitPrice != null
+                        const effectiveLineTotal = itemIsDiscounted && l.baseUnitPrice != null
                             ? l.baseUnitPrice * l.qty
                             : l.lineTotal
                         return (
@@ -164,13 +166,21 @@ const Receipt: React.FC<{ data: ReceiptData; className?: string }>
 
 
             <div className="px-4 text-[12px] space-y-1">
-                {/* SC/PWD sales: label clarifies VAT-exempt status */}
-                <div className="flex justify-between">
-                    <span>{isScPwd ? 'Subtotal (VAT Exempt)' : 'Subtotal'}</span>
-                    <span>{format(data.subtotal)}</span>
-                </div>
-                {/* VAT line: hide entirely for SC/PWD sales (VAT is removed by law) */}
-                {!isScPwd && data.isVatRegistered !== false && (
+                {/* Calculated subtotal based on displayed line items to ensure math adds up on paper */}
+                {(() => {
+                    const displayedSubtotal = data.lines.reduce((sum, l) => {
+                        const itemIsDiscounted = isScPwd && l.isScPwdEligible
+                        return sum + (itemIsDiscounted && l.baseUnitPrice != null ? l.baseUnitPrice * l.qty : l.lineTotal)
+                    }, 0)
+                    return (
+                        <div className="flex justify-between">
+                            <span>{isScPwd ? 'Subtotal (Mixed)' : 'Subtotal'}</span>
+                            <span>{format(displayedSubtotal)}</span>
+                        </div>
+                    )
+                })()}
+                {/* VAT line: Only show for non-discounted portion if SC/PWD is active, or full tax otherwise */}
+                {data.isVatRegistered !== false && (data.tax > 0) && (
                     <div className="flex justify-between"><span>Tax (VAT)</span><span>{format(data.tax)}</span></div>
                 )}
                 {data.scPwdDiscount !== undefined && data.scPwdDiscount > 0 && (

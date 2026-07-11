@@ -18,7 +18,8 @@ import {
   Calendar,
   Clock,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Award
 } from 'lucide-react';
 
 const CustomersAndDebts: React.FC = () => {
@@ -150,6 +151,7 @@ const CustomersAndDebts: React.FC = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Current Balance</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Loyalty Points</th>
                 <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
@@ -157,14 +159,14 @@ const CustomersAndDebts: React.FC = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center">
+                  <td colSpan={6} className="px-6 py-12 text-center">
                     <Loader2 className="h-8 w-8 animate-spin text-indigo-500 mx-auto" />
                     <p className="mt-2 text-gray-500">Loading customers...</p>
                   </td>
                 </tr>
               ) : customers.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
                     No customers found
                   </td>
                 </tr>
@@ -198,6 +200,11 @@ const CustomersAndDebts: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                       <span className={`font-mono ${getBalanceColor(customer.current_balance)}`}>
                         {customer.current_balance.toFixed(2)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                      <span className="font-semibold text-amber-600">
+                        {Number(customer.total_loyalty_points || 0).toLocaleString()} pts
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
@@ -374,7 +381,7 @@ const CustomersAndDebts: React.FC = () => {
                       )}
 
                       {/* Top Cards */}
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                         <div className="p-4 bg-indigo-50 rounded-xl border border-indigo-100">
                           <p className="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-1">Current Balance</p>
                           <p className={`text-2xl font-mono font-bold ${getBalanceColor(customerDetails.account.current_balance)}`}>
@@ -409,6 +416,18 @@ const CustomersAndDebts: React.FC = () => {
                               </span>
                             </p>
                           </div>
+                        </div>
+                        <div className="p-4 bg-yellow-50/60 rounded-xl border border-yellow-100">
+                          <p className="text-xs font-bold text-yellow-700 uppercase tracking-wider mb-1 flex items-center">
+                            <Award size={14} className="mr-1 text-yellow-500" />
+                            Loyalty Points
+                          </p>
+                          <p className="text-2xl font-mono font-bold text-yellow-800">
+                            {Number(detailsCustomer.total_loyalty_points || 0).toLocaleString()}
+                          </p>
+                          <p className="text-xs text-yellow-600 mt-2">
+                            Rewards Points Balance
+                          </p>
                         </div>
                       </div>
 

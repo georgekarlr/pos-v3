@@ -68,15 +68,20 @@ export class PosService {
 
         const offlineSaleId = await OfflineDB.saveSale({
           accountId: params.p_account_id,
-          terminalId: params.p_terminal_id, // NEW
+          terminalId: params.p_terminal_id,
+          customerId: params.p_customer_id ?? null,           // NEW
           cart: params.p_cart_items,
           payments: params.p_payments,
           notes: params.p_notes || null,
           total: params.p_total,
           tax: params.p_tax,
           total_tendered: params.p_total_tendered,
-          scPwdDiscount: params.p_sc_pwd_discount || 0, // NEW
-          regularDiscount: params.p_regular_discount || 0, // NEW
+          scPwdDiscount: params.p_sc_pwd_discount || 0,
+          scPwdIdNumber: params.p_sc_pwd_id_number ?? null,  // NEW
+          scPwdName: params.p_sc_pwd_name ?? null,            // NEW
+          regularDiscount: params.p_regular_discount || 0,
+          loyaltyPointsEarned: params.p_loyalty_points_earned ?? 0,   // NEW
+          loyaltyPointsRedeemed: params.p_loyalty_points_redeemed ?? 0, // NEW
           createdAt: params.p_occurred_at || FormatDateTime.formatLocalTimestampForDatabase(new Date()),
           offlineInvoiceNumber: invoiceNumber,
           offlineGrandTotal: offlineGrandTotal
@@ -102,7 +107,7 @@ export class PosService {
     try {
       const { data, error } = await supabase.rpc('pos2_create_sale', {
         p_account_id: params.p_account_id,
-        p_terminal_id: params.p_terminal_id, // NEW
+        p_terminal_id: params.p_terminal_id,
         p_customer_id: params.p_customer_id,
         p_cart_items: params.p_cart_items,
         p_payments: params.p_payments,
@@ -110,12 +115,19 @@ export class PosService {
         p_total: params.p_total,
         p_tax: params.p_tax,
         p_total_tendered: params.p_total_tendered,
-        p_sc_pwd_discount: params.p_sc_pwd_discount ?? 0, // NEW
-        p_regular_discount: params.p_regular_discount ?? 0, // NEW
-        p_is_offline_sync: params.p_is_offline_sync ?? false, // NEW
+        // BIR Compliance
+        p_sc_pwd_discount: params.p_sc_pwd_discount ?? 0,
+        p_sc_pwd_id_number: params.p_sc_pwd_id_number ?? null,     // NEW
+        p_sc_pwd_name: params.p_sc_pwd_name ?? null,               // NEW
+        p_regular_discount: params.p_regular_discount ?? 0,
+        // Loyalty Program
+        p_loyalty_points_earned: params.p_loyalty_points_earned ?? 0,   // NEW
+        p_loyalty_points_redeemed: params.p_loyalty_points_redeemed ?? 0, // NEW
+        // Offline Sync
+        p_is_offline_sync: params.p_is_offline_sync ?? false,
         p_occurred_at: params.p_occurred_at ?? null,
-        p_offline_invoice_number: params.p_offline_invoice_number ?? null, // NEW
-        p_offline_grand_total: params.p_offline_grand_total ?? null // NEW
+        p_offline_invoice_number: params.p_offline_invoice_number ?? null,
+        p_offline_grand_total: params.p_offline_grand_total ?? null
       });
 
       console.log('data', data)

@@ -9,6 +9,7 @@ import CartPanel, { CartLine } from '../components/pos/CartPanel'
 import BundleModal from '../components/pos/BundleModal'
 import { AlertCircle, Camera, RefreshCw, Search, WifiOff } from 'lucide-react'
 import { PaymentInput, PosAction, PosViewMode } from '../types/pos'
+import { CustomerService } from '../services/customerService'
 import ActionModeBar from '../components/pos/ActionModeBar'
 import ViewModeSwitcher from '../components/pos/ViewModeSwitcher'
 import ReceiptModal from '../components/pos/ReceiptModal'
@@ -41,11 +42,20 @@ const POS: React.FC = () => {
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [scanSuccess, setScanSuccess] = useState<string | null>(null)
 
-  // Terminals and discounts state
+  // Terminals
   const [terminals, setTerminals] = useState<any[]>([])
   const [selectedTerminalId, setSelectedTerminalId] = useState<number | null>(null)
+
+  // SC/PWD Discount state
   const [isScPwdDiscount, setIsScPwdDiscount] = useState<boolean>(false)
+  const [scPwdIdNumber, setScPwdIdNumber] = useState<string>('')
+  const [scPwdName, setScPwdName] = useState<string>('')
   const [regularDiscount, setRegularDiscount] = useState<string>('')
+
+  // Customer & Loyalty state
+  const [customerId, setCustomerId] = useState<number | null>(null)
+  const [customerLoyaltyBalance, setCustomerLoyaltyBalance] = useState<number>(0)
+  const [loyaltyPointsRedeemed, setLoyaltyPointsRedeemed] = useState<number>(0)
 
   // Receipt & Payment modal state
   const [receiptOpen, setReceiptOpen] = useState(false)
@@ -227,6 +237,18 @@ const POS: React.FC = () => {
 
   const clearAll = () => setOrderQtyById({})
 
+  const handleClosePayment = () => {
+    setPaymentOpen(false)
+    setIsScPwdDiscount(false)
+    setScPwdIdNumber('')
+    setScPwdName('')
+    setRegularDiscount('')
+    setLoyaltyPointsRedeemed(0)
+    setCustomerId(null)
+    setPayments([])
+    setNotes('')
+  }
+
   const cartLines: CartLine[] = useMemo(() => {
     const ids = Object.keys(orderQtyById).map(Number)
     return ids
@@ -237,26 +259,68 @@ const POS: React.FC = () => {
   const subtotal = useMemo(() => cartLines.reduce((sum, l) => sum + l.product.base_price * l.qty, 0), [cartLines])
 
   const tax = useMemo(() => {
-    if (isScPwdDiscount) return 0
-    return cartLines.reduce((sum, l) => sum + (l.product.base_price * l.qty) * (l.product.tax_rate / 100), 0)
+    const settings = getCachedBusinessSettings();
+    const billingType = settings?.billing_type || 'NON-VAT';
+
+    return cartLines.reduce((sum, l) => {
+      // SC/PWD logic: if discount is applied AND item is eligible, VAT is stripped
+      if (isScPwdDiscount && l.product.is_sc_pwd_eligible) {
+        return sum;
+      }
+      
+      // Normal tax logic
+      if (billingType === 'VAT' && l.product.tax_type === 'VATable') {
+        return sum + (l.product.base_price * l.qty) * (l.product.tax_rate / 100);
+      }
+      
+      return sum;
+    }, 0);
   }, [cartLines, isScPwdDiscount])
 
   const scPwdDiscountAmount = useMemo(() => {
-    if (!isScPwdDiscount) return 0
-    return subtotal * 0.20
-  }, [subtotal, isScPwdDiscount])
+    if (!isScPwdDiscount) return 0;
+    
+    // Server logic: v_server_calculated_sc_discount := v_server_calculated_sc_discount + (v_line_gross * 0.20);
+    // where v_line_gross = v_product.base_price * cart_item.quantity;
+    // only if v_product.is_sc_pwd_eligible = TRUE
+    return cartLines.reduce((sum, l) => {
+      if (l.product.is_sc_pwd_eligible) {
+        return sum + (l.product.base_price * l.qty) * 0.20;
+      }
+      return sum;
+    }, 0);
+  }, [cartLines, isScPwdDiscount])
 
   const regularDiscountAmount = useMemo(() => {
     return Number(regularDiscount) || 0
   }, [regularDiscount])
 
   const total = useMemo(() => {
-    const calculated = subtotal + tax - scPwdDiscountAmount - regularDiscountAmount
+    const calculated = subtotal + tax - scPwdDiscountAmount - regularDiscountAmount - loyaltyPointsRedeemed
     return Math.max(0, calculated)
-  }, [subtotal, tax, scPwdDiscountAmount, regularDiscountAmount])
-  {/**const totalPaid = useMemo(() => payments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0), [payments])
-  const itemsCount = useMemo(() => cartLines.reduce((sum, l) => sum + l.qty, 0), [cartLines])
-     **/}
+  }, [subtotal, tax, scPwdDiscountAmount, regularDiscountAmount, loyaltyPointsRedeemed])
+
+  // Loyalty points earned: 1 point per ₱1 of net total
+  const loyaltyPointsEarned = useMemo(() => {
+    if (!customerId) return 0
+    return Math.floor(total)
+  }, [total, customerId])
+  // Fetch customer loyalty balance whenever customerId changes
+  useEffect(() => {
+    if (customerId === null) {
+      setCustomerLoyaltyBalance(0)
+      setLoyaltyPointsRedeemed(0)
+      return
+    }
+    CustomerService.getCustomerById(customerId).then(res => {
+      if (res.data) {
+        setCustomerLoyaltyBalance(Number(res.data.total_loyalty_points ?? 0))
+      } else {
+        setCustomerLoyaltyBalance(0)
+      }
+    }).catch(() => setCustomerLoyaltyBalance(0))
+  }, [customerId])
+
   const handleProductClick = (productId: number) => {
     switch (selectedAction) {
       case 'add':
@@ -311,8 +375,8 @@ const POS: React.FC = () => {
 
       const { data: serviceData, error: serviceError } = await PosService.createSale({
         p_account_id: persona.id!,
-        p_terminal_id: selectedTerminalId, // NEW
-        p_customer_id: null,
+        p_terminal_id: selectedTerminalId,
+        p_customer_id: customerId,
         p_cart_items: cartPayload,
         p_payments: payments.map(p => ({
           amount: Number(p.amount),
@@ -323,8 +387,14 @@ const POS: React.FC = () => {
         p_total: total,
         p_tax: tax,
         p_total_tendered: totalPaidFromUI,
-        p_sc_pwd_discount: scPwdDiscountAmount, // NEW
-        p_regular_discount: regularDiscountAmount // NEW
+        // BIR Compliance
+        p_sc_pwd_discount: scPwdDiscountAmount,
+        p_sc_pwd_id_number: isScPwdDiscount ? scPwdIdNumber : null,
+        p_sc_pwd_name: isScPwdDiscount ? scPwdName : null,
+        p_regular_discount: regularDiscountAmount,
+        // Loyalty
+        p_loyalty_points_earned: loyaltyPointsEarned,
+        p_loyalty_points_redeemed: loyaltyPointsRedeemed,
       })
 
 
@@ -333,16 +403,17 @@ const POS: React.FC = () => {
       } else {
         const result = serviceData;
         setSuccessMessage('Sale created successfully');
-        setPaymentOpen(false); // Close payment modal on success
+        handleClosePayment(); // Reset states and close modal
 
         // Build receipt data BEFORE clearing local state
-        const lines = cartLines.map(l => ({
+        const lines: ReceiptLine[] = cartLines.map(l => ({
           name: l.product.name,
           qty: l.qty,
           unitType: l.product.unit_type,
           unitPrice: l.product.display_price,       // VAT-inclusive (used for normal sales)
           baseUnitPrice: l.product.base_price,      // VAT-exclusive (used for SC/PWD sales)
           lineTotal: l.product.display_price * l.qty,
+          isScPwdEligible: l.product.is_sc_pwd_eligible,
         }));
         const totalPaidLocal = totalPaidFromUI;
         const change = Math.max(0, totalPaidLocal - total);
@@ -402,15 +473,9 @@ const POS: React.FC = () => {
         };
         setReceiptData(receipt)
         setReceiptOpen(true)
+        setOrderQtyById({}) // Clear cart after success and receipt generation
 
-        // Reset state
-        setOrderQtyById({})
-        setPayments([])
-        setNotes('')
-        setIsScPwdDiscount(false) // NEW
-        setRegularDiscount('') // NEW
-        // Optionally refresh products (to update stock)
-        // Use silent refresh so the receipt modal remains visible
+        // Silent refresh to update stock without closing receipt modal
         loadProducts(true)
         setTimeout(() => setSuccessMessage(null), 3000)
       }
@@ -660,8 +725,10 @@ const POS: React.FC = () => {
       {/* Payment modal */}
       <PaymentModal
         open={paymentOpen}
-        onClose={() => setPaymentOpen(false)}
+        onClose={handleClosePayment}
         total={total}
+        subtotal={subtotal}
+        tax={tax}
         payments={payments}
         onAddPayment={handleAddPayment}
         onUpdatePayment={handleUpdatePayment}
@@ -671,13 +738,24 @@ const POS: React.FC = () => {
         onSubmit={handleSubmit}
         submitting={submitting}
         disabled={cartLines.length === 0}
+        // SC/PWD
         isScPwdDiscount={isScPwdDiscount}
         onScPwdToggle={setIsScPwdDiscount}
+        scPwdDiscountAmount={scPwdDiscountAmount}
+        scPwdIdNumber={scPwdIdNumber}
+        onScPwdIdNumberChange={setScPwdIdNumber}
+        scPwdName={scPwdName}
+        onScPwdNameChange={setScPwdName}
+        // Regular Discount
         regularDiscount={regularDiscount}
         onRegularDiscountChange={setRegularDiscount}
-        subtotal={subtotal}
-        tax={tax}
-        scPwdDiscountAmount={scPwdDiscountAmount}
+        // Customer & Loyalty
+        customerId={customerId}
+        onCustomerIdChange={setCustomerId}
+        customerLoyaltyBalance={customerLoyaltyBalance}
+        loyaltyPointsEarned={loyaltyPointsEarned}
+        loyaltyPointsRedeemed={loyaltyPointsRedeemed}
+        onLoyaltyRedemptionChange={setLoyaltyPointsRedeemed}
       />
 
       <OfflineSalesModal

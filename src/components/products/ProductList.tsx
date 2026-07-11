@@ -72,6 +72,9 @@ const ProductList: React.FC<ProductListProps> = ({ products, onEdit, isAdmin }) 
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Status
               </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                SC/PWD
+              </th>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actions
               </th>
@@ -167,6 +170,17 @@ const ProductList: React.FC<ProductListProps> = ({ products, onEdit, isAdmin }) 
                     }`}
                   >
                     {product.is_active ? 'Active' : 'Inactive'}
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span
+                    className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                      product.is_sc_pwd_eligible
+                        ? 'bg-purple-100 text-purple-800 border border-purple-200'
+                        : 'bg-gray-100 text-gray-800 border border-gray-200'
+                    }`}
+                  >
+                    {product.is_sc_pwd_eligible ? 'Eligible' : 'Not Eligible'}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -270,6 +284,18 @@ const ProductList: React.FC<ProductListProps> = ({ products, onEdit, isAdmin }) 
                     {product.tax_type || 'VATable'}
                   </span>
                 </div>
+              </div>
+              <div>
+                <p className="text-gray-500">SC/PWD Eligibility</p>
+                <span
+                  className={`inline-flex px-2 py-0.5 text-[10px] font-bold uppercase rounded-full mt-0.5 ${
+                    product.is_sc_pwd_eligible
+                      ? 'bg-purple-100 text-purple-800 border border-purple-200'
+                      : 'bg-gray-100 text-gray-800 border border-gray-200'
+                  }`}
+                >
+                  {product.is_sc_pwd_eligible ? 'Eligible' : 'Not Eligible'}
+                </span>
               </div>
               <div className="col-span-2">
                 <p className="text-gray-500">Inventory</p>

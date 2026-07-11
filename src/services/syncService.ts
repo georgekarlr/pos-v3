@@ -22,20 +22,24 @@ export const SyncService = {
           console.log(`Syncing sale ${sale.id}...`, sale);
           const { data, error } = await PosService.createSale({
             p_account_id: sale.accountId,
-            p_terminal_id: sale.terminalId, // NEW
-            p_customer_id: null,
+            p_terminal_id: sale.terminalId,
+            p_customer_id: sale.customerId ?? null,                    // NEW
             p_cart_items: sale.cart,
             p_payments: sale.payments,
             p_notes: sale.notes || null,
             p_total: sale.total,
             p_tax: sale.tax || 0,
             p_total_tendered: sale.total_tendered,
-            p_sc_pwd_discount: sale.scPwdDiscount || 0, // NEW
-            p_regular_discount: sale.regularDiscount || 0, // NEW
+            p_sc_pwd_discount: sale.scPwdDiscount || 0,
+            p_sc_pwd_id_number: sale.scPwdIdNumber ?? null,            // NEW
+            p_sc_pwd_name: sale.scPwdName ?? null,                     // NEW
+            p_regular_discount: sale.regularDiscount || 0,
+            p_loyalty_points_earned: sale.loyaltyPointsEarned ?? 0,    // NEW
+            p_loyalty_points_redeemed: sale.loyaltyPointsRedeemed ?? 0, // NEW
             p_occurred_at: sale.createdAt,
-            p_is_offline_sync: true, // NEW
-            p_offline_invoice_number: sale.offlineInvoiceNumber || null, // NEW
-            p_offline_grand_total: sale.offlineGrandTotal || null // NEW
+            p_is_offline_sync: true,
+            p_offline_invoice_number: sale.offlineInvoiceNumber || null,
+            p_offline_grand_total: sale.offlineGrandTotal || null
           });
 
           if (error || !data) {

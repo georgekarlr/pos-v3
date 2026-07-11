@@ -24,22 +24,41 @@ export interface PaymentInput extends PaymentItemInput {}
 
 // --- Parameter Interface ---
 
+// SC/PWD BIR compliance fields (required when sc_pwd_discount > 0)
+export interface ScPwdInfo {
+  idNumber: string;
+  name: string;
+}
+
+// Loyalty program state (customer required when either > 0)
+export interface LoyaltyState {
+  pointsEarned: number;
+  pointsRedeemed: number;
+}
+
 export interface CreatePosSaleParams {
   p_account_id: number;
-  p_terminal_id: number; // NEW
-  p_customer_id: number | null; // Nullable for guest checkout
+  p_terminal_id: number;
+  p_customer_id: number | null; // Required if loyalty points are used
   p_cart_items: CartItemInput[];
   p_payments: PaymentItemInput[];
   p_notes?: string | null;
   p_total: number;
   p_tax: number;
   p_total_tendered: number;
-  p_sc_pwd_discount?: number; // NEW
-  p_regular_discount?: number; // NEW
+  // BIR Compliance: SC/PWD Discount
+  p_sc_pwd_discount?: number;
+  p_sc_pwd_id_number?: string | null; // NEW: required when sc_pwd_discount > 0
+  p_sc_pwd_name?: string | null;      // NEW: required when sc_pwd_discount > 0
+  p_regular_discount?: number;
+  // Loyalty Program
+  p_loyalty_points_earned?: number;   // NEW
+  p_loyalty_points_redeemed?: number; // NEW
+  // Offline Sync
   p_occurred_at?: string | null;
-  p_is_offline_sync?: boolean; // NEW
-  p_offline_invoice_number?: string | null; // NEW
-  p_offline_grand_total?: number | null; // NEW
+  p_is_offline_sync?: boolean;
+  p_offline_invoice_number?: string | null;
+  p_offline_grand_total?: number | null;
 }
 
 export interface RecordManualSaleParams {
@@ -53,7 +72,11 @@ export interface RecordManualSaleParams {
   p_tax: number;
   p_total_tendered: number;
   p_sc_pwd_discount?: number;
+  p_sc_pwd_id_number?: string | null;
+  p_sc_pwd_name?: string | null;
   p_regular_discount?: number;
+  p_loyalty_points_earned?: number;
+  p_loyalty_points_redeemed?: number;
   p_occurred_at: string; // Required for manual sale
 }
 

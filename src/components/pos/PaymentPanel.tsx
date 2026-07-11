@@ -1,90 +1,133 @@
 import React, { useMemo } from 'react'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2, Award, CreditCard, User } from 'lucide-react'
 import { PaymentInput } from '../../types/pos'
 
 interface PaymentPanelProps {
+    // --- Totals ---
     total: number
+    subtotal: number
+    tax: number
+    // --- Payments ---
     payments: PaymentInput[]
     onAddPayment: () => void
     onUpdatePayment: (index: number, patch: Partial<PaymentInput>) => void
     onRemovePayment: (index: number) => void
+    // --- Notes ---
     notes: string
     onNotesChange: (notes: string) => void
+    // --- Submit ---
     onSubmit: (totalPaid: number) => void
     submitting?: boolean
     disabled?: boolean
-    // Discounts
+    // --- SC/PWD Discount ---
     isScPwdDiscount: boolean
     onScPwdToggle: (val: boolean) => void
+    scPwdDiscountAmount: number
+    scPwdIdNumber: string
+    onScPwdIdNumberChange: (val: string) => void
+    scPwdName: string
+    onScPwdNameChange: (val: string) => void
+    // --- Regular Discount ---
     regularDiscount: string | number
     onRegularDiscountChange: (val: string) => void
-    subtotal: number
-    tax: number
-    scPwdDiscountAmount: number
+    // --- Customer (for loyalty) ---
+    customerId: number | null
+    onCustomerIdChange: (id: number | null) => void
+    // --- Loyalty Points ---
+    customerLoyaltyBalance: number   // current points the customer holds
+    loyaltyPointsEarned: number      // computed from total
+    loyaltyPointsRedeemed: number
+    onLoyaltyRedemptionChange: (pts: number) => void
 }
 
-// CHANGED: Reverted to a simple currency formatter for dollars
-const formatAsCurrency = (n: number) => `\u20b1${n.toFixed(2)}`
+const formatCurrency = (n: number) => `₱${n.toFixed(2)}`
+const formatPts = (n: number) => `${n.toLocaleString()} pts`
 
-const methods = ['Cash', 'Credit Card', 'Debit Card', 'Mobile Pay', 'Other']
+const PAYMENT_METHODS = ['Cash', 'Credit Card', 'Debit Card', 'Mobile Pay', 'Deposit', 'Other']
 
 const PaymentPanel: React.FC<PaymentPanelProps> = ({
-                                                       total,
-                                                       payments,
-                                                       onAddPayment,
-                                                       onUpdatePayment,
-                                                       onRemovePayment,
-                                                       notes,
-                                                       onNotesChange,
-                                                       onSubmit,
-                                                       submitting,
-                                                       disabled,
-                                                       isScPwdDiscount,
-                                                       onScPwdToggle,
-                                                       regularDiscount,
-                                                       onRegularDiscountChange,
-                                                       subtotal,
-                                                       tax,
-                                                       scPwdDiscountAmount
-                                                   }) => {
+    total,
+    subtotal,
+    tax,
+    payments,
+    onAddPayment,
+    onUpdatePayment,
+    onRemovePayment,
+    notes,
+    onNotesChange,
+    onSubmit,
+    submitting,
+    disabled,
+    isScPwdDiscount,
+    onScPwdToggle,
+    scPwdDiscountAmount,
+    scPwdIdNumber,
+    onScPwdIdNumberChange,
+    scPwdName,
+    onScPwdNameChange,
+    regularDiscount,
+    onRegularDiscountChange,
+    customerId,
+    onCustomerIdChange,
+    customerLoyaltyBalance,
+    loyaltyPointsEarned,
+    loyaltyPointsRedeemed,
+    onLoyaltyRedemptionChange,
+}) => {
     const { totalPaid, totalChangeDue } = useMemo(() => {
         let paid = 0
-        payments.forEach(p => {
-            paid += Number(p.amount) || 0
-        })
+        payments.forEach(p => { paid += Number(p.amount) || 0 })
         const change = Math.max(0, paid - total)
         return { totalPaid: paid, totalChangeDue: change }
     }, [payments, total])
 
     const diff = total - totalPaid
-    const canSubmit = !disabled && (totalPaid >= total - 0.01) && total > 0 && payments.length > 0 && !submitting
+
+    // SC/PWD BIR validation: name + ID required when discount is active
+    const scPwdValid = !isScPwdDiscount || (scPwdIdNumber.trim() !== '' && scPwdName.trim() !== '')
+
+    const canSubmit =
+        !disabled &&
+        (totalPaid >= total - 0.01) &&
+        total > 0 &&
+        payments.length > 0 &&
+        !submitting &&
+        scPwdValid
 
     const handleCashTenderedChange = (index: number, tenderedValue: string) => {
         const tendered = Number(tenderedValue) || 0
-        // We now allow the amount applied to be the full tendered value for Cash.
-        // This ensures "Total Paid" reflects the cash received.
         onUpdatePayment(index, {
             tendered: tenderedValue,
             amount: tendered > 0 ? tendered.toFixed(2) : ''
         })
     }
 
+    const handleLoyaltyRedeemChange = (val: string) => {
+        const pts = Math.max(0, Math.min(Number(val) || 0, customerLoyaltyBalance))
+        onLoyaltyRedemptionChange(pts)
+    }
+
     return (
         <div className="bg-white max-w-2xl mx-auto">
+            {/* Header */}
             <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-gray-900 italic">Order Total</h3>
                 <div className="text-right">
                     <div className="text-sm text-gray-500">Amount Due</div>
-                    <div className="text-xl font-bold text-gray-800">{formatAsCurrency(total)}</div>
+                    <div className="text-xl font-bold text-gray-800">{formatCurrency(total)}</div>
                 </div>
             </div>
 
             <div className="p-6 space-y-4">
-                {/* Discounts Section */}
-                <div className="bg-gray-50 border rounded-lg p-4 space-y-3">
-                    <h4 className="text-xs font-semibold text-gray-700 uppercase tracking-wider">Discounts & Promos</h4>
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                        {/* SC/PWD Toggle */}
+
+                {/* ── Discounts & Promos ── */}
+                <div className="bg-gray-50 border rounded-lg p-4 space-y-4">
+                    <h4 className="text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        Discounts &amp; Promos
+                    </h4>
+
+                    {/* SC/PWD toggle */}
+                    <div className="space-y-3">
                         <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-gray-700 select-none">
                             <input
                                 type="checkbox"
@@ -92,34 +135,164 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
                                 onChange={e => onScPwdToggle(e.target.checked)}
                                 className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
                             />
-                            <span>SC/PWD Discount (20% & VAT Exempt)</span>
+                            <span>SC/PWD Discount (20% &amp; VAT Exempt)</span>
                         </label>
-                        
-                        {/* Regular Discount */}
-                        <div className="flex items-center gap-2">
-                            <label htmlFor="regular-discount" className="text-xs font-medium text-gray-600 whitespace-nowrap">
-                                Regular Discount:
-                            </label>
-                            <div className="relative rounded-md shadow-sm w-32">
-                                <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
-                                    <span className="text-gray-400 text-sm">₱</span>
+
+                        {/* SC/PWD BIR Compliance fields (shown when toggle is ON) */}
+                        {isScPwdDiscount && (
+                            <div className="ml-6 grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-amber-50 border border-amber-200 rounded-md">
+                                <p className="col-span-full text-[11px] font-semibold text-amber-700 uppercase tracking-wide">
+                                    BIR Required — SC/PWD Information
+                                </p>
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-600 mb-1">
+                                        SC/PWD Name <span className="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        placeholder="Full name of SC/PWD beneficiary"
+                                        value={scPwdName}
+                                        onChange={e => onScPwdNameChange(e.target.value)}
+                                        className="w-full rounded-md border-amber-300 shadow-sm text-sm focus:border-amber-500 focus:ring-amber-500"
+                                    />
                                 </div>
-                                <input
-                                    type="number"
-                                    id="regular-discount"
-                                    min="0"
-                                    max={(subtotal + tax - scPwdDiscountAmount).toFixed(2)}
-                                    step="0.01"
-                                    placeholder="0.00"
-                                    value={regularDiscount || ''}
-                                    onChange={e => onRegularDiscountChange(e.target.value)}
-                                    className="w-full pl-6 pr-2 py-1 border border-gray-300 rounded-md text-xs focus:ring-blue-500 focus:border-blue-500"
-                                />
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-600 mb-1">
+                                        SC/PWD ID Number <span className="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        placeholder="ID / Card number"
+                                        value={scPwdIdNumber}
+                                        onChange={e => onScPwdIdNumberChange(e.target.value)}
+                                        className="w-full rounded-md border-amber-300 shadow-sm text-sm focus:border-amber-500 focus:ring-amber-500"
+                                    />
+                                </div>
+                                {isScPwdDiscount && (!scPwdName.trim() || !scPwdIdNumber.trim()) && (
+                                    <p className="col-span-full text-xs text-red-600 font-medium">
+                                        Both fields are required for BIR compliance.
+                                    </p>
+                                )}
                             </div>
+                        )}
+                    </div>
+
+                    {/* Regular discount */}
+                    <div className="flex items-center gap-3">
+                        <label htmlFor="regular-discount" className="text-xs font-medium text-gray-600 whitespace-nowrap">
+                            Regular Discount:
+                        </label>
+                        <div className="relative rounded-md shadow-sm w-36">
+                            <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
+                                <span className="text-gray-400 text-sm">₱</span>
+                            </div>
+                            <input
+                                type="number"
+                                id="regular-discount"
+                                min="0"
+                                max={(subtotal + tax - scPwdDiscountAmount).toFixed(2)}
+                                step="0.01"
+                                placeholder="0.00"
+                                value={regularDiscount || ''}
+                                onChange={e => onRegularDiscountChange(e.target.value)}
+                                className="w-full pl-6 pr-2 py-1 border border-gray-300 rounded-md text-xs focus:ring-blue-500 focus:border-blue-500"
+                            />
                         </div>
                     </div>
                 </div>
 
+                {/* ── Loyalty Program ── */}
+                <div className="bg-gray-50 border rounded-lg p-4 space-y-3">
+                    <h4 className="text-xs font-semibold text-gray-700 uppercase tracking-wider flex items-center gap-1.5">
+                        <Award className="h-3.5 w-3.5 text-yellow-500" />
+                        Loyalty Program
+                    </h4>
+
+                    {/* Customer ID input */}
+                    <div className="flex items-center gap-3">
+                        <User className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                        <div className="flex-1">
+                            <label className="block text-xs font-medium text-gray-600 mb-1">
+                                Customer ID <span className="text-gray-400">(optional — required for loyalty)</span>
+                            </label>
+                            <input
+                                type="number"
+                                min="1"
+                                placeholder="Enter customer ID"
+                                value={customerId ?? ''}
+                                onChange={e => {
+                                    const v = e.target.value
+                                    onCustomerIdChange(v ? Number(v) : null)
+                                }}
+                                className="w-full rounded-md border-gray-300 shadow-sm text-sm focus:border-blue-500 focus:ring-blue-500"
+                            />
+                        </div>
+                    </div>
+
+                    {customerId !== null ? (
+                        <div className="space-y-3 pt-1">
+                            {/* Balance display */}
+                            <div className="flex items-center justify-between text-xs text-gray-600">
+                                <span className="flex items-center gap-1">
+                                    <CreditCard className="h-3.5 w-3.5" /> Current Balance
+                                </span>
+                                <span className="font-semibold text-yellow-600">{formatPts(customerLoyaltyBalance)}</span>
+                            </div>
+
+                            {/* Points to earn */}
+                            <div className="flex items-center justify-between text-xs text-gray-600">
+                                <span>Points Earned (this sale)</span>
+                                <span className="font-semibold text-green-600">+{formatPts(loyaltyPointsEarned)}</span>
+                            </div>
+
+                            {/* Redemption */}
+                            {customerLoyaltyBalance > 0 && (
+                                <div className="space-y-1.5">
+                                    <label className="block text-xs font-medium text-gray-600">
+                                        Redeem Points <span className="text-gray-400">(1 pt = ₱1 discount)</span>
+                                    </label>
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            max={customerLoyaltyBalance}
+                                            step="1"
+                                            placeholder="0"
+                                            value={loyaltyPointsRedeemed || ''}
+                                            onChange={e => handleLoyaltyRedeemChange(e.target.value)}
+                                            className="flex-1 rounded-md border-gray-300 shadow-sm text-sm focus:border-blue-500 focus:ring-blue-500"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => onLoyaltyRedemptionChange(customerLoyaltyBalance)}
+                                            className="px-2.5 py-1.5 text-xs rounded-md border border-yellow-300 bg-yellow-50 text-yellow-700 hover:bg-yellow-100 transition-colors whitespace-nowrap"
+                                        >
+                                            Use All
+                                        </button>
+                                        {loyaltyPointsRedeemed > 0 && (
+                                            <button
+                                                type="button"
+                                                onClick={() => onLoyaltyRedemptionChange(0)}
+                                                className="px-2.5 py-1.5 text-xs rounded-md border border-gray-300 bg-white text-gray-600 hover:bg-gray-100 transition-colors"
+                                            >
+                                                Clear
+                                            </button>
+                                        )}
+                                    </div>
+                                    {loyaltyPointsRedeemed > 0 && (
+                                        <p className="text-xs text-blue-600 font-medium">
+                                            -{formatCurrency(loyaltyPointsRedeemed)} discount applied from loyalty
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <p className="text-xs text-gray-400 italic">Enter a customer ID above to earn or redeem loyalty points.</p>
+                    )}
+                </div>
+
+                {/* ── Payment Methods ── */}
                 <div className="space-y-4">
                     {payments.map((p, idx) => (
                         <div key={idx} className="bg-gray-50/70 border rounded-lg p-4 space-y-3">
@@ -132,10 +305,14 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
                                         onChange={e => onUpdatePayment(idx, { method: e.target.value })}
                                         className="w-full rounded-md border-gray-300 shadow-sm text-sm focus:border-blue-500 focus:ring-blue-500 md:w-auto"
                                     >
-                                        {methods.map(m => <option key={m} value={m}>{m}</option>)}
+                                        {PAYMENT_METHODS.map(m => <option key={m} value={m}>{m}</option>)}
                                     </select>
                                 </div>
-                                <button onClick={() => onRemovePayment(idx)} className="mt-5 flex-shrink-0 p-2 rounded-md border border-gray-300 bg-white hover:bg-red-50" aria-label="Remove payment">
+                                <button
+                                    onClick={() => onRemovePayment(idx)}
+                                    className="mt-5 flex-shrink-0 p-2 rounded-md border border-gray-300 bg-white hover:bg-red-50"
+                                    aria-label="Remove payment"
+                                >
                                     <Trash2 className="h-4 w-4 text-red-600" />
                                 </button>
                             </div>
@@ -164,7 +341,9 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
                                         />
                                     </div>
                                     <div>
-                                        <label htmlFor={`payment-ref-${idx}`} className="block text-xs font-medium text-gray-600 mb-1">Reference <span className="text-gray-400">(Optional)</span></label>
+                                        <label htmlFor={`payment-ref-${idx}`} className="block text-xs font-medium text-gray-600 mb-1">
+                                            Reference <span className="text-gray-400">(Optional)</span>
+                                        </label>
                                         <input
                                             id={`payment-ref-${idx}`} type="text" placeholder="e.g., last 4 digits"
                                             value={p.transaction_ref || ''}
@@ -178,59 +357,66 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
                     ))}
                 </div>
 
-                <button onClick={onAddPayment} className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-md border-2 border-dashed border-gray-300 text-sm text-gray-600 hover:border-blue-500 hover:text-blue-600 transition-colors">
+                <button
+                    onClick={onAddPayment}
+                    className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-md border-2 border-dashed border-gray-300 text-sm text-gray-600 hover:border-blue-500 hover:text-blue-600 transition-colors"
+                >
                     <Plus className="h-4 w-4" /> Add Another Payment
                 </button>
 
+                {/* ── Totals Breakdown ── */}
                 <div className="pt-4 border-t-2 border-gray-100 space-y-2 text-sm">
-                    {/* Totals Breakdown */}
                     <div className="flex justify-between text-xs text-gray-500">
                         <span>Gross Subtotal</span>
-                        <span>{formatAsCurrency(subtotal)}</span>
+                        <span>{formatCurrency(subtotal)}</span>
                     </div>
                     <div className="flex justify-between text-xs text-gray-500">
                         <span>Tax (VAT)</span>
-                        <span>{formatAsCurrency(tax)}</span>
+                        <span>{formatCurrency(tax)}</span>
                     </div>
                     {isScPwdDiscount && (
                         <div className="flex justify-between text-xs text-amber-700">
                             <span>SC/PWD Discount (20%)</span>
-                            <span>-{formatAsCurrency(scPwdDiscountAmount)}</span>
+                            <span>-{formatCurrency(scPwdDiscountAmount)}</span>
                         </div>
                     )}
                     {Number(regularDiscount) > 0 && (
                         <div className="flex justify-between text-xs text-blue-700">
                             <span>Regular Discount</span>
-                            <span>-{formatAsCurrency(Number(regularDiscount))}</span>
+                            <span>-{formatCurrency(Number(regularDiscount))}</span>
                         </div>
                     )}
-                    <div className="border-t border-gray-100 my-1"></div>
+                    {loyaltyPointsRedeemed > 0 && (
+                        <div className="flex justify-between text-xs text-yellow-700">
+                            <span>Loyalty Points Redeemed ({formatPts(loyaltyPointsRedeemed)})</span>
+                            <span>-{formatCurrency(loyaltyPointsRedeemed)}</span>
+                        </div>
+                    )}
+                    <div className="border-t border-gray-100 my-1" />
                     <div className="flex justify-between text-sm font-semibold text-gray-800">
                         <span>Net Amount Due</span>
-                        <span>{formatAsCurrency(total)}</span>
+                        <span>{formatCurrency(total)}</span>
                     </div>
-                    <div className="border-t border-gray-100 my-1"></div>
-                    {/* Payment breakdown */}
+                    <div className="border-t border-gray-100 my-1" />
                     <div className="flex justify-between">
                         <span className="text-gray-600">Total Paid</span>
-                        <span className="font-medium text-gray-800">{formatAsCurrency(totalPaid)}</span>
+                        <span className="font-medium text-gray-800">{formatCurrency(totalPaid)}</span>
                     </div>
                     <div className="flex justify-between items-center">
                         <span className="text-gray-600 font-semibold">Remaining</span>
                         <span className={`font-semibold text-lg ${diff > 0.01 ? 'text-red-600' : 'text-green-600'}`}>
-              {formatAsCurrency(Math.max(0, diff))}
-            </span>
+                            {formatCurrency(Math.max(0, diff))}
+                        </span>
                     </div>
                     {totalChangeDue > 0 && (
                         <div className="flex justify-between items-center pt-2 border-t border-dashed">
                             <span className="text-blue-600 font-semibold">Total Change Due</span>
-                            <span className="font-semibold text-lg text-blue-600">
-                                {formatAsCurrency(totalChangeDue)}
-                            </span>
+                            <span className="font-semibold text-lg text-blue-600">{formatCurrency(totalChangeDue)}</span>
                         </div>
                     )}
                 </div>
 
+                {/* ── Notes ── */}
                 <div className="space-y-1">
                     <label htmlFor="notes" className="block text-xs font-medium text-gray-600">Notes (Printed on receipt)</label>
                     <textarea
@@ -245,7 +431,7 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
                     disabled={!canSubmit}
                     className="w-full mt-2 inline-flex items-center justify-center px-4 py-3 rounded-md text-white font-semibold text-base transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
                 >
-                    {submitting ? 'Processing...' : `Complete Sale (${formatAsCurrency(total)})`}
+                    {submitting ? 'Processing...' : `Complete Sale (${formatCurrency(total)})`}
                 </button>
             </div>
         </div>

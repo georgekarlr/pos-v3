@@ -304,14 +304,24 @@ const DebtWizard: React.FC = () => {
                         <p className="font-semibold text-gray-900">{c.full_name}</p>
                         <p className="text-sm text-gray-500">{c.phone_number}</p>
                       </div>
-                      <div className="text-right">
-                        <p className="text-xs text-gray-400 uppercase font-bold">Balance</p>
-                        <p className={`font-mono ${c.current_balance > 0 ? 'text-red-600' :
-                          c.current_balance < 0 ? 'text-green-600' :
-                            'text-gray-400'
-                          }`}>
-                          {c.current_balance.toFixed(2)}
-                        </p>
+                      <div className="flex gap-4 items-center">
+                        {c.total_loyalty_points !== undefined && c.total_loyalty_points > 0 && (
+                          <div className="text-right">
+                            <p className="text-xs text-gray-400 uppercase font-bold">Loyalty</p>
+                            <p className="font-semibold text-amber-600 font-mono text-sm">
+                              {Number(c.total_loyalty_points).toLocaleString()} pts
+                            </p>
+                          </div>
+                        )}
+                        <div className="text-right">
+                          <p className="text-xs text-gray-400 uppercase font-bold">Balance</p>
+                          <p className={`font-mono ${c.current_balance > 0 ? 'text-red-600' :
+                            c.current_balance < 0 ? 'text-green-600' :
+                              'text-gray-400'
+                            }`}>
+                            {c.current_balance.toFixed(2)}
+                          </p>
+                        </div>
                       </div>
                     </button>
                   ))}
