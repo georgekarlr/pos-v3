@@ -150,6 +150,7 @@ const Installments: React.FC = () => {
     setRecoveryLoading(true);
     const result = await recoverDebt({
       p_requesting_account_id: persona.id,
+      p_terminal_id: parseInt(localStorage.getItem('selected_pos_terminal_id') as string, 10),
       p_contract_id: selectedContract.contract_id,
       p_recovery_amount: amount,
       p_payment_method: method,

@@ -217,6 +217,7 @@ export class InstallmentService {
 
       const { data, error } = await supabase.rpc('pos2_recover_installment_debt', {
         p_requesting_account_id: params.p_requesting_account_id,
+        p_terminal_id: params.p_terminal_id,
         p_contract_id: params.p_contract_id,
         p_recovery_amount: params.p_recovery_amount,
         p_payment_method: params.p_payment_method,

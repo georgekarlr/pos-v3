@@ -139,6 +139,7 @@ export interface WriteOffInstallmentContractResult {
 
 export interface RecoverInstallmentDebtParams {
   p_requesting_account_id: number;
+  p_terminal_id: number;
   p_contract_id: number;
   p_recovery_amount: number;
   p_payment_method: string;
