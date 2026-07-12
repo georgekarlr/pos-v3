@@ -12,12 +12,12 @@ import { FormatDateTime } from '../utils/formatDateTime'
 
 const toISOStartOfDay = (dateStr: string) => {
   const d = new Date(dateStr + 'T00:00:00')
-  return d.toISOString()
+  return FormatDateTime.formatLocalTimestampForDatabase(d)
 }
 
 const toISOEndOfDay = (dateStr: string) => {
   const d = new Date(dateStr + 'T23:59:59.999')
-  return d.toISOString()
+  return FormatDateTime.formatLocalTimestampForDatabase(d)
 }
 
 const formatCurrency = (value: string | number) => {
@@ -33,8 +33,8 @@ const Reports: React.FC = () => {
   const isAdmin = persona?.type === 'admin'
 
   // Filters
-  const todayISO = FormatDateTime.formatLocalTimestampForDatabase(new Date())
-  const thirtyDaysAgoISO = FormatDateTime.formatLocalTimestampForDatabase(new Date(Date.now() - 29 * 24 * 60 * 60 * 1000))
+  const todayISO = FormatDateTime.formatLocalTimestampForDatabase(new Date()).slice(0, 10)
+  const thirtyDaysAgoISO = FormatDateTime.formatLocalTimestampForDatabase(new Date(Date.now() - 29 * 24 * 60 * 60 * 1000)).slice(0, 10)
 
   const [startDate, setStartDate] = useState(thirtyDaysAgoISO)
   const [endDate, setEndDate] = useState(todayISO)
@@ -150,8 +150,8 @@ const Reports: React.FC = () => {
   const onQuickRange = (days: number) => {
     const end = new Date()
     const start = new Date(Date.now() - (days - 1) * 24 * 60 * 60 * 1000)
-    setStartDate(start.toISOString().slice(0, 10))
-    setEndDate(end.toISOString().slice(0, 10))
+    setStartDate(FormatDateTime.formatLocalTimestampForDatabase(start).slice(0, 10))
+    setEndDate(FormatDateTime.formatLocalTimestampForDatabase(end).slice(0, 10))
   }
 
   return (

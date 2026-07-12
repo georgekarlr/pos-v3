@@ -41,7 +41,7 @@ export interface OfflineDebt {
 
 export class IndexedDBService {
   private dbName = 'pos-offline-db';
-  private dbVersion = 4;
+  private dbVersion = 5;
   private salesStore = 'offline-sales';
   private productsStore = 'products';
   private debtsStore = 'offline-debts';
