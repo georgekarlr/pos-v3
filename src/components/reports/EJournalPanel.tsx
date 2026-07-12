@@ -148,7 +148,8 @@ const EJournalPanel: React.FC = () => {
             const unit = item.unit_type || 'pc'
             const name = item.product_name || item.name || 'Item'
             const price = Number(item.display_price ?? item.price_at_purchase ?? 0).toFixed(2)
-            const taxType = item.tax_type === 'VATable' || item.tax_type_at_purchase === 'VATable' ? 'VATable' : 'VAT-Exempt'
+            const rawTaxType = item.tax_type || item.tax_type_at_purchase || 'VAT-Exempt'
+            const taxType = rawTaxType === 'VATable' ? 'VATable' : (rawTaxType === 'Zero-Rated' ? 'Zero-Rated' : 'VAT-Exempt')
             const total = Number(item.display_line_total ?? item.line_total ?? (Number(qtyStr) * Number(price))).toFixed(2)
             text += `  ${index + 1}. ${qtyStr} ${unit} - ${name} @ ${price} (${taxType}) = ${total}\n`
           })
