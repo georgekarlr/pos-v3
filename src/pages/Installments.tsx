@@ -104,6 +104,7 @@ const Installments: React.FC = () => {
     setPayLoading(true);
     const result = await paySchedule({
       p_requesting_account_id: persona.id,
+      p_terminal_id: parseInt(localStorage.getItem('selected_pos_terminal_id') as string, 10),
       p_contract_id: selectedContract.contract_id,
       p_payment_amount: amount,
       p_payment_method: method,

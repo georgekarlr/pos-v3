@@ -102,6 +102,7 @@ export interface CreateInstallmentSaleResult {
 
 export interface PayInstallmentScheduleParams {
   p_requesting_account_id: number;
+  p_terminal_id: number;
   p_contract_id: number;
   p_payment_amount: number;
   p_payment_method: string;

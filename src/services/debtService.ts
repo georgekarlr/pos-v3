@@ -1,7 +1,15 @@
 import { supabase } from '../lib/supabase';
 import { OfflineDB } from '../db/offlineDB';
 import { ServiceResponse } from '../types/pos';
-import { CreateCustomerDebtParams, CustomerSearchResult, DebtOperationResult, CustomerListItem, ManageDebtAccountParams, ManageDebtAccountResult, CustomerDebtDetails } from '../types/debt';
+import {
+  CreateCustomerDebtParams,
+  CustomerSearchResult,
+  DebtOperationResult,
+  CustomerListItem,
+  ManageDebtAccountParams,
+  ManageDebtAccountResult,
+  CustomerDebtDetails
+} from '../types/debt';
 import { FormatDateTime } from '../utils/formatDateTime';
 
 export class DebtService {
@@ -32,7 +40,7 @@ export class DebtService {
   static async searchCustomers(searchTerm: string): Promise<ServiceResponse<CustomerSearchResult[]>> {
     try {
       if (!navigator.onLine) {
-        return { data: [], error: null }; // or maybe search in local customers if we had them
+        return { data: [], error: null };
       }
 
       const { data, error } = await supabase.rpc('pos2_search_customers', {
@@ -124,6 +132,7 @@ export class DebtService {
 
       const { data, error } = await supabase.rpc('pos2_manage_debt_account', {
         p_requesting_account_id: params.p_requesting_account_id,
+        p_terminal_id: params.p_terminal_id, // Passed to match backend signature
         p_customer_id: params.p_customer_id,
         p_action_type: params.p_action_type,
         p_amount: params.p_amount || 0,
