@@ -417,6 +417,7 @@ const POS: React.FC = () => {
         let businessName = 'Point of Sale';
         let businessAddress1: string | undefined;
         let tin: string | undefined;
+        let isVatRegistered: boolean | undefined;
         let min: string | undefined;
         let ptuIssuedBy: string | undefined;
         let softwareProviderName: string | undefined;
@@ -430,6 +431,7 @@ const POS: React.FC = () => {
             businessName = settings.business_name || 'Point of Sale';
             businessAddress1 = settings.address || undefined;
             tin = settings.tin || undefined;
+            isVatRegistered = settings.is_vat_registered !== undefined ? Boolean(settings.is_vat_registered) : undefined;
             min = settings.min || undefined;
             ptuIssuedBy = settings.ptu_issued_by || undefined;
             softwareProviderName = settings.software_provider_name || undefined;
@@ -449,6 +451,7 @@ const POS: React.FC = () => {
           businessName,
           businessAddress1,
           tin,
+          isVatRegistered,
           min,
           cashier: persona.personName || persona.loginName || undefined,
           dateISO: FormatDateTime.formatLocalTimestampForDatabase(new Date()),

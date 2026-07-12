@@ -214,8 +214,8 @@ const Receipt: React.FC<{ data: ReceiptData; className?: string }>
                 <div className="flex justify-between text-green-700 font-semibold"><span>Change</span><span>{format(data.change)}</span></div>
             </div>
 
-            {/* VAT Breakdown — always shown for VAT-registered businesses */}
-            {data.isVatRegistered !== false && (() => {
+            {/* VAT Breakdown — only shown for VAT-registered businesses */}
+            {data.isVatRegistered === true && (() => {
                 const vatableAmt  = data.vatableAmount  ?? (!isScPwd ? Math.max(0, data.subtotal - data.tax) : 0)
                 const vatAmt      = data.vatAmount      ?? (!isScPwd ? data.tax : 0)
                 const vatExempt   = data.vatExemptAmount ?? (isScPwd ? data.subtotal : 0)
