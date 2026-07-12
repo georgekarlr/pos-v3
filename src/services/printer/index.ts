@@ -223,7 +223,7 @@ export function layoutReceiptLines(data: ReceiptData, design?: ReceiptDesign): s
   lines.push('')
 
   // VAT Breakdown
-  if (data.isVatRegistered !== false) {
+  if (data.isVatRegistered === true) {
     const vatableAmt = data.vatableAmount  ?? (!isScPwd ? Math.max(0, data.subtotal - data.tax) : 0)
     const vatAmt     = data.vatAmount      ?? (!isScPwd ? data.tax : 0)
     const vatExempt  = data.vatExemptAmount ?? (isScPwd ? data.subtotal : 0)
