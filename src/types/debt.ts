@@ -3,7 +3,7 @@ export interface CustomerSearchResult {
   full_name: string;
   phone_number: string;
   current_balance: number;
-  total_loyalty_points: number; // NEW
+  total_loyalty_points: number;
 }
 
 export interface CustomerListItem {
@@ -14,7 +14,7 @@ export interface CustomerListItem {
   address: string;
   created_at: string;
   current_balance: number;
-  total_loyalty_points: number; // NEW
+  total_loyalty_points: number;
 }
 
 export interface CreateCustomerDebtParams {
@@ -29,10 +29,31 @@ export interface CreateCustomerDebtParams {
   p_occurred_at?: string | null;
 }
 
+// Aligns with the database enum keys
+export type DebtTransactionType =
+    | 'ITEM_DEBT'
+    | 'CASH_LOAN'
+    | 'PAYMENT'
+    | 'DEPOSIT'
+    | 'WITHDRAW_DEPOSIT'
+    | 'BAD_DEBT_RECOVERY'
+    | 'WRITE_OFF'
+    | 'BAD_DEBT_WRITE_OFF';
+
+// Aligns with the allowed management actions in the UI
+export type DebtActionType =
+    | 'PAYMENT'
+    | 'DEPOSIT'
+    | 'WITHDRAW_DEPOSIT'
+    | 'SETTLE'
+    | 'WRITE_OFF'
+    | 'RECOVER_DEBT';
+
 export interface ManageDebtAccountParams {
   p_requesting_account_id: number;
+  p_terminal_id: number; // Added to support physical cash drawer logging
   p_customer_id: number;
-  p_action_type: 'PAYMENT' | 'DEPOSIT' | 'WITHDRAW_DEPOSIT' | 'SETTLE' | 'WRITE_OFF' | 'RECOVER_DEBT';
+  p_action_type: DebtActionType;
   p_amount?: number;
   p_payment_method?: string;
   p_notes?: string | null;
@@ -49,6 +70,16 @@ export interface ManageDebtAccountResult {
   } | null;
 }
 
+export interface DebtOperationResult {
+  success: boolean;
+  message: string;
+  data: {
+    new_balance?: number;
+    customer_id?: number;
+  } | null;
+  is_offline?: boolean;
+}
+
 export interface DebtItemDetail {
   product_name: string;
   quantity: number;
@@ -59,7 +90,7 @@ export interface DebtItemDetail {
 export interface DebtUnsettledTransaction {
   transaction_id: number;
   date: string;
-  type: string;
+  type: DebtTransactionType;
   amount: number;
   description: string;
   items: DebtItemDetail[];
@@ -70,7 +101,7 @@ export interface DebtSettledHistory {
   settled_date: string;
   total_settled_amount: number;
   transactions: {
-    type: string;
+    type: DebtTransactionType;
     amount: number;
     description: string;
     date: string;

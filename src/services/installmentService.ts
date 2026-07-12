@@ -136,6 +136,7 @@ export class InstallmentService {
       const { data, error } = await supabase.rpc('pos2_pay_installment_schedule', {
         p_requesting_account_id: params.p_requesting_account_id,
         p_contract_id: params.p_contract_id,
+        p_terminal_id: params.p_terminal_id,
         p_payment_amount: params.p_payment_amount,
         p_payment_method: params.p_payment_method,
       });
