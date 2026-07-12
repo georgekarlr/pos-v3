@@ -13,17 +13,18 @@ import RefundListModal from '../components/sales/RefundListModal'
 import VoidSaleModal from '../components/sales/VoidSaleModal'
 import ManualSaleModal from '../components/sales/ManualSaleModal'
 import { useAuth } from '../contexts/AuthContext'
+import {FormatDateTime} from "../utils/formatDateTime.ts";
 
 const PAGE_SIZE = 20
 
 function toStartOfDayISO(dateStr: string): string {
   const d = new Date(dateStr + 'T00:00:00')
-  return d.toISOString()
+  return FormatDateTime.formatLocalTimestampForDatabase(d)
 }
 
 function toEndOfDayISO(dateStr: string): string {
   const d = new Date(dateStr + 'T23:59:59.999')
-  return d.toISOString()
+  return FormatDateTime.formatLocalTimestampForDatabase(d)
 }
 
 const SalesHistory: React.FC = () => {

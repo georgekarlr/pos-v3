@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { Loader2, X, Search, Calendar } from 'lucide-react'
 import { salesService } from '../../services/salesService'
 import { RefundDetailRow } from '../../types/sales'
+import {FormatDateTime} from "../../utils/formatDateTime.ts";
 
 interface RefundListModalProps {
   open: boolean
@@ -43,8 +44,8 @@ const RefundListModal: React.FC<RefundListModalProps> = ({ open, onClose, reques
           requestingAccountId,
           orderId: orderId ?? null,
           searchTerm: search || null,
-          startDate: startDate ? new Date(startDate + 'T00:00:00').toISOString() : null,
-          endDate: endDate ? new Date(endDate + 'T23:59:59.999').toISOString() : null
+          startDate: startDate ? FormatDateTime.formatLocalTimestampForDatabase(new Date(startDate + 'T00:00:00')) : null,
+          endDate: endDate ? FormatDateTime.formatLocalTimestampForDatabase(new Date(endDate + 'T23:59:59.999')) : null
         })
         setRows(rows)
         setHasNext(rows.length === PAGE_SIZE)
