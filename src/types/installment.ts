@@ -78,7 +78,7 @@ export interface GetAllInstallmentContractsParams {
 
 export interface CreateInstallmentSaleParams {
   p_account_id: number;
-  p_terminal_id: number;
+  p_terminal_id: number | null;
   p_customer_id: number;
   p_cart_items: { product_id: number; quantity: number }[];
   p_downpayment_amount: number;
@@ -139,6 +139,7 @@ export interface WriteOffInstallmentContractResult {
 
 export interface RecoverInstallmentDebtParams {
   p_requesting_account_id: number;
+  p_terminal_id: number;
   p_contract_id: number;
   p_recovery_amount: number;
   p_payment_method: string;

@@ -19,6 +19,7 @@ import PaymentModal from '../components/installments/PaymentModal';
 import CreateInstallmentModal from '../components/installments/CreateInstallmentModal';
 import WriteOffModal from '../components/installments/WriteOffModal';
 import DebtRecoveryModal from '../components/installments/DebtRecoveryModal';
+import {PosService} from "../services/posService.ts";
 
 const Installments: React.FC = () => {
   const { persona } = useAuth();
@@ -65,14 +66,36 @@ const Installments: React.FC = () => {
   const [writeOffLoading, setWriteOffLoading] = useState(false);
   const [recoveryLoading, setRecoveryLoading] = useState(false);
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [selectedTerminalId, setSelectedTerminalId] = useState<number | null>(null);
 
   const showToast = (type: 'success' | 'error', message: string) => {
     setToast({ type, message });
     setTimeout(() => setToast(null), 4000);
   };
 
+  const loadTerminals = async () => {
+    try {
+      const { data, error: termError } = await PosService.getActiveTerminals()
+      if (termError) {
+        console.error('Failed to load terminals:', termError)
+      } else {
+        if (data && data.length > 0) {
+          const savedId = localStorage.getItem('selected_pos_terminal_id')
+          if (savedId && data.some((t: any) => t.id === Number(savedId))) {
+            setSelectedTerminalId(Number(savedId))
+          } else if (data.length === 1) {
+            setSelectedTerminalId(data[0].id)
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Unexpected error loading terminals:', err)
+    }
+  }
+
   // Initial load
   useEffect(() => {
+    loadTerminals();
     if (persona?.id) loadAllContracts(persona.id);
   }, [persona?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -101,10 +124,14 @@ const Installments: React.FC = () => {
   // --- Payment ---
   const handlePayConfirm = async (amount: number, method: string) => {
     if (!selectedContract || !persona?.id) return;
+    if (!selectedTerminalId) {
+      showToast('error', 'No active terminal detected. Please register or select an active terminal drawer.');
+      return;
+    }
     setPayLoading(true);
     const result = await paySchedule({
       p_requesting_account_id: persona.id,
-      p_terminal_id: parseInt(localStorage.getItem('selected_pos_terminal_id') as string, 10),
+      p_terminal_id: selectedTerminalId,
       p_contract_id: selectedContract.contract_id,
       p_payment_amount: amount,
       p_payment_method: method,
@@ -147,9 +174,14 @@ const Installments: React.FC = () => {
   // --- Debt recovery ---
   const handleRecoveryConfirm = async (amount: number, method: string, notes: string) => {
     if (!selectedContract || !persona?.id) return;
+    if (!selectedTerminalId) {
+      showToast('error', 'No active terminal detected. Please register or select an active terminal drawer.');
+      return;
+    }
     setRecoveryLoading(true);
     const result = await recoverDebt({
       p_requesting_account_id: persona.id,
+      p_terminal_id: selectedTerminalId,
       p_contract_id: selectedContract.contract_id,
       p_recovery_amount: amount,
       p_payment_method: method,

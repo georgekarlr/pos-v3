@@ -72,6 +72,19 @@ export const PosSection: React.FC = () => {
           <strong>Completion:</strong> Ensure an active terminal is selected. Click "Complete Sale" to trigger the server-side transaction: it validates totals, updates inventory, records loyalty, and opens the receipt printing prompt.
         </p>
       </div>
+
+      <h3 className="text-base font-semibold text-gray-800 mt-4">7. Petty Cash &amp; Drawer Floats</h3>
+      <div className="border-l-4 border-indigo-500 pl-3 py-1 space-y-2">
+        <p className="text-xs">
+          <strong>Starting Drawer Float (Cash In):</strong> Before ringing up transactions, cashiers can enter a starting drawer float using the <strong>Petty Cash</strong> button next to the terminal name. This logs a <code>CASH_IN</code> transaction event and increases the cash count in the drawer.
+        </p>
+        <p className="text-xs">
+          <strong>Paid Out / Expenses (Cash Out):</strong> Cash taken directly from the register drawer to pay for store operational expenses (e.g., water deliveries, office supplies, courier fees) can be registered as a <code>CASH_OUT</code> transaction with the amount and description.
+        </p>
+        <p className="text-xs text-amber-700 font-medium">
+          ⚠ Compliance &amp; Auditing: Petty cash operations require an active internet connection to safely log the audit trail. All actions are immediately recorded in the <strong>Electronic Journal</strong> as <code>CASH_IN</code> or <code>CASH_OUT</code> events, and are fully factored into the Cash Drawer collections breakdown during end-of-day <strong>Z-Readings</strong> and <strong>X-Readings</strong>.
+        </p>
+      </div>
     </div>
   )
 }

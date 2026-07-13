@@ -19,7 +19,14 @@ interface UseInstallmentsReturn {
   createSale: (params: CreateInstallmentSaleParams) => Promise<{ success: boolean; message: string }>;
   paySchedule: (params: PayInstallmentScheduleParams) => Promise<{ success: boolean; message: string }>;
   writeOff: (params: WriteOffInstallmentContractParams) => Promise<{ success: boolean; message: string }>;
-  recoverDebt: (params: RecoverInstallmentDebtParams) => Promise<{ success: boolean; message: string }>;
+  recoverDebt: (params: {
+    p_requesting_account_id: number;
+    p_terminal_id: number | null;
+    p_contract_id: number;
+    p_recovery_amount: number;
+    p_payment_method: string;
+    p_notes: string
+  }) => Promise<{ success: boolean; message: string }>;
   clearError: () => void;
   reset: () => void;
 }

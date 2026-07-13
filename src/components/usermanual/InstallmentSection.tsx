@@ -32,7 +32,7 @@ export const InstallmentSection: React.FC = () => {
       <ol className="list-decimal list-inside space-y-1 ml-2 text-xs">
         <li><strong>Customer:</strong> Search and select from the registered customer list.</li>
         <li><strong>Products:</strong> Add catalog items and specify quantities.</li>
-        <li><strong>Terms:</strong> Configure the downpayment amount, payment method (Cash, GCash, Card, etc.), contract duration (months), and flat interest rate (%).</li>
+        <li><strong>Terms:</strong> Configure the downpayment amount, payment method (Cash, GCash, Card, etc.), contract duration (months), and flat interest rate (%). <span className="text-indigo-600 font-semibold">(Requires an active terminal drawer if downpayment is greater than 0)</span></li>
         <li><strong>Confirm:</strong> Review the calculated monthly due and total interest (computed in real-time) before creating the contract.</li>
       </ol>
 
@@ -46,6 +46,9 @@ export const InstallmentSection: React.FC = () => {
       </ul>
 
       <h3 className="text-base font-semibold text-gray-800 mt-4">4. Contract Operations</h3>
+      <p className="text-xs text-gray-500 mb-2">
+        <strong>Terminal Requirement:</strong> Recording payments or performing debt recovery processes requires a registered and active terminal/cash drawer to be selected (via Settings).
+      </p>
       <div className="overflow-x-auto rounded-lg border border-gray-200 mt-1">
         <table className="min-w-full text-xs">
           <thead className="bg-gray-50">
