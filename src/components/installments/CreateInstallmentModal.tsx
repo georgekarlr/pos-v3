@@ -9,6 +9,7 @@ import { OfflineDB } from '../../db/offlineDB';
 import { CustomerSearchResult } from '../../types/debt';
 import { Product } from '../../types/product';
 import { CreateInstallmentSaleParams } from '../../types/installment';
+import {PosService} from "../../services/posService.ts";
 
 type Step = 'customer' | 'cart' | 'terms' | 'confirm';
 
@@ -42,6 +43,8 @@ const CreateInstallmentModal: React.FC<CreateInstallmentModalProps> = ({
   const [step, setStep] = useState<Step>('customer');
   const [error, setError] = useState<string | null>(null);
 
+  const [selectedTerminalId, setSelectedTerminalId] = useState<number | null>(null);
+
   // Step 1 — Customer
   const [customerQuery, setCustomerQuery] = useState('');
   const [customerResults, setCustomerResults] = useState<CustomerSearchResult[]>([]);
@@ -71,8 +74,29 @@ const CreateInstallmentModal: React.FC<CreateInstallmentModalProps> = ({
     )
   });
 
+  const loadTerminals = async () => {
+    try {
+      const { data, error: termError } = await PosService.getActiveTerminals()
+      if (termError) {
+        console.error('Failed to load terminals:', termError)
+      } else {
+        if (data && data.length > 0) {
+          const savedId = localStorage.getItem('selected_pos_terminal_id')
+          if (savedId && data.some((t: any) => t.id === Number(savedId))) {
+            setSelectedTerminalId(Number(savedId))
+          } else if (data.length === 1) {
+            setSelectedTerminalId(data[0].id)
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Unexpected error loading terminals:', err)
+    }
+  }
+
   // Load products and terminals once
   useEffect(() => {
+    loadTerminals();
     const load = async () => {
       const cached = await OfflineDB.getProducts();
       if (cached.length > 0) setProducts(cached);
@@ -152,7 +176,7 @@ const CreateInstallmentModal: React.FC<CreateInstallmentModalProps> = ({
   const handleSubmit = async () => {
     if (!selectedCustomer) return;
     const result = await onConfirm({
-      p_terminal_id: Number(localStorage.getItem('selected_pos_terminal_id')),
+      p_terminal_id: selectedTerminalId,
       p_customer_id: selectedCustomer.customer_id,
       p_cart_items: cart.map(i => ({ product_id: i.product.id, quantity: i.quantity })),
       p_downpayment_amount: dpNum,

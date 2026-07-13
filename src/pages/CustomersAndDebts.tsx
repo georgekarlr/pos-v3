@@ -22,6 +22,7 @@ import {
   ChevronUp,
   Award
 } from 'lucide-react';
+import {PosService} from "../services/posService.ts";
 
 const CustomersAndDebts: React.FC = () => {
   const { persona } = useAuth();
@@ -37,6 +38,8 @@ const CustomersAndDebts: React.FC = () => {
   const [terminalId, setTerminalId] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
+
+
   // Detail Modal State
   const [detailsCustomer, setDetailsCustomer] = useState<CustomerListItem | null>(null);
   const [customerDetails, setCustomerDetails] = useState<CustomerDebtDetails | null>(null);
@@ -47,13 +50,28 @@ const CustomersAndDebts: React.FC = () => {
   // Determine if active persona is allowed to perform administrative debt adjustments
   const isAdmin = persona?.type === 'admin'
 
+  const loadTerminals = async () => {
+    try {
+      const { data, error: termError } = await PosService.getActiveTerminals()
+      if (termError) {
+        console.error('Failed to load terminals:', termError)
+      } else {
+        if (data && data.length > 0) {
+          const savedId = localStorage.getItem('selected_pos_terminal_id')
+          if (savedId && data.some((t: any) => t.id === Number(savedId))) {
+            setTerminalId(Number(savedId))
+          } else if (data.length === 1) {
+            setTerminalId(data[0].id)
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Unexpected error loading terminals:', err)
+    }
+  }
   // Load physical terminal configuration on mount
   useEffect(() => {
-    const savedTerminal = localStorage.getItem('selected_pos_terminal_id') ||
-        localStorage.getItem('selected_pos_terminal_id');
-    if (savedTerminal) {
-      setTerminalId(parseInt(savedTerminal, 10));
-    }
+    loadTerminals();
   }, []);
 
   const fetchCustomers = async () => {

@@ -78,7 +78,7 @@ export interface GetAllInstallmentContractsParams {
 
 export interface CreateInstallmentSaleParams {
   p_account_id: number;
-  p_terminal_id: number;
+  p_terminal_id: number | null;
   p_customer_id: number;
   p_cart_items: { product_id: number; quantity: number }[];
   p_downpayment_amount: number;
