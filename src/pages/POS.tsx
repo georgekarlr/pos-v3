@@ -7,7 +7,7 @@ import LoadingSpinner from '../components/LoadingSpinner'
 import ProductGrid from '../components/pos/ProductGrid'
 import CartPanel, { CartLine } from '../components/pos/CartPanel'
 import BundleModal from '../components/pos/BundleModal'
-import { AlertCircle, Camera, RefreshCw, Search, WifiOff } from 'lucide-react'
+import { AlertCircle, Camera, Coins, RefreshCw, Search, WifiOff } from 'lucide-react'
 import { PaymentInput, PosAction, PosViewMode } from '../types/pos'
 import { CustomerService } from '../services/customerService'
 import ActionModeBar from '../components/pos/ActionModeBar'
@@ -21,6 +21,7 @@ import { useHardwareScanner } from '../hooks/useHardwareScanner'
 import CameraScanner from '../components/pos/CameraScanner'
 import { useScannerSettings } from '../contexts/ScannerSettingsContext'
 import OfflineSalesModal from '../components/pos/OfflineSalesModal'
+import PettyCashModal from '../components/pos/PettyCashModal'
 import { getCachedBusinessSettings } from '../utils/settingsCache'
 import { FormatDateTime } from '../utils/formatDateTime'
 
@@ -70,6 +71,7 @@ const POS: React.FC = () => {
   const { scanMode } = useScannerSettings()
   const [isCameraOpen, setIsCameraOpen] = useState(false)
   const [offlineSalesOpen, setOfflineSalesOpen] = useState(false)
+  const [isPettyCashOpen, setIsPettyCashOpen] = useState(false)
 
   const loadProducts = async (silent = false) => {
     if (!silent) setIsLoading(true)
@@ -553,6 +555,23 @@ const POS: React.FC = () => {
               </Link>
             </div>
 
+            {selectedTerminalId && (
+              <button
+                onClick={() => {
+                  if (!isOnline) {
+                    setError('Petty cash operations require an active internet connection.')
+                    return
+                  }
+                  setIsPettyCashOpen(true)
+                }}
+                className="flex items-center gap-1.5 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 text-indigo-700 hover:text-indigo-800 px-3.5 py-1.5 rounded-lg shadow-sm text-sm transition-colors font-medium"
+                title="Manage Petty Cash / Drawer Float"
+              >
+                <Coins className="h-4 w-4" />
+                <span>Petty Cash</span>
+              </button>
+            )}
+
             {scanMode === 'camera' && (
               <button
                 onClick={() => setIsCameraOpen(true)}
@@ -760,6 +779,19 @@ const POS: React.FC = () => {
         open={offlineSalesOpen}
         onClose={() => setOfflineSalesOpen(false)}
       />
+
+      {selectedTerminalId && persona?.id && (
+        <PettyCashModal
+          open={isPettyCashOpen}
+          onClose={() => setIsPettyCashOpen(false)}
+          terminalId={selectedTerminalId}
+          accountId={persona.id}
+          onSuccess={(msg) => {
+            setSuccessMessage(msg)
+            setTimeout(() => setSuccessMessage(null), 5000)
+          }}
+        />
+      )}
     </div>
   )
 }

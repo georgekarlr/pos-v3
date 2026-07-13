@@ -175,6 +175,10 @@ const CreateInstallmentModal: React.FC<CreateInstallmentModalProps> = ({
 
   const handleSubmit = async () => {
     if (!selectedCustomer) return;
+    if (dpNum > 0 && !selectedTerminalId) {
+      setError('No active terminal detected. Please register or select an active terminal drawer before performing downpayments.');
+      return;
+    }
     const result = await onConfirm({
       p_terminal_id: selectedTerminalId,
       p_customer_id: selectedCustomer.customer_id,

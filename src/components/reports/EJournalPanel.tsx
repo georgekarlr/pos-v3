@@ -28,6 +28,8 @@ const EVENT_COLORS: Record<string, string> = {
   COLLECTION: 'bg-teal-100 text-teal-700',
   SYSTEM_UPDATE: 'bg-amber-100 text-amber-700',
   MANUAL_SALE_ENTRY: 'bg-indigo-100 text-indigo-700',
+  CASH_IN: 'bg-emerald-100 text-emerald-800 border border-emerald-200',
+  CASH_OUT: 'bg-rose-100 text-rose-800 border border-rose-200',
 }
 
 const EventBadge: React.FC<{ type: string }> = ({ type }) => (
@@ -283,6 +285,11 @@ const EJournalPanel: React.FC = () => {
             text += `  Reason: ${detailsObj.reason}\n`
           }
         }
+      } else if (row.event_type === 'CASH_IN' || row.event_type === 'CASH_OUT') {
+        const amt = Number(detailsObj.amount || 0).toFixed(2)
+        text += `Type: ${row.event_type === 'CASH_IN' ? 'Cash In (Drawer Float)' : 'Cash Out (Expense/Drop)'}\n`
+        text += `Amount: PHP ${amt}\n`
+        text += `Reason/Description: ${row.event_description || 'N/A'}\n`
       } else {
         text += `Details: ${row.event_description}\n`
       }

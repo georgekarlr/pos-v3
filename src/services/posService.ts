@@ -3,7 +3,9 @@ import { OfflineDB } from '../db/offlineDB';
 import type {
   CreatePosSaleParams,
   CreateSaleResult,
-  ServiceResponse
+  ServiceResponse,
+  PettyCashParams,
+  PettyCashResult
 } from '../types/pos.ts';
 import { FormatDateTime } from '../utils/formatDateTime';
 
@@ -271,6 +273,43 @@ export class PosService {
         return { data: JSON.parse(cached), error: null };
       }
       return { data: null, error: err.message || 'Failed to fetch terminal state.' };
+    }
+  }
+
+  /**
+   * Performs Petty Cash Cash In / Cash Out operations.
+   */
+  static async managePettyCash(params: PettyCashParams): Promise<ServiceResponse<PettyCashResult>> {
+    if (!navigator.onLine) {
+      return { data: null, error: 'Petty cash operations require an active internet connection.' };
+    }
+
+    try {
+      const { data, error } = await supabase.rpc('pos2_manage_petty_cash', {
+        p_requesting_account_id: params.p_requesting_account_id,
+        p_terminal_id: params.p_terminal_id,
+        p_action_type: params.p_action_type,
+        p_amount: params.p_amount,
+        p_reason: params.p_reason
+      });
+
+      if (error) {
+        console.error('Error in managePettyCash:', error);
+        return { data: null, error: error.message };
+      }
+
+      if (!data || data.length === 0) {
+        return { data: null, error: 'No response received from the database.' };
+      }
+
+      const result = data[0] as PettyCashResult;
+      return { data: result, error: null };
+    } catch (err: any) {
+      console.error('Unexpected error in managePettyCash:', err);
+      return {
+        data: null,
+        error: err.message || 'An unexpected error occurred during the petty cash operation.'
+      };
     }
   }
 }

@@ -103,7 +103,22 @@ export interface SaleResult {
   is_offline?: boolean;
 }
 
+
 // POS UI types
 export type PosAction = 'add' | 'deduct' | 'bundle' | 'clear'
 export type PosViewMode = 'products' | 'cart-payments' | 'everything'
+
+// Petty Cash
+export interface PettyCashParams {
+  p_requesting_account_id: number;
+  p_terminal_id: number;
+  p_action_type: 'CASH_IN' | 'CASH_OUT';
+  p_amount: number;
+  p_reason: string;
+}
+
+export interface PettyCashResult {
+  success: boolean;
+  message: string;
+}
 

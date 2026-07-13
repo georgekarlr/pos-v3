@@ -124,10 +124,14 @@ const Installments: React.FC = () => {
   // --- Payment ---
   const handlePayConfirm = async (amount: number, method: string) => {
     if (!selectedContract || !persona?.id) return;
+    if (!selectedTerminalId) {
+      showToast('error', 'No active terminal detected. Please register or select an active terminal drawer.');
+      return;
+    }
     setPayLoading(true);
     const result = await paySchedule({
       p_requesting_account_id: persona.id,
-      p_terminal_id: parseInt(localStorage.getItem('selected_pos_terminal_id') as string, 10),
+      p_terminal_id: selectedTerminalId,
       p_contract_id: selectedContract.contract_id,
       p_payment_amount: amount,
       p_payment_method: method,
@@ -170,6 +174,10 @@ const Installments: React.FC = () => {
   // --- Debt recovery ---
   const handleRecoveryConfirm = async (amount: number, method: string, notes: string) => {
     if (!selectedContract || !persona?.id) return;
+    if (!selectedTerminalId) {
+      showToast('error', 'No active terminal detected. Please register or select an active terminal drawer.');
+      return;
+    }
     setRecoveryLoading(true);
     const result = await recoverDebt({
       p_requesting_account_id: persona.id,
