@@ -1,7 +1,8 @@
 export interface DashboardKpiData {
-  today_revenue: number | string
-  today_orders: number
-  today_avg_sale: number | string
+  net_sales_today: number | string
+  order_count_today: number
+  total_collections_today: number | string
+  total_outstanding_debt: number | string
 }
 
 export interface DashboardTopProductRow {
@@ -12,6 +13,7 @@ export interface DashboardTopProductRow {
 
 export interface DashboardRecentOrderRow {
   order_id: number
+  invoice_number: string | null
   created_at: string // ISO timestamp
   total_amount: number | string
   customer_name: string
