@@ -7,13 +7,14 @@ interface RefundModalProps {
   open: boolean
   orderId: number | null
   requestingAccountId: number | null
+  terminalId: number | null
   onClose: () => void
   onSuccess: () => void
 }
 
 const currency = (n: number) => `\u20b1${(Number(n) || 0).toFixed(2)}`
 
-const RefundModal: React.FC<RefundModalProps> = ({ open, orderId, requestingAccountId, onClose, onSuccess }) => {
+const RefundModal: React.FC<RefundModalProps> = ({ open, orderId, requestingAccountId, terminalId, onClose, onSuccess }) => {
   const [loading, setLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -108,11 +109,17 @@ const RefundModal: React.FC<RefundModalProps> = ({ open, orderId, requestingAcco
       return
     }
 
+    if (!terminalId) {
+      setError('No active terminal detected. Please register or select an active terminal before processing refunds.')
+      return
+    }
+
     setSubmitting(true)
     setError(null)
     try {
       const result = await salesService.createBulkRefund({
         order_id: orderId,
+        terminal_id: terminalId,
         items_to_refund: items,
         requesting_account_id: requestingAccountId,
         refund_payment_method: paymentMethod,

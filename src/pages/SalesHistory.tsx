@@ -124,6 +124,7 @@ const SalesHistory: React.FC = () => {
   }
 
   const requestingAccountId = persona?.id ?? null
+  const terminalId = Number(localStorage.getItem('selected_pos_terminal_id')) || null
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -178,6 +179,7 @@ const SalesHistory: React.FC = () => {
         open={refundOpen}
         orderId={refundOrderId}
         requestingAccountId={requestingAccountId}
+        terminalId={terminalId}
         onClose={() => setRefundOpen(false)}
         onSuccess={() => {
           // refresh rows after refund

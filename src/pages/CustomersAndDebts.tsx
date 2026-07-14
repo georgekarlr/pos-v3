@@ -403,7 +403,7 @@ const CustomersAndDebts: React.FC = () => {
                                           tx.type === 'CASH_LOAN' ? 'bg-red-100 text-red-700' :
                                               'bg-green-100 text-green-700'
                                       }`}>
-                                        {tx.type.replace('_', ' ')}
+                                        {tx.type.replace(/_/g, ' ')}
                                       </span>
                                                 <p className="text-xs text-gray-400 mt-1 flex items-center">
                                                   <Calendar size={10} className="mr-1" />
