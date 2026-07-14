@@ -90,15 +90,17 @@ export const salesService = {
 
   async createBulkRefund(params: {
     order_id: number
+    terminal_id: number
     items_to_refund: BulkRefundItemInput[]
     requesting_account_id: number
     refund_payment_method: string
     reason: string
   }): Promise<BulkRefundResult> {
-    const { order_id, items_to_refund, requesting_account_id, refund_payment_method, reason } = params
+    const { order_id, terminal_id, items_to_refund, requesting_account_id, refund_payment_method, reason } = params
 
     const { data, error } = await supabase.rpc('pos2_create_bulk_refund', {
       p_order_id: order_id,
+      p_terminal_id: terminal_id,
       p_items_to_refund: items_to_refund,
       p_requesting_account_id: requesting_account_id,
       p_refund_payment_method: refund_payment_method,
