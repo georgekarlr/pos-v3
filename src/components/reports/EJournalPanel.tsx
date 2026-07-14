@@ -285,6 +285,24 @@ const EJournalPanel: React.FC = () => {
             text += `  Reason: ${detailsObj.reason}\n`
           }
         }
+      } else if (row.event_type === 'REFUND') {
+        // Written by pos2_create_bulk_refund:
+        //   details: { refund_ids: number[], total_amount: number, method: string, reason: string }
+        // reference_id holds the order_id
+        const totalAmt = Number(detailsObj.total_amount || 0).toFixed(2)
+        const method = String(detailsObj.method || 'N/A')
+        const reason = String(detailsObj.reason || row.event_description || 'N/A')
+        const refundIds: number[] = Array.isArray(detailsObj.refund_ids) ? detailsObj.refund_ids : []
+
+        text += `Order Reference: ${row.event_description}\n`
+        text += `Reason: ${reason}\n\n`
+        text += `Refund Details:\n`
+        text += `  Payment Method:   ${method}\n`
+        text += `  Total Refunded:   PHP ${totalAmt}\n`
+        if (refundIds.length > 0) {
+          text += `  Refund IDs:       ${refundIds.join(', ')}\n`
+          text += `  Lines Refunded:   ${refundIds.length}\n`
+        }
       } else if (row.event_type === 'CASH_IN' || row.event_type === 'CASH_OUT') {
         const amt = Number(detailsObj.amount || 0).toFixed(2)
         text += `Type: ${row.event_type === 'CASH_IN' ? 'Cash In (Drawer Float)' : 'Cash Out (Expense/Drop)'}\n`
