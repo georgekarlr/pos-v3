@@ -10,6 +10,7 @@ export interface CartItemInput {
   price: number;
   base_price: number;
   tax_rate: number;
+  promo_id?: number | null;
 }
 
 export interface PaymentItemInput {
@@ -50,7 +51,6 @@ export interface CreatePosSaleParams {
   p_sc_pwd_discount?: number;
   p_sc_pwd_id_number?: string | null; // NEW: required when sc_pwd_discount > 0
   p_sc_pwd_name?: string | null;      // NEW: required when sc_pwd_discount > 0
-  p_regular_discount?: number;
   // Loyalty Program
   p_loyalty_points_earned?: number;   // NEW
   p_loyalty_points_redeemed?: number; // NEW
@@ -65,7 +65,7 @@ export interface RecordManualSaleParams {
   p_account_id: number;
   p_customer_id: number | null;
   p_manual_or_number: string;
-  p_cart_items: { product_id: number; quantity: number }[];
+  p_cart_items: { product_id: number; quantity: number; promo_id?: number | null }[];
   p_payments: { amount: number; method: string; transaction_ref?: string }[];
   p_notes?: string | null;
   p_total: number;
@@ -74,7 +74,6 @@ export interface RecordManualSaleParams {
   p_sc_pwd_discount?: number;
   p_sc_pwd_id_number?: string | null;
   p_sc_pwd_name?: string | null;
-  p_regular_discount?: number;
   p_loyalty_points_earned?: number;
   p_loyalty_points_redeemed?: number;
   p_occurred_at: string; // Required for manual sale

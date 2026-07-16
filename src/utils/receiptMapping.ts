@@ -20,7 +20,8 @@ export function mapSaleDetailsToReceipt(details: SaleDetailsResponse): ReceiptDa
             unitPrice: unit,
             baseUnitPrice: baseUnit,  // VAT-exclusive; used when SC/PWD discount is active
             lineTotal: Number(total),
-            isScPwdEligible: it.tax_type_at_purchase === 'VAT-Exempt',
+            taxType: it.tax_type_at_purchase ?? null,  // 'VATable' | 'VAT-Exempt' | 'Zero-Rated'
+            isScPwdEligible: it.is_sc_pwd_eligible ?? false, // product's stored SC/PWD eligibility flag
             refundedQty,
             refundedAmount
         }
@@ -76,7 +77,7 @@ export function mapSaleDetailsToReceipt(details: SaleDetailsResponse): ReceiptDa
         invoiceNumber: order.invoice_number ?? undefined,
         terminalId: order.terminal_id ?? undefined,
         scPwdDiscount: order.sc_pwd_discount_amount ? Number(order.sc_pwd_discount_amount) : undefined,
-        regularDiscount: order.regular_discount_amount ? Number(order.regular_discount_amount) : undefined,
+        totalPromoDiscount: order.promo_discount_total != null ? Number(order.promo_discount_total) : (order.promo_discount_amount ? Number(order.promo_discount_amount) : undefined),
         businessName,
         businessAddress1,
         tin,

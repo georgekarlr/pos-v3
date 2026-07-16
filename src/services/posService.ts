@@ -81,7 +81,6 @@ export class PosService {
           scPwdDiscount: params.p_sc_pwd_discount || 0,
           scPwdIdNumber: params.p_sc_pwd_id_number ?? null,  // NEW
           scPwdName: params.p_sc_pwd_name ?? null,            // NEW
-          regularDiscount: params.p_regular_discount || 0,
           loyaltyPointsEarned: params.p_loyalty_points_earned ?? 0,   // NEW
           loyaltyPointsRedeemed: params.p_loyalty_points_redeemed ?? 0, // NEW
           createdAt: params.p_occurred_at || FormatDateTime.formatLocalTimestampForDatabase(new Date()),
@@ -121,7 +120,6 @@ export class PosService {
         p_sc_pwd_discount: params.p_sc_pwd_discount ?? 0,
         p_sc_pwd_id_number: params.p_sc_pwd_id_number ?? null,     // NEW
         p_sc_pwd_name: params.p_sc_pwd_name ?? null,               // NEW
-        p_regular_discount: params.p_regular_discount ?? 0,
         // Loyalty Program
         p_loyalty_points_earned: params.p_loyalty_points_earned ?? 0,   // NEW
         p_loyalty_points_redeemed: params.p_loyalty_points_redeemed ?? 0, // NEW

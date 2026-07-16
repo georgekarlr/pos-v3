@@ -27,6 +27,7 @@ import ZReading from './pages/ZReading'
 import EJournal from './pages/EJournal'
 import Settings from './pages/Settings'
 import UserManual from './pages/UserManual'
+import Promotions from './pages/Promotions'
 
 function App() {
   useEffect(() => {
@@ -88,6 +89,16 @@ function App() {
                 <PersonaProtectedRoute>
                   <Layout>
                     <Inventory />
+                  </Layout>
+                </PersonaProtectedRoute>
+              </ProtectedRoute>
+            } />
+
+            <Route path="/management/promotions" element={
+              <ProtectedRoute>
+                <PersonaProtectedRoute>
+                  <Layout>
+                    <Promotions />
                   </Layout>
                 </PersonaProtectedRoute>
               </ProtectedRoute>

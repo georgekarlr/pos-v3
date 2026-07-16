@@ -24,7 +24,8 @@ export interface SaleOrderDetails {
   invoice_number?: string | null
   terminal_id?: number | null
   sc_pwd_discount_amount?: number | null
-  regular_discount_amount?: number | null
+  promo_discount_amount?: number | null
+  promo_discount_total?: number | null
 }
 
 export interface SaleItemDetails {
@@ -35,6 +36,8 @@ export interface SaleItemDetails {
     order_id: number
     base_price_at_purchase: number | null
     tax_rate_at_purchase: number | null
+    tax_type_at_purchase?: string | null
+    is_sc_pwd_eligible?: boolean | null
 
   price_at_purchase?: number | null
   line_total?: number | null

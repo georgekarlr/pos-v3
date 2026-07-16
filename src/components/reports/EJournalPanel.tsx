@@ -158,7 +158,7 @@ const EJournalPanel: React.FC = () => {
           text += `\n`
         }
 
-        const totalDiscounts = Number((detailsObj.sc_pwd_discount || 0)) + Number((detailsObj.regular_discount || 0))
+        const totalDiscounts = Number((detailsObj.sc_pwd_discount || 0)) + Number((detailsObj.promo_discount || 0))
         const totalVat = Number(detailsObj.tax_amount ?? detailsObj.vat_amount ?? 0)
 
         text += `Totals:\n`

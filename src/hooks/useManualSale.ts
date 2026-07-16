@@ -1,7 +1,10 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Product } from '../types/product'
 import { CustomerSearchResult } from '../types/debt'
 import { getCachedBusinessSettings } from '../utils/settingsCache'
+import { Promotion } from '../types/promotion'
+import { PromotionService } from '../services/promotionService'
+import { calculateCartTotals } from '../utils/cartCalculator'
 
 export interface CartItem {
   product: Product
@@ -14,57 +17,61 @@ export interface PaymentItem {
   transaction_ref: string
 }
 
-export function useManualSale() {
+export function useManualSale(params?: { transactionTime?: string }) {
   const [cart, setCart] = useState<CartItem[]>([])
   const [payments, setPayments] = useState<PaymentItem[]>([{ amount: 0, method: 'Cash', transaction_ref: '' }])
   
   const [isScPwdDiscount, setIsScPwdDiscount] = useState(false)
   const [scPwdIdNumber, setScPwdIdNumber] = useState('')
   const [scPwdName, setScPwdName] = useState('')
-  const [regularDiscount, setRegularDiscount] = useState(0)
-  
   const [loyaltyPointsEarned, setLoyaltyPointsEarned] = useState(0)
   const [loyaltyPointsRedeemed, setLoyaltyPointsRedeemed] = useState(0)
   
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerSearchResult | null>(null)
+  const [promotions, setPromotions] = useState<Promotion[]>([])
 
-  const subtotal = useMemo(() => {
-    return cart.reduce((acc, item) => acc + (item.product.base_price * item.quantity), 0)
+  useEffect(() => {
+    PromotionService.getPromotions({ limit: 1000, filterStatus: 'all' })
+      .then(res => {
+        if (res.data) setPromotions(res.data)
+      })
+      .catch(err => console.error('Failed to fetch promotions in useManualSale:', err))
+  }, [])
+
+  const transactionTimeStr = params?.transactionTime
+  const transactionTime = useMemo(() => {
+    return transactionTimeStr ? new Date(transactionTimeStr) : new Date()
+  }, [transactionTimeStr])
+
+  const cartLines = useMemo(() => {
+    return cart.map(item => ({
+      product: item.product,
+      qty: item.quantity
+    }))
   }, [cart])
 
-  const tax = useMemo(() => {
-    const settings = getCachedBusinessSettings();
-    const billingType = settings?.billing_type || 'NON-VAT';
-    
-    return cart.reduce((acc, item) => {
-      // SC/PWD logic: if discount is applied AND item is eligible, VAT is stripped
-      if (isScPwdDiscount && item.product.is_sc_pwd_eligible) {
-        return acc;
-      }
-      
-      // Normal tax logic
-      if (billingType === 'VAT' && item.product.tax_type === 'VATable') {
-        return acc + (item.product.base_price * item.quantity * (item.product.tax_rate / 100));
-      }
-      
-      return acc;
-    }, 0);
-  }, [cart, isScPwdDiscount])
+  const billingType = useMemo(() => {
+    const settings = getCachedBusinessSettings()
+    return settings?.billing_type || 'NON-VAT'
+  }, [])
 
-  const scPwdDiscountAmount = useMemo(() => {
-    if (!isScPwdDiscount) return 0;
-    
-    return cart.reduce((sum, item) => {
-      if (item.product.is_sc_pwd_eligible) {
-        return sum + (item.product.base_price * item.quantity) * 0.20;
-      }
-      return sum;
-    }, 0);
-  }, [cart, isScPwdDiscount])
+  const cartCalculations = useMemo(() => {
+    return calculateCartTotals({
+      cartLines,
+      promotions,
+      isScPwdDiscount,
+      billingType: billingType as 'VAT' | 'NON-VAT',
+      loyaltyPointsRedeemed,
+      transactionTime
+    })
+  }, [cartLines, promotions, isScPwdDiscount, billingType, loyaltyPointsRedeemed, transactionTime])
 
-  const total = useMemo(() => {
-    return (subtotal + tax) - scPwdDiscountAmount - regularDiscount - loyaltyPointsRedeemed
-  }, [subtotal, tax, scPwdDiscountAmount, regularDiscount, loyaltyPointsRedeemed])
+  const subtotal = cartCalculations.subtotal
+  const tax = cartCalculations.tax
+  const scPwdDiscountAmount = cartCalculations.scPwdDiscountAmount
+  const totalPromoDiscount = cartCalculations.totalPromoDiscount
+  const total = cartCalculations.total
+  const calculatedLines = cartCalculations.calculatedLines
 
   const totalTendered = useMemo(() => {
     return payments.reduce((acc, p) => acc + (Number(p.amount) || 0), 0)
@@ -109,7 +116,6 @@ export function useManualSale() {
     setIsScPwdDiscount(false)
     setScPwdIdNumber('')
     setScPwdName('')
-    setRegularDiscount(0)
     setLoyaltyPointsEarned(0)
     setLoyaltyPointsRedeemed(0)
     setSelectedCustomer(null)
@@ -127,8 +133,6 @@ export function useManualSale() {
     setScPwdIdNumber,
     scPwdName,
     setScPwdName,
-    regularDiscount,
-    setRegularDiscount,
     loyaltyPointsEarned,
     setLoyaltyPointsEarned,
     loyaltyPointsRedeemed,
@@ -138,6 +142,8 @@ export function useManualSale() {
     subtotal,
     tax,
     total,
+    totalPromoDiscount,
+    calculatedLines,
     totalTendered,
     changeDue,
     addToCart,

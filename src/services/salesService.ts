@@ -40,6 +40,7 @@ export const salesService = {
       p_start_date: startDate || null,
       p_end_date: endDate || null
     })
+    console.log('Sales history', data);
     if (error) {
       console.error('Error fetching sales history:', error)
       throw new Error(error.message)
@@ -80,6 +81,7 @@ export const salesService = {
     const { data, error } = await supabase.rpc('pos2_get_sale_details_by_id', {
       p_order_id: orderId
     })
+    console.log('Sale details', data);
     if (error) {
       console.error('Error fetching sale details:', error)
       throw new Error(error.message)

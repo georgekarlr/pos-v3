@@ -1,4 +1,5 @@
 import { Product } from '../types/product';
+import { Promotion } from '../types/promotion';
 
 export interface OfflineSale {
   id?: number;
@@ -15,7 +16,6 @@ export interface OfflineSale {
   scPwdDiscount?: number;
   scPwdIdNumber?: string | null;        // NEW
   scPwdName?: string | null;            // NEW
-  regularDiscount?: number;
   // Loyalty Program
   loyaltyPointsEarned?: number;         // NEW
   loyaltyPointsRedeemed?: number;       // NEW
@@ -41,11 +41,12 @@ export interface OfflineDebt {
 
 export class IndexedDBService {
   private dbName = 'pos-offline-db';
-  private dbVersion = 5;
+  private dbVersion = 6;
   private salesStore = 'offline-sales';
   private productsStore = 'products';
   private debtsStore = 'offline-debts';
   private customersStore = 'customers';
+  private promotionsStore = 'promotions';
 
   private async getDB(): Promise<IDBDatabase> {
     return new Promise((resolve, reject) => {
@@ -67,6 +68,9 @@ export class IndexedDBService {
         }
         if (!db.objectStoreNames.contains(this.customersStore)) {
           db.createObjectStore(this.customersStore, { keyPath: 'id' });
+        }
+        if (!db.objectStoreNames.contains(this.promotionsStore)) {
+          db.createObjectStore(this.promotionsStore, { keyPath: 'id' });
         }
       };
     });
@@ -195,6 +199,34 @@ export class IndexedDBService {
     return new Promise((resolve, reject) => {
       const transaction = db.transaction(this.customersStore, 'readonly');
       const store = transaction.objectStore(this.customersStore);
+      const request = store.getAll();
+
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async savePromotions(promotions: Promotion[]): Promise<void> {
+    const db = await this.getDB();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(this.promotionsStore, 'readwrite');
+      const store = transaction.objectStore(this.promotionsStore);
+
+      store.clear();
+      promotions.forEach(promo => {
+        store.put(promo);
+      });
+
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+    });
+  }
+
+  async getPromotions(): Promise<Promotion[]> {
+    const db = await this.getDB();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(this.promotionsStore, 'readonly');
+      const store = transaction.objectStore(this.promotionsStore);
       const request = store.getAll();
 
       request.onsuccess = () => resolve(request.result);

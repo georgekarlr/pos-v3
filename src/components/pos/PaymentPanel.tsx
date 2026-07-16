@@ -8,6 +8,7 @@ interface PaymentPanelProps {
     total: number
     subtotal: number
     tax: number
+    totalPromoDiscount?: number
     // --- Payments ---
     payments: PaymentInput[]
     onAddPayment: () => void
@@ -28,9 +29,6 @@ interface PaymentPanelProps {
     onScPwdIdNumberChange: (val: string) => void
     scPwdName: string
     onScPwdNameChange: (val: string) => void
-    // --- Regular Discount ---
-    regularDiscount: string | number
-    onRegularDiscountChange: (val: string) => void
     // --- Customer (for loyalty) ---
     customerId: number | null
     onCustomerIdChange: (id: number | null) => void
@@ -48,6 +46,7 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
     total,
     subtotal,
     tax,
+    totalPromoDiscount,
     payments,
     onAddPayment,
     onUpdatePayment,
@@ -64,8 +63,6 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
     onScPwdIdNumberChange,
     scPwdName,
     onScPwdNameChange,
-    regularDiscount,
-    onRegularDiscountChange,
     customerId,
     onCustomerIdChange,
     customerLoyaltyBalance,
@@ -170,28 +167,6 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
                         )}
                     </div>
 
-                    {/* Regular discount */}
-                    <div className="flex items-center gap-3">
-                        <label htmlFor="regular-discount" className="text-xs font-medium text-gray-600 whitespace-nowrap">
-                            Regular Discount:
-                        </label>
-                        <div className="relative rounded-md shadow-sm w-36">
-                            <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
-                                <span className="text-gray-400 text-sm">₱</span>
-                            </div>
-                            <input
-                                type="number"
-                                id="regular-discount"
-                                min="0"
-                                max={(subtotal + tax - scPwdDiscountAmount).toFixed(2)}
-                                step="0.01"
-                                placeholder="0.00"
-                                value={regularDiscount || ''}
-                                onChange={e => onRegularDiscountChange(e.target.value)}
-                                className="w-full pl-6 pr-2 py-1 border border-gray-300 rounded-md text-xs focus:ring-blue-500 focus:border-blue-500"
-                            />
-                        </div>
-                    </div>
                 </div>
 
                 {/* ── Loyalty Program ── */}
@@ -321,12 +296,13 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
                             <span>-{formatCurrency(scPwdDiscountAmount)}</span>
                         </div>
                     )}
-                    {Number(regularDiscount) > 0 && (
-                        <div className="flex justify-between text-xs text-blue-700">
-                            <span>Regular Discount</span>
-                            <span>-{formatCurrency(Number(regularDiscount))}</span>
+                    {(totalPromoDiscount ?? 0) > 0 && (
+                        <div className="flex justify-between text-xs text-violet-700">
+                            <span>Promo Discount</span>
+                            <span>-{formatCurrency(totalPromoDiscount!)}</span>
                         </div>
                     )}
+
                     <div className="border-t border-gray-100 my-1" />
                     <div className="flex justify-between text-sm font-semibold text-gray-800">
                         <span>Net Amount Due</span>

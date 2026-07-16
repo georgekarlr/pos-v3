@@ -3,6 +3,9 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { ProductService } from '../services/productService'
 import { Product } from '../types/product'
+import { PromotionService } from '../services/promotionService'
+import { Promotion } from '../types/promotion'
+import { calculateCartTotals, validateCouponCode, CouponStatus } from '../utils/cartCalculator'
 import LoadingSpinner from '../components/LoadingSpinner'
 import ProductGrid from '../components/pos/ProductGrid'
 import CartPanel, { CartLine } from '../components/pos/CartPanel'
@@ -51,7 +54,8 @@ const POS: React.FC = () => {
   const [isScPwdDiscount, setIsScPwdDiscount] = useState<boolean>(false)
   const [scPwdIdNumber, setScPwdIdNumber] = useState<string>('')
   const [scPwdName, setScPwdName] = useState<string>('')
-  const [regularDiscount, setRegularDiscount] = useState<string>('')
+  const [promotions, setPromotions] = useState<Promotion[]>([])
+  const [appliedCoupons, setAppliedCoupons] = useState<string[]>([])
 
   // Customer & Loyalty state
   const [customerId, setCustomerId] = useState<number | null>(null)
@@ -115,9 +119,21 @@ const POS: React.FC = () => {
     }
   }
 
+  const loadPromotions = async () => {
+    try {
+      const { data } = await PromotionService.getPromotions({ limit: 1000, filterStatus: 'all' })
+      if (data) {
+        setPromotions(data)
+      }
+    } catch (err) {
+      console.error('Failed to load promotions:', err)
+    }
+  }
+
   useEffect(() => {
     loadProducts()
     loadTerminals()
+    loadPromotions()
 
     const handleOnline = () => {
       setIsOnline(true)
@@ -236,14 +252,16 @@ const POS: React.FC = () => {
     })
   }
 
-  const clearAll = () => setOrderQtyById({})
+  const clearAll = () => {
+    setOrderQtyById({})
+    setAppliedCoupons([])
+  }
 
   const handleClosePayment = () => {
     setPaymentOpen(false)
     setIsScPwdDiscount(false)
     setScPwdIdNumber('')
     setScPwdName('')
-    setRegularDiscount('')
     setCustomerId(null)
     setPayments([])
     setNotes('')
@@ -256,49 +274,26 @@ const POS: React.FC = () => {
       .filter(l => l.product && l.qty > 0)
   }, [orderQtyById, products])
 
-  const subtotal = useMemo(() => cartLines.reduce((sum, l) => sum + l.product.base_price * l.qty, 0), [cartLines])
-
-  const tax = useMemo(() => {
+  const billingType = useMemo(() => {
     const settings = getCachedBusinessSettings();
-    const billingType = settings?.billing_type || 'NON-VAT';
+    return settings?.billing_type || 'NON-VAT';
+  }, []);
 
-    return cartLines.reduce((sum, l) => {
-      // SC/PWD logic: if discount is applied AND item is eligible, VAT is stripped
-      if (isScPwdDiscount && l.product.is_sc_pwd_eligible) {
-        return sum;
-      }
-      
-      // Normal tax logic
-      if (billingType === 'VAT' && l.product.tax_type === 'VATable') {
-        return sum + (l.product.base_price * l.qty) * (l.product.tax_rate / 100);
-      }
-      
-      return sum;
-    }, 0);
-  }, [cartLines, isScPwdDiscount])
+  const cartCalculations = useMemo(() => {
+    return calculateCartTotals({
+      cartLines,
+      promotions,
+      isScPwdDiscount,
+      billingType,
+      appliedCouponCodes: appliedCoupons,
+    });
+  }, [cartLines, promotions, isScPwdDiscount, billingType, appliedCoupons]);
 
-  const scPwdDiscountAmount = useMemo(() => {
-    if (!isScPwdDiscount) return 0;
-    
-    // Server logic: v_server_calculated_sc_discount := v_server_calculated_sc_discount + (v_line_gross * 0.20);
-    // where v_line_gross = v_product.base_price * cart_item.quantity;
-    // only if v_product.is_sc_pwd_eligible = TRUE
-    return cartLines.reduce((sum, l) => {
-      if (l.product.is_sc_pwd_eligible) {
-        return sum + (l.product.base_price * l.qty) * 0.20;
-      }
-      return sum;
-    }, 0);
-  }, [cartLines, isScPwdDiscount])
-
-  const regularDiscountAmount = useMemo(() => {
-    return Number(regularDiscount) || 0
-  }, [regularDiscount])
-
-  const total = useMemo(() => {
-    const calculated = subtotal + tax - scPwdDiscountAmount - regularDiscountAmount
-    return Math.max(0, calculated)
-  }, [subtotal, tax, scPwdDiscountAmount, regularDiscountAmount])
+  const subtotal = cartCalculations.subtotal;
+  const tax = cartCalculations.tax;
+  const scPwdDiscountAmount = cartCalculations.scPwdDiscountAmount;
+  const totalPromoDiscount = cartCalculations.totalPromoDiscount;
+  const total = cartCalculations.total;
 
   // Loyalty points earned: 1 point per ₱1 of net total
   const loyaltyPointsEarned = useMemo(() => {
@@ -364,12 +359,13 @@ const POS: React.FC = () => {
     setSubmitting(true)
     setError(null)
     try {
-      const cartPayload = cartLines.map(l => ({
+      const cartPayload = cartCalculations.calculatedLines.map(l => ({
         product_id: l.product.id,
         quantity: l.qty,
         price: l.product.display_price,
         base_price: l.product.base_price,
-        tax_rate: l.product.tax_rate
+        tax_rate: l.product.tax_rate,
+        promo_id: l.promoId,
       }));
 
       const { data: serviceData, error: serviceError } = await PosService.createSale({
@@ -390,7 +386,6 @@ const POS: React.FC = () => {
         p_sc_pwd_discount: scPwdDiscountAmount,
         p_sc_pwd_id_number: isScPwdDiscount ? scPwdIdNumber : null,
         p_sc_pwd_name: isScPwdDiscount ? scPwdName : null,
-        p_regular_discount: regularDiscountAmount,
         // Loyalty
         p_loyalty_points_earned: loyaltyPointsEarned,
         p_loyalty_points_redeemed: 0,
@@ -405,13 +400,14 @@ const POS: React.FC = () => {
         handleClosePayment(); // Reset states and close modal
 
         // Build receipt data BEFORE clearing local state
-        const lines: ReceiptLine[] = cartLines.map(l => ({
+        const lines: ReceiptLine[] = cartCalculations.calculatedLines.map(l => ({
           name: l.product.name,
           qty: l.qty,
           unitType: l.product.unit_type,
-          unitPrice: l.product.display_price,       // VAT-inclusive (used for normal sales)
+          unitPrice: l.product.display_price,       // VAT-inclusive display price (original)
           baseUnitPrice: l.product.base_price,      // VAT-exclusive (used for SC/PWD sales)
-          lineTotal: l.product.display_price * l.qty,
+          lineTotal: l.lineGross + l.lineTax,       // promo-adjusted line total
+          taxType: l.product.tax_type,              // 'VATable' | 'VAT-Exempt' | 'Zero-Rated'
           isScPwdEligible: l.product.is_sc_pwd_eligible,
         }));
         const totalPaidLocal = totalPaidFromUI;
@@ -461,7 +457,7 @@ const POS: React.FC = () => {
           subtotal,
           tax,
           scPwdDiscount: scPwdDiscountAmount,
-          regularDiscount: regularDiscountAmount,
+          totalPromoDiscount: totalPromoDiscount,
           total,
           payments: payments.map(p => ({ method: p.method, amount: Number(p.amount) || 0, reference: p.transaction_ref || undefined })),
           totalPaid: totalPaidLocal,
@@ -476,6 +472,7 @@ const POS: React.FC = () => {
         setReceiptData(receipt)
         setReceiptOpen(true)
         setOrderQtyById({}) // Clear cart after success and receipt generation
+        setAppliedCoupons([])
 
         // Silent refresh to update stock without closing receipt modal
         loadProducts(true)
@@ -667,11 +664,23 @@ const POS: React.FC = () => {
           <div className="grid grid-cols-1 gap-4 lg:gap-6">
             <div className="flex flex-col gap-4">
               <CartPanel
-                lines={cartLines}
+                lines={cartCalculations.calculatedLines}
                 subtotal={subtotal}
                 tax={tax}
                 total={total}
+                totalPromoDiscount={totalPromoDiscount}
                 terminalSelected={selectedTerminalId !== null} // NEW
+                appliedCoupons={appliedCoupons}
+                onApplyCoupon={(code) => {
+                  const status = validateCouponCode(code, promotions, appliedCoupons);
+                  if (status === 'valid') {
+                    setAppliedCoupons(prev => [...prev, code.trim().toUpperCase()]);
+                  }
+                  return status;
+                }}
+                onRemoveCoupon={(code) => {
+                  setAppliedCoupons(prev => prev.filter(c => c !== code));
+                }}
                 onAdd={(id) => add(id, 1)}
                 onDeduct={(id) => deduct(id, 1)}
                 onClear={clear}
@@ -698,11 +707,23 @@ const POS: React.FC = () => {
             {/* Right: cart and payment */}
             <div className="flex flex-col gap-4">
               <CartPanel
-                lines={cartLines}
+                lines={cartCalculations.calculatedLines}
                 subtotal={subtotal}
                 tax={tax}
                 total={total}
+                totalPromoDiscount={totalPromoDiscount}
                 terminalSelected={selectedTerminalId !== null} // NEW
+                appliedCoupons={appliedCoupons}
+                onApplyCoupon={(code) => {
+                  const status = validateCouponCode(code, promotions, appliedCoupons);
+                  if (status === 'valid') {
+                    setAppliedCoupons(prev => [...prev, code.trim().toUpperCase()]);
+                  }
+                  return status;
+                }}
+                onRemoveCoupon={(code) => {
+                  setAppliedCoupons(prev => prev.filter(c => c !== code));
+                }}
                 onAdd={(id) => add(id, 1)}
                 onDeduct={(id) => deduct(id, 1)}
                 onClear={clear}
@@ -748,6 +769,7 @@ const POS: React.FC = () => {
         total={total}
         subtotal={subtotal}
         tax={tax}
+        totalPromoDiscount={totalPromoDiscount}
         payments={payments}
         onAddPayment={handleAddPayment}
         onUpdatePayment={handleUpdatePayment}
@@ -765,9 +787,6 @@ const POS: React.FC = () => {
         onScPwdIdNumberChange={setScPwdIdNumber}
         scPwdName={scPwdName}
         onScPwdNameChange={setScPwdName}
-        // Regular Discount
-        regularDiscount={regularDiscount}
-        onRegularDiscountChange={setRegularDiscount}
         // Customer & Loyalty
         customerId={customerId}
         onCustomerIdChange={setCustomerId}
