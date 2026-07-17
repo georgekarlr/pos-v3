@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase'
-import { SaleDetailsResponse, SalesHistoryRow, RefundDetailRow } from '../types/sales'
+import { SaleDetailsResponse, SalesHistoryRow, RefundDetailRow, RefundableItem } from '../types/sales'
 import { RecordManualSaleParams } from '../types/pos'
 
 export interface GetSalesHistoryParams {
@@ -68,7 +68,7 @@ export const salesService = {
       p_start_date: startDate ?? null,
       p_end_date: endDate ?? null
     })
-    console.log(data);
+    console.log('Refund details', data);
     if (error) {
       console.error('Error fetching refund details:', error)
       throw new Error(error.message)
@@ -91,6 +91,17 @@ export const salesService = {
     return (data || {}) as SaleDetailsResponse
   },
 
+  async getRefundableItems(orderId: number): Promise<RefundableItem[]> {
+    const { data, error } = await supabase.rpc('pos2_get_refundable_items', {
+      p_order_id: orderId
+    })
+    if (error) {
+      console.error('Error fetching refundable items:', error)
+      throw new Error(error.message)
+    }
+    return (data || []) as RefundableItem[]
+  },
+
   async createBulkRefund(params: {
     order_id: number
     terminal_id: number
@@ -110,6 +121,9 @@ export const salesService = {
       p_reason: reason
     })
 
+    console.log('Bulk refund data:', data);
+    console.log('Bulk refund error:', error);
+    console.log('Bulk refund params:', params);
     if (error) {
       console.error('Error creating bulk refund:', error)
       return { success: false, message: error.message }
