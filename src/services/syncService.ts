@@ -33,7 +33,6 @@ export const SyncService = {
             p_sc_pwd_discount: sale.scPwdDiscount || 0,
             p_sc_pwd_id_number: sale.scPwdIdNumber ?? null,            // NEW
             p_sc_pwd_name: sale.scPwdName ?? null,                     // NEW
-            p_regular_discount: sale.regularDiscount || 0,
             p_loyalty_points_earned: sale.loyaltyPointsEarned ?? 0,    // NEW
             p_loyalty_points_redeemed: sale.loyaltyPointsRedeemed ?? 0, // NEW
             p_occurred_at: sale.createdAt,

@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { X, Receipt, ShoppingBag, CreditCard, Clock } from 'lucide-react';
 import { OfflineDB, OfflineSale } from '../../db/offlineDB';
-import { ReceiptData } from './Receipt';
+import { ReceiptData, ReceiptLine } from './Receipt';
 import ReceiptModal from './ReceiptModal';
+import { getCachedBusinessSettings } from '../../utils/settingsCache';
 
 interface OfflineSalesModalProps {
   open: boolean;
@@ -35,19 +36,73 @@ const OfflineSalesModal: React.FC<OfflineSalesModalProps> = ({ open, onClose }) 
   };
 
   const viewReceipt = (sale: OfflineSale) => {
-    const subtotal = sale.total - (sale.tax || 0);
+    // Subtotal: sum of display_price * quantity (gross shelf totals)
+    const calculatedSubtotal = sale.cart.reduce((sum: number, item: any) => {
+      const price = item.display_price ?? item.price ?? 0;
+      const qty = item.quantity ?? item.qty ?? 0;
+      return sum + (price * qty);
+    }, 0);
+
+    let businessName = 'Point of Sale';
+    let businessAddress1: string | undefined;
+    let tin: string | undefined;
+    let isVatRegistered: boolean | undefined;
+    let min: string | undefined;
+    let ptuIssuedBy: string | undefined;
+    let softwareProviderName: string | undefined;
+    let softwareProviderAddress: string | undefined;
+    let softwareProviderTin: string | undefined;
+    let softwareProviderAccreditationNo: string | undefined;
+
+    try {
+      const settings = getCachedBusinessSettings();
+      if (settings) {
+        businessName = settings.business_name || 'Point of Sale';
+        businessAddress1 = settings.address || undefined;
+        tin = settings.tin || undefined;
+        isVatRegistered = settings.is_vat_registered !== undefined ? Boolean(settings.is_vat_registered) : undefined;
+        min = settings.min || undefined;
+        ptuIssuedBy = settings.ptu_issued_by || undefined;
+        softwareProviderName = settings.software_provider_name || undefined;
+        softwareProviderAddress = settings.software_provider_address || undefined;
+        softwareProviderTin = settings.software_provider_tin || undefined;
+        softwareProviderAccreditationNo = settings.software_provider_accreditation_no || undefined;
+      }
+    } catch (e) {
+      console.error('Error reading cached business settings in offline viewReceipt:', e);
+    }
+
+    const lines: ReceiptLine[] = sale.cart.map((item: any) => {
+      const qty = item.quantity ?? item.qty ?? 0;
+      const displayPrice = item.display_price ?? item.price ?? 0;
+      const lineTax = item.line_tax ?? 0;
+      const lineGross = item.line_gross ?? (displayPrice * qty);
+
+      return {
+        name: item.name || `Product #${item.product_id}`,
+        qty: qty,
+        unitType: item.unit_type,
+        unitPrice: displayPrice,
+        baseUnitPrice: item.base_price,
+        lineTotal: item.line_gross != null && item.line_tax != null
+          ? (item.line_gross + item.line_tax)
+          : (displayPrice * qty),
+        taxType: item.tax_type,
+        isScPwdEligible: item.is_sc_pwd_eligible,
+        vatExemptLineTotal: item.vat_exempt_line_total,
+      };
+    });
+
     const receipt: ReceiptData = {
       offlineId: sale.id,
+      invoiceNumber: sale.offlineInvoiceNumber,
       dateISO: sale.createdAt,
-      lines: sale.cart.map((item: any) => ({
-        name: item.name,
-        qty: item.qty,
-        unitType: item.unit_type,
-        unitPrice: item.price,
-        lineTotal: item.price * item.qty,
-      })),
-      subtotal: subtotal,
+      terminalId: sale.terminalId,
+      lines,
+      subtotal: calculatedSubtotal,
       tax: sale.tax || 0,
+      scPwdDiscount: sale.scPwdDiscount,
+      totalPromoDiscount: sale.totalPromoDiscount,
       total: sale.total,
       payments: sale.payments.map((p: any) => ({
         method: p.method,
@@ -57,6 +112,16 @@ const OfflineSalesModal: React.FC<OfflineSalesModalProps> = ({ open, onClose }) 
       totalPaid: sale.total_tendered,
       change: Math.max(0, sale.total_tendered - sale.total),
       notes: sale.notes,
+      businessName,
+      businessAddress1,
+      tin,
+      isVatRegistered,
+      min,
+      ptuIssuedBy,
+      softwareProviderName,
+      softwareProviderAddress,
+      softwareProviderTin,
+      softwareProviderAccreditationNo,
     };
     setSelectedReceipt(receipt);
     setReceiptOpen(true);

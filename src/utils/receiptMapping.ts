@@ -13,6 +13,10 @@ export function mapSaleDetailsToReceipt(details: SaleDetailsResponse): ReceiptDa
         const total = (it.line_total ?? (it.quantity && it.price_at_purchase ? it.quantity * it.price_at_purchase : 0)) || 0
         const refundedQty = Number(it.refunded_quantity || 0)
         const refundedAmount = refundedQty > 0 ? refundedQty * unit : undefined
+        // For SC/PWD-eligible VATable items the DB stores base_price_at_purchase as the
+        // post-promo VAT-exclusive unit price (e.g. 162.00 for Chicken after 10% promo).
+        // We surface this as vatExemptLineTotal so the VAT breakdown uses the BIR-correct amount.
+        const vatExemptLineTotal = baseUnit != null ? baseUnit * it.quantity : undefined
         return {
             name: it.product_name,
             qty: it.quantity,
@@ -20,7 +24,9 @@ export function mapSaleDetailsToReceipt(details: SaleDetailsResponse): ReceiptDa
             unitPrice: unit,
             baseUnitPrice: baseUnit,  // VAT-exclusive; used when SC/PWD discount is active
             lineTotal: Number(total),
-            isScPwdEligible: it.tax_type_at_purchase === 'VAT-Exempt',
+            taxType: it.tax_type_at_purchase ?? null,  // 'VATable' | 'VAT-Exempt' | 'Zero-Rated'
+            isScPwdEligible: it.is_sc_pwd_eligible ?? false, // product's stored SC/PWD eligibility flag
+            vatExemptLineTotal,
             refundedQty,
             refundedAmount
         }
@@ -76,7 +82,7 @@ export function mapSaleDetailsToReceipt(details: SaleDetailsResponse): ReceiptDa
         invoiceNumber: order.invoice_number ?? undefined,
         terminalId: order.terminal_id ?? undefined,
         scPwdDiscount: order.sc_pwd_discount_amount ? Number(order.sc_pwd_discount_amount) : undefined,
-        regularDiscount: order.regular_discount_amount ? Number(order.regular_discount_amount) : undefined,
+        totalPromoDiscount: order.promo_discount_total != null ? Number(order.promo_discount_total) : (order.promo_discount_amount ? Number(order.promo_discount_amount) : undefined),
         businessName,
         businessAddress1,
         tin,

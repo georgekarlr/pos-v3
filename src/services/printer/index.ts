@@ -203,7 +203,7 @@ export function layoutReceiptLines(data: ReceiptData, design?: ReceiptDesign): s
 
   if (d.showItemsSeparatorBottom) lines.push(sep)
 
-  // Totals aligned to right side as value
+  // Totals — BIR order: Subtotal → Less Promo → Subtotal After Promo → Less SC/PWD → TOTAL DUE
   const pushTotal = (label: string, value: number) => {
     const v = money(value)
     const lbl = label + ': '
@@ -211,10 +211,24 @@ export function layoutReceiptLines(data: ReceiptData, design?: ReceiptDesign): s
     const text = alignText(lbl, Math.max(0, left), 'left') + v
     lines.push(text)
   }
-  pushTotal(isScPwd ? 'Subtotal (VAT Exempt)' : 'Subtotal', data.subtotal)
-  // For SC/PWD sales, VAT is fully removed by law — do not print a VAT line
-  if (!isScPwd && data.isVatRegistered !== false) pushTotal('Tax (VAT)', data.tax)
-  if (isScPwd && (data.scPwdDiscount ?? 0) > 0) pushTotal('Less: SC/PWD Discount (20%)', -(data.scPwdDiscount!))
+
+  const promoDiscount = data.totalPromoDiscount ?? 0
+  pushTotal('Subtotal', data.subtotal)
+
+  // Promo discount line (before SC/PWD — BIR compliant order)
+  if (promoDiscount > 0) {
+    pushTotal('Less: Promo Discount', -promoDiscount)
+    // Show intermediate subtotal only when both promo AND SC/PWD are active
+    if (isScPwd) {
+      pushTotal('Subtotal After Promo', data.subtotal - promoDiscount)
+    }
+  }
+
+  // SC/PWD discount line
+  if (isScPwd && (data.scPwdDiscount ?? 0) > 0) {
+    pushTotal('Less: SC/PWD Disc (20%)', -(data.scPwdDiscount!))
+  }
+
   lines.push('='.repeat(d.paperWidth!))
   pushTotal('TOTAL DUE', data.total)
   lines.push('='.repeat(d.paperWidth!))
@@ -222,12 +236,43 @@ export function layoutReceiptLines(data: ReceiptData, design?: ReceiptDesign): s
   pushTotal('Change', data.change)
   lines.push('')
 
-  // VAT Breakdown
+  // VAT Breakdown — derived from line items for BIR-correct amounts
   if (data.isVatRegistered === true) {
-    const vatableAmt = data.vatableAmount  ?? (!isScPwd ? Math.max(0, data.subtotal - data.tax) : 0)
-    const vatAmt     = data.vatAmount      ?? (!isScPwd ? data.tax : 0)
-    const vatExempt  = data.vatExemptAmount ?? (isScPwd ? data.subtotal : 0)
-    const zeroRated  = data.zeroRatedAmount ?? 0
+    let vatableAmt: number
+    let vatAmt: number
+    let vatExempt: number
+    let zeroRated: number
+
+    if (data.vatableAmount != null || data.vatAmount != null || data.vatExemptAmount != null || data.zeroRatedAmount != null) {
+      // Explicit overrides — use them directly
+      vatableAmt = data.vatableAmount ?? 0
+      vatAmt     = data.vatAmount ?? 0
+      vatExempt  = data.vatExemptAmount ?? 0
+      zeroRated  = data.zeroRatedAmount ?? 0
+    } else {
+      // Derive from line items (same logic as Receipt.tsx)
+      vatableAmt = 0; vatAmt = 0; vatExempt = 0; zeroRated = 0
+      for (const l of data.lines) {
+        const isVatable = l.taxType === 'VATable' || !l.taxType
+        const lineIsScPwdVatExempt = isScPwd && l.isScPwdEligible && isVatable
+        if (lineIsScPwdVatExempt) {
+          // Post-promo VAT-exclusive amount — BIR VAT-Exempt bucket
+          const vatExemptAmt = l.vatExemptLineTotal != null && l.vatExemptLineTotal > 0
+            ? l.vatExemptLineTotal
+            : (l.baseUnitPrice != null ? l.baseUnitPrice * l.qty : l.lineTotal)
+          vatExempt += vatExemptAmt
+        } else if (l.taxType === 'Zero-Rated') {
+          zeroRated += l.lineTotal
+        } else if (l.taxType === 'VAT-Exempt') {
+          vatExempt += l.lineTotal
+        } else {
+          const lineGross = l.lineTotal / 1.12
+          vatableAmt += lineGross
+          vatAmt += l.lineTotal - lineGross
+        }
+      }
+    }
+
     lines.push('='.repeat(d.paperWidth!))
     lines.push(alignText('VAT BREAKDOWN', d.paperWidth!, 'center'))
     pushTotal('VATable Sales', vatableAmt)

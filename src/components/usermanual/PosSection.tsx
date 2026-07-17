@@ -42,9 +42,9 @@ export const PosSection: React.FC = () => {
           </p>
         </div>
         <div>
-          <p className="font-semibold">Regular Discount</p>
+          <p className="font-semibold">Promo Discount</p>
           <p className="text-xs mt-0.5">
-            A fixed peso amount deducted from the grand total before payments. Enter any amount up to the gross subtotal.
+            Discounts automatically applied based on active promotions. If a product is eligible for an active promotion, the discount is calculated automatically.
           </p>
         </div>
       </div>

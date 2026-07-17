@@ -11,6 +11,7 @@ interface PaymentModalProps {
     total: number
     subtotal: number
     tax: number
+    totalPromoDiscount?: number
     // --- Payments ---
     payments: PaymentInput[]
     onAddPayment: () => void
@@ -31,9 +32,6 @@ interface PaymentModalProps {
     onScPwdIdNumberChange: (val: string) => void
     scPwdName: string
     onScPwdNameChange: (val: string) => void
-    // --- Regular Discount ---
-    regularDiscount: string | number
-    onRegularDiscountChange: (val: string) => void
     // --- Customer & Loyalty ---
     customerId: number | null
     onCustomerIdChange: (id: number | null) => void
@@ -79,6 +77,7 @@ const PaymentModal: React.FC<PaymentModalProps> = (props) => {
                             total={props.total}
                             subtotal={props.subtotal}
                             tax={props.tax}
+                            totalPromoDiscount={props.totalPromoDiscount}
                             payments={props.payments}
                             onAddPayment={props.onAddPayment}
                             onUpdatePayment={props.onUpdatePayment}
@@ -95,8 +94,6 @@ const PaymentModal: React.FC<PaymentModalProps> = (props) => {
                             onScPwdIdNumberChange={props.onScPwdIdNumberChange}
                             scPwdName={props.scPwdName}
                             onScPwdNameChange={props.onScPwdNameChange}
-                            regularDiscount={props.regularDiscount}
-                            onRegularDiscountChange={props.onRegularDiscountChange}
                             customerId={props.customerId}
                             onCustomerIdChange={props.onCustomerIdChange}
                             customerLoyaltyBalance={props.customerLoyaltyBalance}

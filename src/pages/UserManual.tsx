@@ -5,6 +5,7 @@ import { AuthSection } from '../components/usermanual/AuthSection'
 import { DashboardSection } from '../components/usermanual/DashboardSection'
 import { PosSection } from '../components/usermanual/PosSection'
 import { CatalogSection } from '../components/usermanual/CatalogSection'
+import { PromotionsSection } from '../components/usermanual/PromotionsSection'
 import { InventorySection } from '../components/usermanual/InventorySection'
 import { SalesSection } from '../components/usermanual/SalesSection'
 import { DebtSection } from '../components/usermanual/DebtSection'
@@ -144,10 +145,12 @@ const chapters: ManualChapter[] = [
       <h3>4. Cart Calculations, Discounts, and Loyalty</h3>
       <p><strong>Discount Types:</strong></p>
       <ul>
+        <li><strong>Promotions (Coupon Code Gated):</strong> Active promotions are only applied if a matching coupon code is entered in the cart. The best discount is selected per product among the matches. A <em>Save ₱X</em> badge appears on qualifying items in the cart, and a <strong>Coupon Discount</strong> line is shown in the order summary and receipt.
+          <br/><em>Offline Support:</em> Promotions are cached in IndexedDB when loaded online. Validity (start/end dates, active status, product eligibility, and coupon codes) is enforced client-side while offline, using the same logic as the server.
+        </li>
         <li><strong>Senior Citizen (SC) / Person with Disability (PWD):</strong> Applies a 20% discount on VAT-exclusive price and waives tax calculations for BIR compliance.
           <br/><em>⚠ BIR Compliance:</em> You must provide the beneficiary's <strong>Full Name</strong> and <strong>ID Number</strong> during checkout. The checkout action is disabled until both are entered.
         </li>
-        <li><strong>Regular Discount:</strong> A manual fixed Peso amount deducted from the grand total.</li>
       </ul>
       <p><strong>Loyalty Program:</strong></p>
       <ul>
@@ -195,11 +198,56 @@ const chapters: ManualChapter[] = [
     `
   },
   {
+    id: 'promotions',
+    title: '6. Promotions & Discounts',
+    component: <PromotionsSection />,
+    rawHtml: `
+      <h2>6. Promotions & Discounts</h2>
+      <p><strong>Route:</strong> <code>/management/promotions</code> | <strong>Access:</strong> Admin (Full CRUD), Staff (Read-only promotions view)</p>
+      <h3>1. Promotions Overview</h3>
+      <p>The <strong>Promotions & Discounts</strong> page allows management of promotional campaigns, discount periods, and coupon codes. The system requires a valid, matching coupon code to be entered in the POS cart to activate promotion discounts.</p>
+      <h3>2. Promotion Configuration Fields</h3>
+      <p>Creating or editing a promotion opens a sidebar modal with the following parameters:</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Config Parameter</th>
+            <th>Function</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Promotion Name</td><td>Descriptive name of the campaign (e.g., Summer Sale 20% Off).</td></tr>
+          <tr><td>Coupon Code</td><td>Optional alphanumeric code (e.g. SUMMER20). Must be unique. Cashiers must input this in the cart to trigger the promo discount.</td></tr>
+          <tr><td>Discount Type</td><td>Percentage (%) or Fixed Amount (₱). Defines how the discount is computed.</td></tr>
+          <tr><td>Value</td><td>The numeric value of the discount. Percentage is capped at 100%.</td></tr>
+          <tr><td>Start Date &amp; End Date</td><td>The duration of the promotion. Automatically transitions between statuses based on the current time.</td></tr>
+          <tr><td>Applies To</td><td>Define scope: All Products (entire store catalog) or Specific Products (using an interactive product multi-selector).</td></tr>
+          <tr><td>Active Status</td><td>A toggle to activate or deactivate the promotion. Inactive promotions will not be applied under any condition.</td></tr>
+        </tbody>
+      </table>
+      <h3>3. Promotion Statuses</h3>
+      <p>Promotions are categorized into one of four statuses:</p>
+      <ul>
+        <li><strong>Active:</strong> Currently running promotions. Discount is applied during checkouts.</li>
+        <li><strong>Upcoming:</strong> Scheduled promotions with start dates in the future.</li>
+        <li><strong>Expired:</strong> Past promotions whose end dates have passed.</li>
+        <li><strong>Deactivated:</strong> Disabled promotions (where the active toggle is turned off).</li>
+      </ul>
+      <h3>4. POS Integration &amp; Offline Mode</h3>
+      <ul>
+        <li><strong>Coupon Code Requirement:</strong> Promotions do not auto-apply. Cashiers must input the coupon code and click **Apply** in the cart area. Multiple coupon codes can be applied simultaneously to a single transaction.</li>
+        <li><strong>Best Discount Selection:</strong> If a product qualifies for multiple active promotions matching any of the applied coupon codes, the system automatically calculates and applies the best discount per product.</li>
+        <li><strong>Offline Support:</strong> Active promotions (including coupon codes) are stored in IndexedDB. Validity is verified locally client-side when offline, and promotional discount is saved to the local sync queue.</li>
+        <li><strong>Receipt &amp; Invoices:</strong> Promo discounts are itemized, showing a "Save ₱X" badge in the cart, listing "Coupon Discounts" in totals, and mapping the Promo ID in the database.</li>
+      </ul>
+    `
+  },
+  {
     id: 'inventory',
-    title: '6. Inventory Adjustments & Batches',
+    title: '7. Inventory Adjustments & Batches',
     component: <InventorySection />,
     rawHtml: `
-      <h2>6. Inventory Adjustments & Batches</h2>
+      <h2>7. Inventory Adjustments & Batches</h2>
       <p><strong>Route:</strong> <code>/management/inventory</code> | <strong>Access:</strong> Admin, Staff</p>
       <h3>1. Stock Status Indicators</h3>
       <p>Each product shows a visual badge representing availability status: Healthy, Low Stock, or Out of Stock.</p>
@@ -228,10 +276,10 @@ const chapters: ManualChapter[] = [
   },
   {
     id: 'sales',
-    title: '7. Sales History, Void, & Refunds',
+    title: '8. Sales History, Void, & Refunds',
     component: <SalesSection />,
     rawHtml: `
-      <h2>7. Sales History, Void, & Refunds</h2>
+      <h2>8. Sales History, Void, & Refunds</h2>
       <p><strong>Route:</strong> <code>/management/sales-history</code> | <strong>Access:</strong> Admin, Staff</p>
       <h3>1. Sales History Directory</h3>
       <p>A searchable ledger of every completed order. Rows show Order ID, timestamp, cashier name, customer name, transaction totals, and payment status.</p>
@@ -254,17 +302,17 @@ const chapters: ManualChapter[] = [
       </table>
       <h3>4. Manual Sales Logs &amp; Refunds Ledger</h3>
       <ul>
-        <li><strong>Record Manual Sale:</strong> Backdate or log a sales record completed outside the terminal interface. Form requires adding items, amounts, and customer context.</li>
+        <li><strong>Record Manual Sale:</strong> Backdate or log a sales record completed outside the terminal interface. Form requires adding items, amounts, customer context, and optionally applying coupon codes for promotional discounts.</li>
         <li><strong>View All Refunds:</strong> Open a centralized refunds audit log auditing all partial/full transaction returns in the system.</li>
       </ul>
     `
   },
   {
     id: 'debt',
-    title: '8. Customer Debt & Wizard',
+    title: '9. Customer Debt & Wizard',
     component: <DebtSection />,
     rawHtml: `
-      <h2>8. Customer Debt & Wizard</h2>
+      <h2>9. Customer Debt & Wizard</h2>
       <h3>1. Customers Directory</h3>
       <p><strong>Route:</strong> <code>/management/customers</code> | <strong>Access:</strong> Admin, Staff</p>
       <p>Manage customer registration profiles: Name, Phone, Email, and physical Address. Includes actions to:</p>
@@ -305,10 +353,10 @@ const chapters: ManualChapter[] = [
   },
   {
     id: 'installments',
-    title: '9. Installment Plans & Interests',
+    title: '10. Installment Plans & Interests',
     component: <InstallmentSection />,
     rawHtml: `
-      <h2>9. Installment Plans & Interests</h2>
+      <h2>10. Installment Plans & Interests</h2>
       <p><strong>Route:</strong> <code>/installments</code> | <strong>Access:</strong> Admin, Staff</p>
       <p>Installments support purchasing inventory items via custom layaway contracts with monthly payments.</p>
       <h3>1. Contracts Directory Layout</h3>
@@ -345,10 +393,10 @@ const chapters: ManualChapter[] = [
   },
   {
     id: 'compliance',
-    title: '10. BIR Compliance (X, Z-Reading & Journals)',
+    title: '11. BIR Compliance (X, Z-Reading & Journals)',
     component: <ComplianceSection />,
     rawHtml: `
-      <h2>10. BIR Compliance (X, Z-Reading & Journals)</h2>
+      <h2>11. BIR Compliance (X, Z-Reading & Journals)</h2>
       <p><strong>Sub-Menu:</strong> Reports &amp; Compliance | <strong>Access:</strong> X-Reading (Admin, Staff), Z-Reading &amp; E-Journal (Admin only)</p>
       <h3>1. X-Reading</h3>
       <p><strong>Route:</strong> <code>/reports-compliance/x-reading</code></p>
@@ -363,10 +411,10 @@ const chapters: ManualChapter[] = [
   },
   {
     id: 'settings',
-    title: '11. Terminals, Printers & Staff Configuration',
+    title: '12. Terminals, Printers & Staff Configuration',
     component: <SettingsSection />,
     rawHtml: `
-      <h2>11. Terminals, Printers & Staff Configuration</h2>
+      <h2>12. Terminals, Printers & Staff Configuration</h2>
       <h3>1. System Settings Pages</h3>
       <p><strong>Route:</strong> <code>/settings</code> | <strong>Access:</strong> Admin, Staff (limited)</p>
       <ul>
@@ -390,24 +438,26 @@ const chapters: ManualChapter[] = [
   },
   {
     id: 'offline',
-    title: '12. Offline Cache & Syncing',
+    title: '13. Offline Cache & Syncing',
     component: <OfflineSection />,
     rawHtml: `
-      <h2>12. Offline Cache & Syncing</h2>
+      <h2>13. Offline Cache &amp; Syncing</h2>
       <h3>1. Offline State Execution</h3>
       <p>The application listens to network connection state changes. When offline, an amber "Offline" alert banner is shown. The catalog displays locally cached products stored in the browser's IndexedDB. Checkout operations save sale JSON payloads to a local sync queue in IndexedDB instead of failing.</p>
-      <h3>2. Sales Sync Queue</h3>
+      <h3>2. Promotions Offline Cache</h3>
+      <p>Active promotions (and their coupon codes) are cached in IndexedDB when loaded online. While offline, the system enforces promotion validity locally (matching coupon codes, start/end dates, active flag, product eligibility) using the same rules as the server-side database function. Discounts are calculated and displayed on the cart and receipt without requiring a network connection once a valid code is entered.</p>
+      <h3>3. Sales Sync Queue</h3>
       <p>Click View Offline Sales in the alert banner to open the Offline Sales queue and review all transactions waiting to upload.</p>
-      <h3>3. Background Upload Sync</h3>
+      <h3>4. Background Upload Sync</h3>
       <p>Once internet connectivity is restored, the system displays a blue "Syncing N offline sales..." spinner alert. A background scheduler processes queued orders, sending each one to the server using the pos2_create_sale database function. Once uploaded, items are cleared from IndexedDB.</p>
     `
   },
   {
     id: 'architecture',
-    title: '13. Security Guards & System Architecture',
+    title: '14. Security Guards & System Architecture',
     component: <ArchitectureSection />,
     rawHtml: `
-      <h2>13. Security Guards & System Architecture</h2>
+      <h2>14. Security Guards & System Architecture</h2>
       <h3>1. Security Guard Wrappers</h3>
       <p>The system uses a nested routing wrapper layout in React Router: ProtectedRoute (validates Supabase auth token) → PersonaProtectedRoute (validates admin/staff PIN session) → Layout (renders sidebar and header context).</p>
       <h3>2. Client Cache Mapping</h3>

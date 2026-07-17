@@ -14,7 +14,8 @@ import {
   Printer,
   Wallet,
   ClipboardList,
-  CreditCard
+  CreditCard,
+  Tag
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -40,6 +41,7 @@ const adminNavigation: NavigationItem[] = [
       { name: 'Inventory', href: '/management/inventory' },
       { name: 'Sales History', href: '/management/sales-history' },
       { name: 'Customers', href: '/management/customers' },
+      { name: 'Promotions & Discounts', href: '/management/promotions' },
     ]
   },
   {

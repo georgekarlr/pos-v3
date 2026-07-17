@@ -8,6 +8,20 @@ import { salesService } from '../../services/salesService'
 import { RecordManualSaleParams } from '../../types/pos'
 import { FormatDateTime } from '../../utils/formatDateTime'
 import { useManualSale } from '../../hooks/useManualSale'
+import { Ticket, X } from 'lucide-react'
+import type { CouponStatus } from '../../utils/cartCalculator'
+
+const COUPON_STATUS_CONFIG: Record<
+  CouponStatus,
+  { text: string; color: string; bg: string; border: string }
+> = {
+  idle: { text: '', color: '', bg: '', border: 'border-gray-300' },
+  valid: { text: 'Coupon added successfully!', color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-400' },
+  invalid: { text: 'Invalid coupon code.', color: 'text-red-700', bg: 'bg-red-50', border: 'border-red-400' },
+  expired: { text: 'This coupon has expired.', color: 'text-orange-700', bg: 'bg-orange-50', border: 'border-orange-400' },
+  upcoming: { text: 'This coupon is not active yet.', color: 'text-blue-700', bg: 'bg-blue-50', border: 'border-blue-400' },
+  already_applied: { text: 'This coupon is already applied.', color: 'text-amber-700', bg: 'bg-amber-50', border: 'border-amber-400' },
+}
 
 interface ManualSaleModalProps {
   open: boolean
@@ -25,6 +39,10 @@ const ManualSaleModal: React.FC<ManualSaleModalProps> = ({ open, onClose, onSucc
   const [manualOrNumber, setManualOrNumber] = useState('')
   const [occurredAt, setOccurredAt] = useState(FormatDateTime.formatLocalTimestampForDatabase(new Date()))
   const [notes, setNotes] = useState('')
+
+  // Coupon entry state
+  const [localCouponCode, setLocalCouponCode] = useState('')
+  const [couponStatus, setCouponStatus] = useState<CouponStatus>('idle')
 
   // Product Search
   const [productSearch, setProductSearch] = useState('')
@@ -47,8 +65,6 @@ const ManualSaleModal: React.FC<ManualSaleModalProps> = ({ open, onClose, onSucc
     setScPwdIdNumber,
     scPwdName,
     setScPwdName,
-    regularDiscount,
-    setRegularDiscount,
     loyaltyPointsEarned,
     setLoyaltyPointsEarned,
     loyaltyPointsRedeemed,
@@ -58,6 +74,8 @@ const ManualSaleModal: React.FC<ManualSaleModalProps> = ({ open, onClose, onSucc
     subtotal,
     tax,
     total,
+    totalPromoDiscount,
+    calculatedLines,
     totalTendered,
     changeDue,
     addToCart,
@@ -66,8 +84,34 @@ const ManualSaleModal: React.FC<ManualSaleModalProps> = ({ open, onClose, onSucc
     addPayment,
     removePayment,
     updatePayment,
+    appliedCoupons,
+    onApplyCoupon,
+    onRemoveCoupon,
     reset
-  } = useManualSale()
+  } = useManualSale({ transactionTime: occurredAt })
+
+  const handleApplyCouponCode = () => {
+    if (!localCouponCode.trim()) return
+    const status = onApplyCoupon(localCouponCode)
+    setCouponStatus(status)
+    if (status === 'valid') {
+      setLocalCouponCode('')
+    }
+  }
+
+  const handleCouponKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      handleApplyCouponCode()
+    }
+  }
+
+  const handleCouponInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setLocalCouponCode(e.target.value.toUpperCase())
+    if (couponStatus !== 'idle') {
+      setCouponStatus('idle')
+    }
+  }
 
   useEffect(() => {
     if (open) {
@@ -152,7 +196,11 @@ const ManualSaleModal: React.FC<ManualSaleModalProps> = ({ open, onClose, onSucc
       p_account_id: accountId,
       p_customer_id: selectedCustomer?.customer_id || null,
       p_manual_or_number: manualOrNumber,
-      p_cart_items: cart.map(c => ({ product_id: c.product.id, quantity: c.quantity })),
+      p_cart_items: calculatedLines.map(line => ({
+        product_id: line.product.id,
+        quantity: line.qty,
+        promo_id: line.promoId
+      })),
       p_payments: payments.map(p => ({ amount: p.amount, method: p.method, transaction_ref: p.transaction_ref })),
       p_notes: notes,
       p_total: total,
@@ -161,7 +209,6 @@ const ManualSaleModal: React.FC<ManualSaleModalProps> = ({ open, onClose, onSucc
       p_sc_pwd_discount: scPwdDiscountAmount,
       p_sc_pwd_id_number: isScPwdDiscount ? scPwdIdNumber : null,
       p_sc_pwd_name: isScPwdDiscount ? scPwdName : null,
-      p_regular_discount: regularDiscount,
       p_loyalty_points_earned: loyaltyPointsEarned,
       p_loyalty_points_redeemed: loyaltyPointsRedeemed,
       p_occurred_at: FormatDateTime.formatLocalTimestampForDatabase(new Date(occurredAt)),
@@ -377,24 +424,31 @@ const ManualSaleModal: React.FC<ManualSaleModalProps> = ({ open, onClose, onSucc
               </div>
 
               <div className="border rounded-md divide-y max-h-64 overflow-auto bg-gray-50">
-                {cart.length === 0 ? (
+                {calculatedLines.length === 0 ? (
                   <div className="p-8 text-center text-gray-500 text-sm">No products added yet</div>
                 ) : (
-                  cart.map(item => (
-                    <div key={item.product.id} className="p-3 flex items-center justify-between gap-2 bg-white">
+                  calculatedLines.map(line => (
+                    <div key={line.product.id} className="p-3 flex items-center justify-between gap-2 bg-white">
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">{item.product.name}</p>
-                        <p className="text-xs text-gray-500">₱{item.product.display_price.toFixed(2)} / {item.product.unit_type}</p>
+                        <p className="text-sm font-medium text-gray-900 truncate">{line.product.name}</p>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-xs text-gray-500">₱{line.product.display_price.toFixed(2)} / {line.product.unit_type}</span>
+                          {line.promoDiscount > 0 && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-green-100 text-green-800">
+                              Promo -₱{line.promoDiscount.toFixed(2)}
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <div className="flex items-center gap-2">
                         <input
                           type="number"
-                          step={item.product.unit_type === 'kg' ? '0.01' : '1'}
-                          value={item.quantity}
-                          onChange={e => updateQuantity(item.product.id, parseFloat(e.target.value))}
+                          step={line.product.unit_type === 'kg' ? '0.01' : '1'}
+                          value={line.qty}
+                          onChange={e => updateQuantity(line.product.id, parseFloat(e.target.value))}
                           className="w-16 rounded-md border-gray-300 text-sm p-1 text-center"
                         />
-                        <button type="button" onClick={() => removeFromCart(item.product.id)} className="text-red-500 hover:text-red-700">
+                        <button type="button" onClick={() => removeFromCart(line.product.id)} className="text-red-500 hover:text-red-700">
                           <TrashIcon className="h-4 w-4" />
                         </button>
                       </div>
@@ -465,55 +519,117 @@ const ManualSaleModal: React.FC<ManualSaleModalProps> = ({ open, onClose, onSucc
             </div>
 
             {/* Totals Section */}
-            <div className="bg-gray-50 p-4 rounded-lg space-y-2 border">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Gross Subtotal</span>
-                <span>₱{subtotal.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Tax (VAT)</span>
-                <span>₱{tax.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <div className="flex flex-col">
-                  <span className="text-gray-500 font-medium">Apply SC/PWD Discount?</span>
-                  <label className="inline-flex items-center mt-1 cursor-pointer">
+            <div className="bg-gray-50 p-4 rounded-lg space-y-4 border">
+              {/* Coupon Codes Input & Applied Badges */}
+              <div className="space-y-3 bg-white p-3 rounded-md border shadow-sm">
+                <label className="flex items-center gap-1.5 text-xs font-bold text-gray-600 uppercase tracking-wider">
+                  <Ticket className="h-3.5 w-3.5 text-violet-500" />
+                  Coupon Codes
+                </label>
+
+                {/* Applied Coupons List */}
+                {appliedCoupons.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 py-1">
+                    {appliedCoupons.map((code) => (
+                      <div
+                        key={code}
+                        className="flex items-center gap-1 bg-violet-50 border border-violet-200 rounded-full pl-2.5 pr-1.5 py-0.5 text-xs text-violet-850 font-semibold shadow-sm"
+                      >
+                        <span className="font-mono uppercase tracking-wider">{code}</span>
+                        <button
+                          type="button"
+                          onClick={() => onRemoveCoupon(code)}
+                          className="ml-1 p-0.5 rounded-full hover:bg-violet-100 text-violet-600 hover:text-violet-800 transition-colors"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Input row */}
+                <div className="space-y-1.5">
+                  <div className="flex gap-2">
                     <input
-                      type="checkbox"
-                      checked={isScPwdDiscount}
-                      onChange={e => setIsScPwdDiscount(e.target.checked)}
-                      className="sr-only peer"
+                      type="text"
+                      value={localCouponCode}
+                      onChange={handleCouponInputChange}
+                      onKeyDown={handleCouponKeyDown}
+                      placeholder="Enter coupon code…"
+                      className={`flex-1 px-3 py-1.5 border rounded-lg text-sm font-mono uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-colors ${couponStatus !== 'idle' ? COUPON_STATUS_CONFIG[couponStatus].border + ' ' + COUPON_STATUS_CONFIG[couponStatus].bg : 'border-gray-300 bg-white'}`}
                     />
-                    <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                  </label>
+                    <button
+                      type="button"
+                      onClick={handleApplyCouponCode}
+                      disabled={!localCouponCode.trim()}
+                      className="px-3 py-1.5 bg-violet-600 text-white text-xs font-semibold rounded-lg hover:bg-violet-700 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
+                    >
+                      Apply
+                    </button>
+                  </div>
+
+                  {/* Status feedback */}
+                  {couponStatus !== 'idle' && COUPON_STATUS_CONFIG[couponStatus].text && (
+                    <div className={`text-xs font-medium ${COUPON_STATUS_CONFIG[couponStatus].color}`}>
+                      {COUPON_STATUS_CONFIG[couponStatus].text}
+                    </div>
+                  )}
                 </div>
-                <span className="text-red-600 font-bold">-₱{scPwdDiscountAmount.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between text-sm">
-                <div className="flex flex-col">
-                  <span className="text-gray-500">Regular Discount</span>
-                  <input
-                    type="number"
-                    value={regularDiscount}
-                    onChange={e => setRegularDiscount(Number(e.target.value))}
-                    className="w-24 text-xs p-1 border rounded"
-                  />
+
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">Gross Subtotal</span>
+                  <span>₱{subtotal.toFixed(2)}</span>
                 </div>
-                <span className="text-red-600">-₱{regularDiscount.toFixed(2)}</span>
-              </div>
-              <div className="pt-2 border-t flex justify-between font-bold text-lg">
-                <span>Net Due</span>
-                <span className="text-blue-600">₱{total.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-sm pt-2">
-                <span className="text-gray-500">Total Tendered</span>
-                <span>₱{totalTendered.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Change Due</span>
-                <span className={totalTendered - total >= 0 ? 'text-green-600' : 'text-red-600'}>
-                  ₱{changeDue.toFixed(2)}
-                </span>
+                {totalPromoDiscount > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500">Promo Discount</span>
+                    <span className="text-green-600 font-medium">-₱{totalPromoDiscount.toFixed(2)}</span>
+                  </div>
+                )}
+                {/* Show intermediate Subtotal After Promo only when both promo and SC/PWD discounts are active */}
+                {totalPromoDiscount > 0 && isScPwdDiscount && (
+                  <div className="flex justify-between text-gray-500 text-xs pl-2">
+                    <span>Subtotal After Promo</span>
+                    <span>₱{(subtotal - totalPromoDiscount).toFixed(2)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">Tax (VAT)</span>
+                  <span>₱{tax.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <div className="flex flex-col">
+                    <span className="text-gray-500 font-medium">Apply SC/PWD Discount?</span>
+                    <label className="inline-flex items-center mt-1 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={isScPwdDiscount}
+                        onChange={e => setIsScPwdDiscount(e.target.checked)}
+                        className="sr-only peer"
+                      />
+                      <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    </label>
+                  </div>
+                  <span className="text-red-600 font-bold">-₱{scPwdDiscountAmount.toFixed(2)}</span>
+                </div>
+
+                <div className="pt-2 border-t flex justify-between font-bold text-lg">
+                  <span>Net Due</span>
+                  <span className="text-blue-600">₱{total.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm pt-2">
+                  <span className="text-gray-500">Total Tendered</span>
+                  <span>₱{totalTendered.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">Change Due</span>
+                  <span className={totalTendered - total >= 0 ? 'text-green-600' : 'text-red-600'}>
+                    ₱{changeDue.toFixed(2)}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
