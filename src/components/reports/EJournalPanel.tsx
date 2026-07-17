@@ -138,9 +138,14 @@ const EJournalPanel: React.FC = () => {
 
       if (row.event_type === 'SALE' || row.event_type === 'MANUAL_SALE_ENTRY') {
         const invoiceNo = detailsObj.invoice_number || detailsObj.invoice_no || 'N/A'
-        const customerName = detailsObj.customer_name || 'Walk-in'
+        // Show customer with ID, matching BIR e-journal style (e.g. "Walk-in (ID: NULL)")
+        const rawCustomerName = detailsObj.customer_name || null
+        const customerId = detailsObj.customer_id ?? null
+        const customerDisplay = rawCustomerName
+          ? `${rawCustomerName} (ID: ${customerId ?? 'NULL'})`
+          : `Walk-in (ID: NULL)`
         text += `Invoice No: ${invoiceNo}\n`
-        text += `Customer: ${customerName}\n\n`
+        text += `Customer: ${customerDisplay}\n\n`
 
         const items = Array.isArray(detailsObj.items) ? detailsObj.items : []
         if (items.length > 0) {
@@ -158,17 +163,21 @@ const EJournalPanel: React.FC = () => {
           text += `\n`
         }
 
-        const totalDiscounts = Number((detailsObj.sc_pwd_discount || 0)) + Number((detailsObj.promo_discount || 0))
+        const totalDiscounts = Number(detailsObj.sc_pwd_discount || 0) + Number(detailsObj.promo_discount || 0)
         const totalVat = Number(detailsObj.tax_amount ?? detailsObj.vat_amount ?? 0)
+        // change_due is the authoritative change field set by the API
+        const changeDue = Number(detailsObj.change_due ?? 0)
 
         text += `Totals:\n`
         text += `  Gross Amount:        ${Number(detailsObj.gross_amount || detailsObj.total_amount || detailsObj.subtotal || 0).toFixed(2).padStart(10)}\n`
         text += `  Discounts:           ${totalDiscounts.toFixed(2).padStart(10)}\n`
         text += `  Net Amount:          ${Number(detailsObj.net_amount || detailsObj.total_amount || detailsObj.total || 0).toFixed(2).padStart(10)}\n`
         text += `  Total VAT:           ${totalVat.toFixed(2).padStart(10)}\n`
+        // Change is a Totals-section field (not appended to the payment line)
+        text += `  Change:              ${changeDue.toFixed(2).padStart(10)}\n`
         if (detailsObj.sc_pwd_id || detailsObj.sc_pwd_name) {
-          text += `  SC/PWD ID:           ${(detailsObj.sc_pwd_id || 'N/A')}\n`
-          text += `  SC/PWD Name:         ${(detailsObj.sc_pwd_name || 'N/A')}\n`
+          text += `  SC/PWD ID:           ${detailsObj.sc_pwd_id || 'N/A'}\n`
+          text += `  SC/PWD Name:         ${detailsObj.sc_pwd_name || 'N/A'}\n`
         }
         if (detailsObj.points_earned || detailsObj.points_redeemed) {
           text += `  Loyalty Earned:      ${Number(detailsObj.points_earned || 0).toFixed(2)}\n`
@@ -176,22 +185,31 @@ const EJournalPanel: React.FC = () => {
         }
         text += `\n`
 
+        // ── Payments ──────────────────────────────────────────────────────────
+        // The API stores tendered (full amount given) in detailsObj.tendered.
+        // For multi-payment scenarios each entry's amount is the applied slice;
+        // for single-payment cash, we prefer showing the full tendered amount.
         const payments = Array.isArray(detailsObj.payments) ? detailsObj.payments : []
+        const totalTendered = Number(detailsObj.tendered ?? detailsObj.total_tendered ?? 0)
         if (payments.length > 0) {
           text += `Payments:\n`
-          payments.forEach((pay: any) => {
+          payments.forEach((pay: any, idx: number) => {
             const method = pay.method || pay.payment_method || 'Cash'
-            const amount = Number(pay.amount || 0).toFixed(2)
-            const refStr = pay.reference || pay.transaction_ref ? ` (Ref: ${pay.reference || pay.transaction_ref})` : ''
-            const changeStr = pay.change || detailsObj.change_due ? ` (Change: ${Number(pay.change || detailsObj.change_due).toFixed(2)})` : ''
-            text += `  ${method}: ${amount}${changeStr}${refStr}\n`
+            // If there is exactly one payment, display the full tendered amount;
+            // otherwise show the slice amount actually applied for that method.
+            const displayAmt = payments.length === 1
+              ? (totalTendered > 0 ? totalTendered : Number(pay.amount || 0))
+              : Number(pay.amount || 0)
+            const refStr = pay.ref || pay.reference || pay.transaction_ref
+              ? ` (Ref: ${pay.ref || pay.reference || pay.transaction_ref})`
+              : ''
+            text += `  ${method}: ${displayAmt.toFixed(2)}${refStr}\n`
           })
         } else {
-          // Fallback if no payment array
+          // Fallback: no payments array — use tendered field
           const method = detailsObj.payment_method || 'Cash'
-          const amount = Number(detailsObj.total_tendered || detailsObj.total_amount || 0).toFixed(2)
-          const changeStr = detailsObj.change_due ? ` (Change: ${Number(detailsObj.change_due).toFixed(2)})` : ''
-          text += `  ${method}: ${amount}${changeStr}\n`
+          const amount = (totalTendered > 0 ? totalTendered : Number(detailsObj.total_amount || 0)).toFixed(2)
+          text += `  ${method}: ${amount}\n`
         }
       } else if (row.event_type === 'VOID') {
         const targetInvoice = detailsObj.target_invoice_number || detailsObj.target_invoice_no || 'N/A'

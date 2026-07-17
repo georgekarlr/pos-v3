@@ -11,6 +11,17 @@ export interface CartItemInput {
   base_price: number;
   tax_rate: number;
   promo_id?: number | null;
+  // Optional display fields — populated when saving offline so receipts
+  // can be reconstructed without a DB round-trip.
+  name?: string;
+  unit_type?: string | null;
+  display_price?: number;       // VAT-inclusive shelf price (original)
+  tax_type?: string | null;     // 'VATable' | 'VAT-Exempt' | 'Zero-Rated'
+  is_sc_pwd_eligible?: boolean;
+  line_gross?: number;          // VAT-exclusive post-promo line total
+  line_tax?: number;            // VAT component of this line
+  vat_exempt_line_total?: number; // post-promo VAT-exclusive total for SC/PWD VAT-Exempt bucket
+  promo_discount_inclusive?: number; // VAT-inclusive promo saving on this line
 }
 
 export interface PaymentItemInput {
@@ -49,11 +60,13 @@ export interface CreatePosSaleParams {
   p_total_tendered: number;
   // BIR Compliance: SC/PWD Discount
   p_sc_pwd_discount?: number;
-  p_sc_pwd_id_number?: string | null; // NEW: required when sc_pwd_discount > 0
-  p_sc_pwd_name?: string | null;      // NEW: required when sc_pwd_discount > 0
+  p_sc_pwd_id_number?: string | null; // required when sc_pwd_discount > 0
+  p_sc_pwd_name?: string | null;      // required when sc_pwd_discount > 0
+  // Discounts
+  p_total_promo_discount?: number;    // VAT-inclusive total promo saving (for offline receipt)
   // Loyalty Program
-  p_loyalty_points_earned?: number;   // NEW
-  p_loyalty_points_redeemed?: number; // NEW
+  p_loyalty_points_earned?: number;
+  p_loyalty_points_redeemed?: number;
   // Offline Sync
   p_occurred_at?: string | null;
   p_is_offline_sync?: boolean;

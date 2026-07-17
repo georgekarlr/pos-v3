@@ -13,6 +13,10 @@ export function mapSaleDetailsToReceipt(details: SaleDetailsResponse): ReceiptDa
         const total = (it.line_total ?? (it.quantity && it.price_at_purchase ? it.quantity * it.price_at_purchase : 0)) || 0
         const refundedQty = Number(it.refunded_quantity || 0)
         const refundedAmount = refundedQty > 0 ? refundedQty * unit : undefined
+        // For SC/PWD-eligible VATable items the DB stores base_price_at_purchase as the
+        // post-promo VAT-exclusive unit price (e.g. 162.00 for Chicken after 10% promo).
+        // We surface this as vatExemptLineTotal so the VAT breakdown uses the BIR-correct amount.
+        const vatExemptLineTotal = baseUnit != null ? baseUnit * it.quantity : undefined
         return {
             name: it.product_name,
             qty: it.quantity,
@@ -22,6 +26,7 @@ export function mapSaleDetailsToReceipt(details: SaleDetailsResponse): ReceiptDa
             lineTotal: Number(total),
             taxType: it.tax_type_at_purchase ?? null,  // 'VATable' | 'VAT-Exempt' | 'Zero-Rated'
             isScPwdEligible: it.is_sc_pwd_eligible ?? false, // product's stored SC/PWD eligibility flag
+            vatExemptLineTotal,
             refundedQty,
             refundedAmount
         }

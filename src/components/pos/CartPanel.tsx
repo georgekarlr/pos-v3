@@ -278,7 +278,10 @@ const CartPanel: React.FC<CartPanelProps> = ({
                     <div>
                         <h4 className="text-md font-semibold text-gray-800 mb-3">Order Summary</h4>
                         <div className="space-y-2 text-sm">
-                            <div className="flex justify-between"><span className="text-gray-600">Subtotal</span><span className="font-medium text-gray-800">{currency(subtotal)}</span></div>
+                            <div className="flex justify-between">
+                                <span className="text-gray-600">Subtotal</span>
+                                <span className="font-medium text-gray-800">{currency(subtotal)}</span>
+                            </div>
                             {totalPromoDiscount !== undefined && totalPromoDiscount > 0 && (
                                 <div className="flex justify-between text-violet-700">
                                     <span className="flex items-center gap-1 font-semibold">
@@ -288,7 +291,12 @@ const CartPanel: React.FC<CartPanelProps> = ({
                                     <span className="font-bold">-{currency(totalPromoDiscount)}</span>
                                 </div>
                             )}
-                            <div className="flex justify-between"><span className="text-gray-600">Tax</span><span className="font-medium text-gray-800">{currency(tax)}</span></div>
+                            {tax > 0 && (
+                                <div className="flex justify-between text-[11px] text-gray-400 italic">
+                                    <span>Incl. VAT</span>
+                                    <span>{currency(tax)}</span>
+                                </div>
+                            )}
                             <div className="border-t border-gray-200 my-2"></div>
                             <div className="flex justify-between text-lg">
                                 <span className="font-bold text-gray-900">Total</span>

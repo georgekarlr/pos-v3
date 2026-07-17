@@ -10,18 +10,24 @@ export interface CalculatedLine {
   product: Product;
   qty: number;
   promoId: number | null;
-  promoDiscount: number;
-  lineGross: number; // gross after promo discount
+  promoDiscount: number;  // VAT-inclusive discount (shelf price saving)
+  lineGross: number;     // VAT-exclusive net after promo discount (sent to DB)
   lineTax: number;
+  /**
+   * Post-promo VAT-exclusive total for SC/PWD-eligible VATable items;
+   * 0 for all other lines. Used for the VAT-Exempt bucket on receipts.
+   * BIR order: promo applied → VAT stripped → 20% SC/PWD applied.
+   */
+  vatExemptLineTotal: number;
 }
 
 export interface CartTotals {
   calculatedLines: CalculatedLine[];
-  subtotal: number; // sum of lineGross (gross after promo, before tax)
-  tax: number; // sum of lineTax
+  subtotal: number;          // sum of display_price * qty (shelf prices, VAT-inclusive, before discounts)
+  tax: number;               // sum of lineTax (on post-discount VAT-exclusive amounts)
   scPwdDiscountAmount: number;
-  totalPromoDiscount: number;
-  total: number; // Net due
+  totalPromoDiscount: number; // VAT-inclusive total discount (shelf saving)
+  total: number;             // Net due
 }
 
 /**
@@ -143,45 +149,69 @@ export function calculateCartTotals(params: {
     transactionTime = new Date(),
   } = params;
 
-  let serverGrossSubtotal = 0;
+  // Gross shelf subtotal: sum of display_price * qty (VAT-inclusive, before any discounts)
+  let shelfSubtotal = 0;
   let serverTax = 0;
   let serverCalculatedScDiscount = 0;
+  // VAT-inclusive total promo discount (actual saving from shelf price)
   let serverTotalPromoDiscount = 0;
 
   const calculatedLines: CalculatedLine[] = cartLines.map((line) => {
     const { product, qty } = line;
     const basePrice = product.base_price;
-    const grossRaw = basePrice * qty;
+    const taxRate = product.tax_rate / 100; // e.g. 0.12
+    const isVatable = billingType === 'VAT' && product.tax_type === 'VATable';
+
+    // Shelf (display) price is VAT-inclusive for VATable items
+    const displayPricePerUnit = product.display_price; // VAT-inclusive shelf price
+    const shelfLineTotal = displayPricePerUnit * qty;   // VAT-inclusive shelf total
+    shelfSubtotal += shelfLineTotal;
+
+    const grossRaw = basePrice * qty; // VAT-exclusive shelf total
 
     // Find best promotion — requires a matching coupon code
     const bestPromo = findBestPromotion(product, promotions, appliedCouponCodes, transactionTime);
-    let promoDiscount = 0;
+    let promoDiscountBase = 0; // VAT-exclusive discount
     let promoId: number | null = null;
 
     if (bestPromo) {
       promoId = bestPromo.id;
       if (bestPromo.discount_type === 'percentage') {
-        promoDiscount = grossRaw * (bestPromo.discount_value / 100);
+        promoDiscountBase = grossRaw * (bestPromo.discount_value / 100);
       } else if (bestPromo.discount_type === 'fixed_amount') {
-        promoDiscount = bestPromo.discount_value * qty;
-        if (promoDiscount > grossRaw) {
-          promoDiscount = grossRaw;
+        promoDiscountBase = bestPromo.discount_value * qty;
+        if (promoDiscountBase > grossRaw) {
+          promoDiscountBase = grossRaw;
         }
       }
     }
 
-    const lineGross = grossRaw - promoDiscount;
+    // VAT-inclusive discount = VAT-exclusive discount * (1 + taxRate) for VATable items
+    const promoDiscount = isVatable
+      ? promoDiscountBase * (1 + taxRate)
+      : promoDiscountBase;
+
     serverTotalPromoDiscount += promoDiscount;
-    serverGrossSubtotal += lineGross;
+
+    // lineGross = VAT-exclusive amount after promo (sent to DB)
+    const lineGross = grossRaw - promoDiscountBase;
 
     // Calculate tax and SC/PWD Discount
     let lineTax = 0;
-    if (isScPwdDiscount && product.is_sc_pwd_eligible) {
-      // Stripped of VAT and get 20% discount on the gross
+    // vatExemptLineTotal: post-promo VAT-exclusive total for VAT-Exempt bucket.
+    // BIR order: promo applied first → VAT stripped → 20% SC/PWD on VAT-exclusive price.
+    // lineGross is already VAT-exclusive (base_price × qty − promoDiscountBase).
+    let vatExemptLineTotal = 0;
+    // BIR rule: the 20% SC/PWD discount (with VAT removal) applies ONLY to VATable
+    // eligible items. Zero-Rated and VAT-Exempt items that happen to be SC/PWD eligible
+    // are NOT reclassified and do NOT receive the 20% discount — there is no VAT to
+    // remove on them and the SC/PWD benefit is the VAT relief itself.
+    if (isScPwdDiscount && product.is_sc_pwd_eligible && isVatable) {
+      vatExemptLineTotal = lineGross; // VAT-exclusive post-promo → VAT-Exempt bucket
       serverCalculatedScDiscount += lineGross * 0.20;
     } else {
-      if (billingType === 'VAT' && product.tax_type === 'VATable') {
-        lineTax = lineGross * (product.tax_rate / 100);
+      if (isVatable) {
+        lineTax = lineGross * taxRate;
       }
     }
 
@@ -191,21 +221,23 @@ export function calculateCartTotals(params: {
       product,
       qty,
       promoId,
-      promoDiscount,
-      lineGross,
+      promoDiscount,    // VAT-inclusive saving (for display)
+      lineGross,        // VAT-exclusive net after promo (for DB/tax calc)
       lineTax,
+      vatExemptLineTotal, // post-promo VAT-exclusive total for VAT-Exempt bucket
     };
   });
 
-  const netAmountDue = (serverGrossSubtotal + serverTax) - serverCalculatedScDiscount - loyaltyPointsRedeemed;
-  const finalTotal = Math.max(0, netAmountDue);
+  // Total = sum of (lineGross + lineTax) per line, then subtract SC/PWD discount and any loyalty redemption
+  const vatInclusiveNet = calculatedLines.reduce((sum, l) => sum + l.lineGross + l.lineTax, 0);
+  const finalTotal = Math.max(0, vatInclusiveNet - serverCalculatedScDiscount - loyaltyPointsRedeemed);
 
   return {
     calculatedLines,
-    subtotal: serverGrossSubtotal,
+    subtotal: shelfSubtotal,           // Gross shelf total (VAT-inclusive, before discounts)
     tax: serverTax,
     scPwdDiscountAmount: serverCalculatedScDiscount,
-    totalPromoDiscount: serverTotalPromoDiscount,
+    totalPromoDiscount: serverTotalPromoDiscount, // VAT-inclusive total saving
     total: finalTotal,
   };
 }

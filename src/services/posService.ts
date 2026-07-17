@@ -71,7 +71,7 @@ export class PosService {
         const offlineSaleId = await OfflineDB.saveSale({
           accountId: params.p_account_id,
           terminalId: params.p_terminal_id,
-          customerId: params.p_customer_id ?? null,           // NEW
+          customerId: params.p_customer_id ?? null,
           cart: params.p_cart_items,
           payments: params.p_payments,
           notes: params.p_notes || null,
@@ -79,10 +79,11 @@ export class PosService {
           tax: params.p_tax,
           total_tendered: params.p_total_tendered,
           scPwdDiscount: params.p_sc_pwd_discount || 0,
-          scPwdIdNumber: params.p_sc_pwd_id_number ?? null,  // NEW
-          scPwdName: params.p_sc_pwd_name ?? null,            // NEW
-          loyaltyPointsEarned: params.p_loyalty_points_earned ?? 0,   // NEW
-          loyaltyPointsRedeemed: params.p_loyalty_points_redeemed ?? 0, // NEW
+          scPwdIdNumber: params.p_sc_pwd_id_number ?? null,
+          scPwdName: params.p_sc_pwd_name ?? null,
+          totalPromoDiscount: params.p_total_promo_discount ?? 0,
+          loyaltyPointsEarned: params.p_loyalty_points_earned ?? 0,
+          loyaltyPointsRedeemed: params.p_loyalty_points_redeemed ?? 0,
           createdAt: params.p_occurred_at || FormatDateTime.formatLocalTimestampForDatabase(new Date()),
           offlineInvoiceNumber: invoiceNumber,
           offlineGrandTotal: offlineGrandTotal

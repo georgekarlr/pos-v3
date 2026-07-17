@@ -283,13 +283,16 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
                 {/* ── Totals Breakdown ── */}
                 <div className="pt-4 border-t-2 border-gray-100 space-y-2 text-sm">
                     <div className="flex justify-between text-xs text-gray-500">
-                        <span>Gross Subtotal</span>
+                        <span>Gross Subtotal (incl. VAT)</span>
                         <span>{formatCurrency(subtotal)}</span>
                     </div>
-                    <div className="flex justify-between text-xs text-gray-500">
-                        <span>Tax (VAT)</span>
-                        <span>{formatCurrency(tax)}</span>
-                    </div>
+                    {/* VAT is informational — already included in shelf prices, NOT additive */}
+                    {tax > 0 && (
+                        <div className="flex justify-between text-xs text-gray-400 italic">
+                            <span>VAT (included in prices)</span>
+                            <span>{formatCurrency(tax)}</span>
+                        </div>
+                    )}
                     {isScPwdDiscount && (
                         <div className="flex justify-between text-xs text-amber-700">
                             <span>SC/PWD Discount (20%)</span>

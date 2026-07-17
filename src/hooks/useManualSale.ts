@@ -4,7 +4,7 @@ import { CustomerSearchResult } from '../types/debt'
 import { getCachedBusinessSettings } from '../utils/settingsCache'
 import { Promotion } from '../types/promotion'
 import { PromotionService } from '../services/promotionService'
-import { calculateCartTotals } from '../utils/cartCalculator'
+import { calculateCartTotals, validateCouponCode, CouponStatus } from '../utils/cartCalculator'
 
 export interface CartItem {
   product: Product
@@ -29,6 +29,7 @@ export function useManualSale(params?: { transactionTime?: string }) {
   
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerSearchResult | null>(null)
   const [promotions, setPromotions] = useState<Promotion[]>([])
+  const [appliedCoupons, setAppliedCoupons] = useState<string[]>([])
 
   useEffect(() => {
     PromotionService.getPromotions({ limit: 1000, filterStatus: 'all' })
@@ -61,10 +62,11 @@ export function useManualSale(params?: { transactionTime?: string }) {
       promotions,
       isScPwdDiscount,
       billingType: billingType as 'VAT' | 'NON-VAT',
+      appliedCouponCodes: appliedCoupons,
       loyaltyPointsRedeemed,
       transactionTime
     })
-  }, [cartLines, promotions, isScPwdDiscount, billingType, loyaltyPointsRedeemed, transactionTime])
+  }, [cartLines, promotions, isScPwdDiscount, billingType, appliedCoupons, loyaltyPointsRedeemed, transactionTime])
 
   const subtotal = cartCalculations.subtotal
   const tax = cartCalculations.tax
@@ -110,6 +112,18 @@ export function useManualSale(params?: { transactionTime?: string }) {
     setPayments(payments.map((p, i) => i === index ? { ...p, [field]: value } : p))
   }
 
+  const handleApplyCoupon = (code: string): CouponStatus => {
+    const status = validateCouponCode(code, promotions, appliedCoupons, transactionTime)
+    if (status === 'valid') {
+      setAppliedCoupons(prev => [...prev, code.trim().toUpperCase()])
+    }
+    return status
+  }
+
+  const handleRemoveCoupon = (code: string) => {
+    setAppliedCoupons(prev => prev.filter(c => c !== code))
+  }
+
   const reset = () => {
     setCart([])
     setPayments([{ amount: 0, method: 'Cash', transaction_ref: '' }])
@@ -119,6 +133,7 @@ export function useManualSale(params?: { transactionTime?: string }) {
     setLoyaltyPointsEarned(0)
     setLoyaltyPointsRedeemed(0)
     setSelectedCustomer(null)
+    setAppliedCoupons([])
   }
 
   return {
@@ -152,6 +167,9 @@ export function useManualSale(params?: { transactionTime?: string }) {
     addPayment,
     removePayment,
     updatePayment,
+    appliedCoupons,
+    onApplyCoupon: handleApplyCoupon,
+    onRemoveCoupon: handleRemoveCoupon,
     reset
   }
 }

@@ -5,7 +5,7 @@ export interface OfflineSale {
   id?: number;
   accountId: number;
   terminalId: number;
-  customerId?: number | null;           // NEW: for loyalty
+  customerId?: number | null;           // for loyalty
   cart: any[];
   payments: any[];
   notes: string | null;
@@ -14,11 +14,13 @@ export interface OfflineSale {
   total_tendered: number;
   // BIR Compliance
   scPwdDiscount?: number;
-  scPwdIdNumber?: string | null;        // NEW
-  scPwdName?: string | null;            // NEW
+  scPwdIdNumber?: string | null;
+  scPwdName?: string | null;
+  // Discounts
+  totalPromoDiscount?: number;          // VAT-inclusive total promo saving (for receipt display)
   // Loyalty Program
-  loyaltyPointsEarned?: number;         // NEW
-  loyaltyPointsRedeemed?: number;       // NEW
+  loyaltyPointsEarned?: number;
+  loyaltyPointsRedeemed?: number;
   // Offline Sync
   createdAt: string;
   offlineInvoiceNumber?: string;

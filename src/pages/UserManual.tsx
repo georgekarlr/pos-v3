@@ -302,7 +302,7 @@ const chapters: ManualChapter[] = [
       </table>
       <h3>4. Manual Sales Logs &amp; Refunds Ledger</h3>
       <ul>
-        <li><strong>Record Manual Sale:</strong> Backdate or log a sales record completed outside the terminal interface. Form requires adding items, amounts, and customer context.</li>
+        <li><strong>Record Manual Sale:</strong> Backdate or log a sales record completed outside the terminal interface. Form requires adding items, amounts, customer context, and optionally applying coupon codes for promotional discounts.</li>
         <li><strong>View All Refunds:</strong> Open a centralized refunds audit log auditing all partial/full transaction returns in the system.</li>
       </ul>
     `

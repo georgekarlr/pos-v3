@@ -366,6 +366,16 @@ const POS: React.FC = () => {
         base_price: l.product.base_price,
         tax_rate: l.product.tax_rate,
         promo_id: l.promoId,
+        // Offline receipt display fields
+        name: l.product.name,
+        unit_type: l.product.unit_type,
+        display_price: l.product.display_price,
+        tax_type: l.product.tax_type,
+        is_sc_pwd_eligible: l.product.is_sc_pwd_eligible,
+        line_gross: l.lineGross,
+        line_tax: l.lineTax,
+        vat_exempt_line_total: l.vatExemptLineTotal,
+        promo_discount_inclusive: l.promoDiscount,
       }));
 
       const { data: serviceData, error: serviceError } = await PosService.createSale({
@@ -386,6 +396,8 @@ const POS: React.FC = () => {
         p_sc_pwd_discount: scPwdDiscountAmount,
         p_sc_pwd_id_number: isScPwdDiscount ? scPwdIdNumber : null,
         p_sc_pwd_name: isScPwdDiscount ? scPwdName : null,
+        // Discounts
+        p_total_promo_discount: totalPromoDiscount,
         // Loyalty
         p_loyalty_points_earned: loyaltyPointsEarned,
         p_loyalty_points_redeemed: 0,
@@ -404,11 +416,14 @@ const POS: React.FC = () => {
           name: l.product.name,
           qty: l.qty,
           unitType: l.product.unit_type,
-          unitPrice: l.product.display_price,       // VAT-inclusive display price (original)
-          baseUnitPrice: l.product.base_price,      // VAT-exclusive (used for SC/PWD sales)
-          lineTotal: l.lineGross + l.lineTax,       // promo-adjusted line total
-          taxType: l.product.tax_type,              // 'VATable' | 'VAT-Exempt' | 'Zero-Rated'
+          unitPrice: l.product.display_price,         // VAT-inclusive display price (original shelf price)
+          // Post-promo VAT-exclusive unit price: matches base_price_at_purchase stored in DB.
+          // BIR order: promo applied first → VAT stripped → 20% SC/PWD applied on this amount.
+          baseUnitPrice: l.qty > 0 ? l.lineGross / l.qty : l.product.base_price,
+          lineTotal: l.lineGross + l.lineTax,         // promo-adjusted VAT-inclusive line total
+          taxType: l.product.tax_type,                // 'VATable' | 'VAT-Exempt' | 'Zero-Rated'
           isScPwdEligible: l.product.is_sc_pwd_eligible,
+          vatExemptLineTotal: l.vatExemptLineTotal,   // post-promo VAT-exclusive total for VAT-Exempt bucket
         }));
         const totalPaidLocal = totalPaidFromUI;
         const change = Math.max(0, totalPaidLocal - total);

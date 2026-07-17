@@ -9,6 +9,14 @@ export interface ReceiptLine {
     lineTotal: number
     taxType?: string | null  // 'VATable' | 'VAT-Exempt' | 'Zero-Rated' — product's original tax type
     isScPwdEligible?: boolean // tracks if THIS specific item was eligible for SC/PWD
+    /**
+     * Post-promo VAT-exclusive total for SC/PWD-eligible VATable items (0 otherwise).
+     * BIR order: promo first → VAT stripped → 20% SC/PWD.
+     * Used for the VAT-Exempt bucket in the VAT breakdown section.
+     * For live cart receipts this comes from CalculatedLine.vatExemptLineTotal;
+     * for saved receipts this is recomputed from base_price_at_purchase (already post-promo).
+     */
+    vatExemptLineTotal?: number
     // Optional refund info per item (shown on Sales History receipts)
     refundedQty?: number
     refundedAmount?: number
@@ -168,33 +176,32 @@ const Receipt: React.FC<{ data: ReceiptData; className?: string }>
 
 
                 <div className="px-4 text-[12px] space-y-1">
-                    {/* Calculated subtotal based on displayed line items to ensure math adds up on paper */}
-                    {(() => {
-                        const displayedSubtotal = data.lines.reduce((sum, l) => {
-                            const itemIsDiscounted = isScPwd && l.isScPwdEligible
-                            return sum + (itemIsDiscounted && l.baseUnitPrice != null ? l.baseUnitPrice * l.qty : l.lineTotal)
-                        }, 0)
-                        return (
-                            <div className="flex justify-between">
-                                <span>{isScPwd ? 'Subtotal (Mixed)' : 'Subtotal'}</span>
-                                <span>{format(displayedSubtotal)}</span>
-                            </div>
-                        )
-                    })()}
-                    {/* VAT line: Only show for non-discounted portion if SC/PWD is active, or full tax otherwise */}
-                    {data.isVatRegistered !== false && (data.tax > 0) && (
-                        <div className="flex justify-between"><span>Tax (VAT)</span><span>{format(data.tax)}</span></div>
+                    {/* Subtotal = gross shelf prices (VAT-inclusive, before any discounts).
+                        Tax is NOT shown here as a separate additive line — it is already included
+                        in the shelf prices and is detailed in the VAT Breakdown section below.
+                        BIR order: Subtotal → Less Promo → Subtotal After Promo → Less SC/PWD → Total Due */}
+                    <div className="flex justify-between">
+                        <span>Subtotal</span>
+                        <span>{format(data.subtotal)}</span>
+                    </div>
+                    {data.totalPromoDiscount !== undefined && data.totalPromoDiscount > 0 && (
+                        <div className="flex justify-between text-violet-700">
+                            <span>Less: Promo Discount</span>
+                            <span>-{format(data.totalPromoDiscount)}</span>
+                        </div>
+                    )}
+                    {/* Show intermediate Subtotal After Promo only when both promo and SC/PWD discounts are active */}
+                    {data.totalPromoDiscount !== undefined && data.totalPromoDiscount > 0 &&
+                     data.scPwdDiscount !== undefined && data.scPwdDiscount > 0 && (
+                        <div className="flex justify-between text-gray-500 text-[11px]">
+                            <span>Subtotal After Promo</span>
+                            <span>{format(data.subtotal - data.totalPromoDiscount)}</span>
+                        </div>
                     )}
                     {data.scPwdDiscount !== undefined && data.scPwdDiscount > 0 && (
                         <div className="flex justify-between text-amber-700">
                             <span>Less: SC/PWD Discount (20%)</span>
                             <span>-{format(data.scPwdDiscount)}</span>
-                        </div>
-                    )}
-                    {data.totalPromoDiscount !== undefined && data.totalPromoDiscount > 0 && (
-                        <div className="flex justify-between text-violet-700">
-                            <span>Less: Promo Discount</span>
-                            <span>-{format(data.totalPromoDiscount)}</span>
                         </div>
                     )}
                     <div className="my-2 border-t border-dashed" />
@@ -244,9 +251,14 @@ const Receipt: React.FC<{ data: ReceiptData; className?: string }>
                             const isVatable = l.taxType === 'VATable' || !l.taxType
                             const lineIsScPwdVatExempt = isScPwd && l.isScPwdEligible && isVatable
                             if (lineIsScPwdVatExempt) {
-                                // VATable item discounted by SC/PWD → reclassified as VAT-Exempt
-                                const baseTotal = (l.baseUnitPrice != null ? l.baseUnitPrice * l.qty : l.lineTotal)
-                                computedVatExempt += baseTotal
+                                // VATable item discounted by SC/PWD → reclassified as VAT-Exempt.
+                                // BIR order: promo applied first, then VAT stripped, then 20% SC/PWD.
+                                // vatExemptLineTotal carries the post-promo VAT-exclusive amount.
+                                // Fall back to baseUnitPrice * qty if not supplied (e.g. older data).
+                                const vatExemptAmt = l.vatExemptLineTotal != null && l.vatExemptLineTotal > 0
+                                    ? l.vatExemptLineTotal
+                                    : (l.baseUnitPrice != null ? l.baseUnitPrice * l.qty : l.lineTotal)
+                                computedVatExempt += vatExemptAmt
                             } else if (l.taxType === 'Zero-Rated') {
                                 computedZeroRated += l.lineTotal
                             } else if (l.taxType === 'VAT-Exempt') {

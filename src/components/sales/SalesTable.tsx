@@ -67,7 +67,7 @@ const SalesTable: React.FC<SalesTableProps> = ({ rows, loading, onView, onRefund
                   <td className="px-4 py-3 text-sm text-gray-700">{dateStr}</td>
                   {/*<td className="px-4 py-3 text-sm text-gray-700">{r.customer_name}</td>*/}
                   <td className="px-4 py-3 text-sm text-gray-700">{r.account_name}</td>
-                  <td className="px-4 py-3 text-sm text-gray-900 text-right">{formatCurrency(Number(r.original_total_amount))}</td>
+                  <td className="px-4 py-3 text-sm text-gray-900 text-right">{formatCurrency(Number(r.subtotal_amount))}</td>
                   <td className="px-4 py-3 text-sm text-right text-gray-500">
                     {Number(r.total_discount) > 0 ? (
                       <span className="text-red-600">-{formatCurrency(Number(r.total_discount))}</span>

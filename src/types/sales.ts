@@ -4,7 +4,7 @@ export interface SalesHistoryRow {
   created_at: string
   customer_name: string
   account_name: string
-  original_total_amount: number
+  subtotal_amount: number
   total_discount: number
   total_refund_amount: number
   net_amount: number
@@ -33,11 +33,11 @@ export interface SaleItemDetails {
   product_id: number
   product_name: string
   quantity: number
-    order_id: number
-    base_price_at_purchase: number | null
-    tax_rate_at_purchase: number | null
-    tax_type_at_purchase?: string | null
-    is_sc_pwd_eligible?: boolean | null
+  order_id: number
+  base_price_at_purchase: number | null
+  tax_rate_at_purchase: number | null
+  tax_type_at_purchase?: string | null
+  is_sc_pwd_eligible?: boolean | null
 
   price_at_purchase?: number | null
   line_total?: number | null
