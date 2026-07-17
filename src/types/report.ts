@@ -33,7 +33,7 @@ export interface GetSalesOverTimeParams {
   end_date: string // ISO timestamp
 }
 
-export interface GetSalesByStaffParams extends GetSalesOverTimeParams {}
+export interface GetSalesByStaffParams extends GetSalesOverTimeParams { }
 
 export interface GetBestSellingProductsParams extends GetSalesOverTimeParams {
   limit: number
@@ -57,8 +57,9 @@ export interface CollectionDetails {
 }
 
 export interface XReadingDeductions {
-  SC_PWD: number
-  Regular: number
+  SC_PWD_Discount: number
+  VAT_Exempt_Discount: number
+  Promotions: number
   Refunds: number
   Voids: number
 }
@@ -113,7 +114,7 @@ export interface ZReadingResult {
   Invoices: { Start: string | null; End: string | null }
   GrossSales: number
   NetSales: number
-  Deductions: { SC_PWD: number; Regular: number; Refunds: number; Voids: number }
+  Deductions: { SC_PWD_Discount: number; VAT_Exempt_Discount: number; Promotions: number; Refunds: number; Voids: number }
   VAT: ZReadingVAT
   GrandTotals: ZReadingGrandTotals
   Collections?: CollectionDetails
@@ -151,4 +152,50 @@ export interface GetEJournalParams {
   start_date?: string | null
   end_date?: string | null
 }
+
+// ─── BIR Books of Accounts (RMO No. 10-2005) ───────────────────────────────────
+
+export interface BIRSalesBookRow {
+  reading_date: string
+  terminal_name: string
+  min_number: string
+  starting_invoice: string | null
+  ending_invoice: string | null
+  gross_sales: number
+  vatable_sales: number
+  vat_amount: number
+  vat_exempt_sales: number
+  zero_rated_sales: number
+  total_discounts: number
+  previous_grand_total: number
+  ending_grand_total: number
+}
+
+export interface SCPWDBookRow {
+  transaction_date: string
+  invoice_number: string
+  sc_pwd_name: string
+  sc_pwd_id: string
+  gross_sales: number
+  vat_exempt_sales: number
+  discount_amount: number
+  net_sales: number
+}
+
+export interface VoidsAndRefundsRow {
+  action_date: string
+  adjustment_type: 'VOID' | 'REFUND'
+  invoice_number: string
+  original_total: number
+  adjusted_amount: number
+  reason: string | null
+  authorized_by: string | null
+}
+
+export interface GetBIRBooksParams {
+  requesting_account_id: number
+  start_date: string // 'YYYY-MM-DD'
+  end_date: string // 'YYYY-MM-DD'
+}
+
 

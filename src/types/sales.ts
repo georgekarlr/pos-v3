@@ -26,6 +26,7 @@ export interface SaleOrderDetails {
   sc_pwd_discount_amount?: number | null
   promo_discount_amount?: number | null
   promo_discount_total?: number | null
+  vat_exempt_discount_amount: number | null
 }
 
 export interface SaleItemDetails {
@@ -55,6 +56,20 @@ export interface SaleDetailsResponse {
   order: SaleOrderDetails
   items: SaleItemDetails[]
   payments: SalePaymentDetails[]
+}
+
+// Refundable item row returned by pos2_get_refundable_items
+export interface RefundableItem {
+  order_item_id: number
+  product_id: number
+  product_name: string
+  unit_type: string | null
+  tax_type: string
+  original_quantity: number
+  already_refunded_quantity: number
+  available_quantity: number          // Remaining quantity eligible for return
+  price_paid_per_unit: number         // Net price paid per unit (SC/PWD & promos already applied)
+  max_refundable_amount: number       // available_quantity * price_paid_per_unit
 }
 
 // Refund details row returned by pos2_get_refund_details

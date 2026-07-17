@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { X, Loader2 } from 'lucide-react'
 import { salesService, BulkRefundItemInput } from '../../services/salesService'
-import { SaleDetailsResponse, SaleItemDetails } from '../../types/sales'
+import { RefundableItem } from '../../types/sales'
 
 interface RefundModalProps {
   open: boolean
@@ -18,7 +18,7 @@ const RefundModal: React.FC<RefundModalProps> = ({ open, orderId, requestingAcco
   const [loading, setLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [details, setDetails] = useState<SaleDetailsResponse | null>(null)
+  const [items, setItems] = useState<RefundableItem[]>([])
   const [quantities, setQuantities] = useState<Record<number, number>>({}) // key: order_item_id
   const [paymentMethod, setPaymentMethod] = useState('cash')
   const [reason, setReason] = useState('')
@@ -26,7 +26,7 @@ const RefundModal: React.FC<RefundModalProps> = ({ open, orderId, requestingAcco
   useEffect(() => {
     if (!open || !orderId) return
     setError(null)
-    setDetails(null)
+    setItems([])
     setQuantities({})
     setPaymentMethod('cash')
     setReason('')
@@ -34,18 +34,15 @@ const RefundModal: React.FC<RefundModalProps> = ({ open, orderId, requestingAcco
     const load = async () => {
       setLoading(true)
       try {
-        const d = await salesService.getSaleDetailsById(orderId)
-          console.log('d: ', d)
-        setDetails(d)
-        // initialize quantities to 0
+        const refundable = await salesService.getRefundableItems(orderId)
+        console.log('refundable items:', refundable)
+        setItems(refundable)
+        // initialise all quantities to 0
         const initial: Record<number, number> = {}
-        ;(d.items || []).forEach((it: any) => {
-          const key = (it.order_item_id ?? it.id) as number
-          initial[key] = 0
-        })
+        refundable.forEach((it) => { initial[it.order_item_id] = 0 })
         setQuantities(initial)
       } catch (e: any) {
-        setError(e?.message || 'Failed to load sale details')
+        setError(e?.message || 'Failed to load refundable items')
       } finally {
         setLoading(false)
       }
@@ -53,28 +50,18 @@ const RefundModal: React.FC<RefundModalProps> = ({ open, orderId, requestingAcco
     load()
   }, [open, orderId])
 
-  const itemsWithAvail = useMemo(() => {
-    const items: (SaleItemDetails & { availableQuantity: number; id: number })[] = (details?.items || []).map((it: any) => {
-      const refunded = Number(it.refunded_quantity || 0)
-      const availableQuantity = Math.max(0, Number(it.quantity) - refunded)
-      const order_item_id = (it.order_item_id ?? it.id) as number
-      return { ...it, availableQuantity, order_item_id }
-    })
-    return items
-  }, [details])
-
   const canSubmit = useMemo(() => {
-    const anyQty = itemsWithAvail.some((it) => (quantities[it.id] || 0) > 0)
+    const anyQty = items.some((it) => (quantities[it.order_item_id] || 0) > 0)
     return open && !!orderId && !!requestingAccountId && anyQty && !submitting
-  }, [open, orderId, requestingAccountId, itemsWithAvail, quantities, submitting])
+  }, [open, orderId, requestingAccountId, items, quantities, submitting])
 
+  // Sum of qty * price_paid_per_unit (already net of SC/PWD & promos per DB)
   const totalRefundLines = useMemo(() => {
-    return itemsWithAvail.reduce((sum, it) => {
-      const q = quantities[it.id] || 0
-      const unit = Number(it.price_at_purchase || 0)
-      return sum + q * unit
+    return items.reduce((sum, it) => {
+      const q = quantities[it.order_item_id] || 0
+      return sum + q * Number(it.price_paid_per_unit)
     }, 0)
-  }, [itemsWithAvail, quantities])
+  }, [items, quantities])
 
   const handleQtyChange = (order_item_id: number, value: number, max: number) => {
     const v = Math.max(0, Math.min(Math.floor(value || 0), max))
@@ -85,26 +72,21 @@ const RefundModal: React.FC<RefundModalProps> = ({ open, orderId, requestingAcco
     e.preventDefault()
     if (!orderId || !requestingAccountId) return
 
-      console.log('itemsWithAvail: ', itemsWithAvail)
-    const items: BulkRefundItemInput[] = itemsWithAvail
+    const itemsToRefund: BulkRefundItemInput[] = items
       .map((it) => {
-        const qty = quantities[it.id] || 0
-        const priceAtPurchase = Number((it as any).price_at_purchase ?? it.price_at_purchase ?? 0)
-        const basePrice = Number((it as any).base_price_at_purchase ?? 0)
-        const rate = Number((it as any).tax_rate_at_purchase ?? 0)
-        const taxPerUnit = basePrice * (rate/100)
-        const refund_amount = priceAtPurchase * qty
-        const tax_component = taxPerUnit * qty
+        const qty = quantities[it.order_item_id] || 0
         return {
-          order_item_id: it.id,
+          order_item_id: it.order_item_id,
           quantity: qty,
-          refund_amount,
-          tax_component
+          // price_paid_per_unit already has SC/PWD & promo applied
+          refund_amount: Number(it.price_paid_per_unit) * qty,
+          // tax_component: 0 — the DB function owns tax math
+          tax_component: 0
         }
       })
       .filter((x) => x.quantity > 0)
 
-    if (items.length === 0) {
+    if (itemsToRefund.length === 0) {
       setError('Please enter a refund quantity for at least one item.')
       return
     }
@@ -120,7 +102,7 @@ const RefundModal: React.FC<RefundModalProps> = ({ open, orderId, requestingAcco
       const result = await salesService.createBulkRefund({
         order_id: orderId,
         terminal_id: terminalId,
-        items_to_refund: items,
+        items_to_refund: itemsToRefund,
         requesting_account_id: requestingAccountId,
         refund_payment_method: paymentMethod,
         reason: reason || 'Refund processed from Sales History.'
@@ -168,28 +150,29 @@ const RefundModal: React.FC<RefundModalProps> = ({ open, orderId, requestingAcco
               ) : (
                 <>
                   <div className="space-y-3 max-h-80 overflow-auto pr-1">
-                    {itemsWithAvail.length === 0 && (
-                      <div className="text-sm text-gray-600">No items found for this order.</div>
+                    {items.length === 0 && (
+                      <div className="text-sm text-gray-600">No refundable items found for this order.</div>
                     )}
-                    {itemsWithAvail.map((it) => (
-                      <div key={it.id} className="flex items-start justify-between gap-3 p-3 border rounded">
+                    {items.map((it) => (
+                      <div key={it.order_item_id} className="flex items-start justify-between gap-3 p-3 border rounded">
                         <div className="flex-1">
                           <div className="font-medium text-gray-900">{it.product_name}</div>
-                          <div className="text-xs text-gray-600">Purchased: {it.quantity} • Refunded: {Number(it.refunded_quantity || 0)} • Available: {it.availableQuantity}</div>
-                          <div className="text-xs text-gray-600">Unit price: {currency(Number(it.price_at_purchase || 0))}</div>
+                          <div className="text-xs text-gray-600">Purchased: {it.original_quantity} • Refunded: {it.already_refunded_quantity} • Available: {it.available_quantity}</div>
+                          <div className="text-xs text-gray-600">Unit price (net): {currency(Number(it.price_paid_per_unit))}</div>
+                          <div className="text-xs text-gray-500">Max refund: {currency(Number(it.max_refundable_amount))}</div>
                         </div>
                         <div className="w-28">
                           <label className="block text-xs text-gray-600 mb-1">Refund qty</label>
                           <input
                             type="number"
                             min={0}
-                            max={it.availableQuantity}
+                            max={it.available_quantity}
                             step={1}
-                            value={quantities[it.id] || 0}
-                            onChange={(e) => handleQtyChange(it.id, parseInt(e.target.value, 10), it.availableQuantity)}
+                            value={quantities[it.order_item_id] || 0}
+                            onChange={(e) => handleQtyChange(it.order_item_id, parseInt(e.target.value, 10), it.available_quantity)}
                             className="w-full px-2 py-1 border rounded"
                           />
-                          <div className="mt-1 text-[11px] text-gray-500">Max {it.availableQuantity}</div>
+                          <div className="mt-1 text-[11px] text-gray-500">Max {it.available_quantity}</div>
                         </div>
                       </div>
                     ))}
@@ -212,7 +195,7 @@ const RefundModal: React.FC<RefundModalProps> = ({ open, orderId, requestingAcco
                   </div>
 
                   <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded flex items-center justify-between">
-                    <div className="text-sm text-blue-800">Estimated base refund (excl. tax adjustments)</div>
+                    <div className="text-sm text-blue-800">Estimated refund (net of discounts)</div>
                     <div className="text-base font-semibold text-blue-700">{currency(totalRefundLines)}</div>
                   </div>
                 </>

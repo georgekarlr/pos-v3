@@ -194,6 +194,7 @@ const ManualSaleModal: React.FC<ManualSaleModalProps> = ({ open, onClose, onSucc
 
     const params: RecordManualSaleParams = {
       p_account_id: accountId,
+      p_terminal_id: Number(localStorage.getItem('selected_pos_terminal_id')) || null,
       p_customer_id: selectedCustomer?.customer_id || null,
       p_manual_or_number: manualOrNumber,
       p_cart_items: calculatedLines.map(line => ({
@@ -212,6 +213,7 @@ const ManualSaleModal: React.FC<ManualSaleModalProps> = ({ open, onClose, onSucc
       p_loyalty_points_earned: loyaltyPointsEarned,
       p_loyalty_points_redeemed: loyaltyPointsRedeemed,
       p_occurred_at: FormatDateTime.formatLocalTimestampForDatabase(new Date(occurredAt)),
+      p_created_at: FormatDateTime.formatLocalTimestampForDatabase(new Date()),
     }
 
     try {

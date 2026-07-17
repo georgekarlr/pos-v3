@@ -472,6 +472,7 @@ const POS: React.FC = () => {
           subtotal,
           tax,
           scPwdDiscount: scPwdDiscountAmount,
+          vatExemptDiscount: cartCalculations.vatExemptDiscountAmount,
           totalPromoDiscount: totalPromoDiscount,
           total,
           payments: payments.map(p => ({ method: p.method, amount: Number(p.amount) || 0, reference: p.transaction_ref || undefined })),
@@ -798,6 +799,7 @@ const POS: React.FC = () => {
         isScPwdDiscount={isScPwdDiscount}
         onScPwdToggle={setIsScPwdDiscount}
         scPwdDiscountAmount={scPwdDiscountAmount}
+        vatExemptDiscountAmount={cartCalculations.vatExemptDiscountAmount}
         scPwdIdNumber={scPwdIdNumber}
         onScPwdIdNumberChange={setScPwdIdNumber}
         scPwdName={scPwdName}

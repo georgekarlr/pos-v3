@@ -45,6 +45,7 @@ export interface ReceiptData {
     subtotal: number
     tax: number
     scPwdDiscount?: number
+    vatExemptDiscount?: number
     totalPromoDiscount?: number
     total: number
     payments: ReceiptPayment[]
@@ -196,6 +197,12 @@ const Receipt: React.FC<{ data: ReceiptData; className?: string }>
                         <div className="flex justify-between text-gray-500 text-[11px]">
                             <span>Subtotal After Promo</span>
                             <span>{format(data.subtotal - data.totalPromoDiscount)}</span>
+                        </div>
+                    )}
+                    {data.vatExemptDiscount !== undefined && data.vatExemptDiscount > 0 && (
+                        <div className="flex justify-between text-amber-700">
+                            <span>Less: 12% VAT Exemption</span>
+                            <span>-{format(data.vatExemptDiscount)}</span>
                         </div>
                     )}
                     {data.scPwdDiscount !== undefined && data.scPwdDiscount > 0 && (

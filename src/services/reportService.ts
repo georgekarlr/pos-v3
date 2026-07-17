@@ -14,6 +14,10 @@ import {
   SalesOverTimeRow,
   XReadingResult,
   ZReadingRPCRow,
+  BIRSalesBookRow,
+  SCPWDBookRow,
+  VoidsAndRefundsRow,
+  GetBIRBooksParams,
 } from '../types/report'
 
 export const ReportService = {
@@ -67,7 +71,7 @@ export const ReportService = {
 
   /**
    * Generate an X-Reading (mid-day snapshot) for a terminal on a given date.
-   * Read-only – nothing is persisted to the database.
+   * Logs a permanent X_READING entry to the E-Journal on every call.
    */
   async generateXReading(params: GenerateXReadingParams): Promise<XReadingResult> {
     const { requesting_account_id, terminal_id, target_date } = params
@@ -114,5 +118,40 @@ export const ReportService = {
     console.log('data e-journal', data);
     if (error) { console.error('Error fetching E-Journal:', error); throw new Error(error.message) }
     return (data || []) as EJournalRow[]
+  },
+
+  // ─── BIR Books of Accounts (RMO No. 10-2005) ───────────────────────────────
+
+  async getBIRSalesBook(params: GetBIRBooksParams): Promise<BIRSalesBookRow[]> {
+    const { requesting_account_id, start_date, end_date } = params
+    const { data, error } = await supabase.rpc('pos2_report_bir_sales_book', {
+      p_requesting_account_id: requesting_account_id,
+      p_start_date: start_date,
+      p_end_date: end_date,
+    })
+    if (error) { console.error('Error fetching BIR Sales Book:', error); throw new Error(error.message) }
+    return (data || []) as BIRSalesBookRow[]
+  },
+
+  async getSCPWDBook(params: GetBIRBooksParams): Promise<SCPWDBookRow[]> {
+    const { requesting_account_id, start_date, end_date } = params
+    const { data, error } = await supabase.rpc('pos2_report_sc_pwd_book', {
+      p_requesting_account_id: requesting_account_id,
+      p_start_date: start_date,
+      p_end_date: end_date,
+    })
+    if (error) { console.error('Error fetching SC/PWD Book:', error); throw new Error(error.message) }
+    return (data || []) as SCPWDBookRow[]
+  },
+
+  async getVoidsAndRefunds(params: GetBIRBooksParams): Promise<VoidsAndRefundsRow[]> {
+    const { requesting_account_id, start_date, end_date } = params
+    const { data, error } = await supabase.rpc('pos2_report_voids_and_refunds', {
+      p_requesting_account_id: requesting_account_id,
+      p_start_date: start_date,
+      p_end_date: end_date,
+    })
+    if (error) { console.error('Error fetching Voids & Refunds Log:', error); throw new Error(error.message) }
+    return (data || []) as VoidsAndRefundsRow[]
   },
 }

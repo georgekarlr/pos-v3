@@ -3,31 +3,18 @@ import { X, Tag, AlertCircle, Search, Loader2 } from 'lucide-react';
 import type { Promotion, PromoDiscountType } from '../../types/promotion';
 import { ProductService } from '../../services/productService';
 import type { Product } from '../../types/product';
-
-// Converts a local datetime string used by <input type="datetime-local">
-// into an ISO string for the API (UTC).
-const toIso = (local: string) =>
-  local ? new Date(local).toISOString() : '';
-
-// Converts an ISO string from the API to the value expected by
-// <input type="datetime-local"> (YYYY-MM-DDTHH:mm).
-const toLocalInput = (iso: string) => {
-  if (!iso) return '';
-  const d = new Date(iso);
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-};
+import { FormatDateTime } from '../../utils/formatDateTime';
 
 export interface PromotionFormData {
   name: string;
   discount_type: PromoDiscountType;
   discount_value: number;
-  start_date: string; // ISO
-  end_date: string;   // ISO
+  start_date: string;
+  end_date: string;
   is_active: boolean;
   applies_to_all_products: boolean;
   eligible_product_ids: number[];
-  coupon_code: string; // empty string = no coupon
+  coupon_code: string;
 }
 
 interface PromotionFormProps {
@@ -76,8 +63,8 @@ const PromotionForm: React.FC<PromotionFormProps> = ({
         name: promotion.name,
         discount_type: promotion.discount_type,
         discount_value: promotion.discount_value,
-        start_date: toLocalInput(promotion.start_date),
-        end_date: toLocalInput(promotion.end_date),
+        start_date: FormatDateTime.formatLocalTimestampForDatabase(promotion.start_date),
+        end_date: FormatDateTime.formatLocalTimestampForDatabase(promotion.end_date),
         is_active: promotion.is_active,
         applies_to_all_products: promotion.applies_to_all_products,
         eligible_product_ids: promotion.eligible_product_ids ?? [],
@@ -135,8 +122,8 @@ const PromotionForm: React.FC<PromotionFormProps> = ({
     try {
       await onSubmit({
         ...form,
-        start_date: toIso(form.start_date),
-        end_date: toIso(form.end_date),
+        start_date: FormatDateTime.formatLocalTimestampForDatabase(form.start_date),
+        end_date: FormatDateTime.formatLocalTimestampForDatabase(form.end_date),
       });
     } catch (err: any) {
       setFormError(err.message || 'An unexpected error occurred.');

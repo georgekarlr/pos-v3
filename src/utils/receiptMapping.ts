@@ -82,6 +82,7 @@ export function mapSaleDetailsToReceipt(details: SaleDetailsResponse): ReceiptDa
         invoiceNumber: order.invoice_number ?? undefined,
         terminalId: order.terminal_id ?? undefined,
         scPwdDiscount: order.sc_pwd_discount_amount ? Number(order.sc_pwd_discount_amount) : undefined,
+        vatExemptDiscount: order.vat_exempt_discount_amount ? Number(order.vat_exempt_discount_amount) : undefined,
         totalPromoDiscount: order.promo_discount_total != null ? Number(order.promo_discount_total) : (order.promo_discount_amount ? Number(order.promo_discount_amount) : undefined),
         businessName,
         businessAddress1,

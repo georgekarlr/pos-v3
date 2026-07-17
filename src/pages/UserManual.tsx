@@ -148,7 +148,7 @@ const chapters: ManualChapter[] = [
         <li><strong>Promotions (Coupon Code Gated):</strong> Active promotions are only applied if a matching coupon code is entered in the cart. The best discount is selected per product among the matches. A <em>Save ₱X</em> badge appears on qualifying items in the cart, and a <strong>Coupon Discount</strong> line is shown in the order summary and receipt.
           <br/><em>Offline Support:</em> Promotions are cached in IndexedDB when loaded online. Validity (start/end dates, active status, product eligibility, and coupon codes) is enforced client-side while offline, using the same logic as the server.
         </li>
-        <li><strong>Senior Citizen (SC) / Person with Disability (PWD):</strong> Applies a 20% discount on VAT-exclusive price and waives tax calculations for BIR compliance.
+        <li><strong>Senior Citizen (SC) / Person with Disability (PWD):</strong> Applies a 20% discount on VAT-exclusive price and waives tax calculations for BIR compliance. The receipt and Electronic Journal (E-Journal) break down the deductions by explicitly showing the 12% VAT exemption and the 20% discount.
           <br/><em>⚠ BIR Compliance:</em> You must provide the beneficiary's <strong>Full Name</strong> and <strong>ID Number</strong> during checkout. The checkout action is disabled until both are entered.
         </li>
       </ul>
@@ -297,12 +297,12 @@ const chapters: ManualChapter[] = [
           <tr><td>View Receipt</td><td>Re-open the thermal receipt format for printout or customer reference.</td></tr>
           <tr><td>Refund Item</td><td>Perform partial or full itemized refunds. Select exact line items and quantities, then select a reason.</td></tr>
           <tr><td>View Applied Refunds</td><td>Lists refund logs associated with this specific order.</td></tr>
-          <tr><td>Void Transaction</td><td>Fully invalidate a transaction. Reverts inventory stock deductions and balances. Requires confirmation.</td></tr>
+          <tr><td>Void Transaction</td><td>Fully invalidate a transaction. Reverts inventory stock deductions and balances. Requires confirmation. <strong>BIR Compliance:</strong> You can only void transactions from the same business day. For previous days, a Refund must be processed instead.</td></tr>
         </tbody>
       </table>
       <h3>4. Manual Sales Logs &amp; Refunds Ledger</h3>
       <ul>
-        <li><strong>Record Manual Sale:</strong> Backdate or log a sales record completed outside the terminal interface. Form requires adding items, amounts, customer context, and optionally applying coupon codes for promotional discounts.</li>
+        <li><strong>Record Manual Sale:</strong> Backdate or log a sales record completed outside the terminal interface. Form requires adding items, amounts, customer context, and optionally applying coupon codes for promotional discounts. <strong>BIR Compliance:</strong> The system captures both the actual issue date/time from the paper receipt and the current date/time the cashier encoded the entry.</li>
         <li><strong>View All Refunds:</strong> Open a centralized refunds audit log auditing all partial/full transaction returns in the system.</li>
       </ul>
     `
@@ -393,11 +393,11 @@ const chapters: ManualChapter[] = [
   },
   {
     id: 'compliance',
-    title: '11. BIR Compliance (X, Z-Reading & Journals)',
+    title: '11. BIR Compliance (X, Z-Reading, Journals & Books of Accounts)',
     component: <ComplianceSection />,
     rawHtml: `
-      <h2>11. BIR Compliance (X, Z-Reading & Journals)</h2>
-      <p><strong>Sub-Menu:</strong> Reports &amp; Compliance | <strong>Access:</strong> X-Reading (Admin, Staff), Z-Reading &amp; E-Journal (Admin only)</p>
+      <h2>11. BIR Compliance (X, Z-Reading, Journals &amp; Books of Accounts)</h2>
+      <p><strong>Sub-Menu:</strong> Reports &amp; Compliance | <strong>Access:</strong> X-Reading (Admin, Staff), Z-Reading, E-Journal &amp; BIR Books (Admin only)</p>
       <h3>1. X-Reading</h3>
       <p><strong>Route:</strong> <code>/reports-compliance/x-reading</code></p>
       <p>Generates a temporary snapshot report of the selected terminal's daily activity: gross sales, net sales, voids, refunds, senior citizen discounts, tax values, and payment collections breakdown (Cash, Card, GCash, etc.). Non-persistent: no database commits.</p>
@@ -406,7 +406,15 @@ const chapters: ManualChapter[] = [
       <p>The official daily closing procedure required for tax registry and audit logs: compiles active sales transactions, writes them into a permanent ledger lock, increments the Z-Counter, and resets daily counts. Non-reversible transaction.</p>
       <h3>3. Electronic Journal (E-Journal)</h3>
       <p><strong>Route:</strong> <code>/reports-compliance/e-journal</code></p>
-      <p>A complete audit log of all system actions: logs transactions, refunds, logins, settings modifications, voided sales, and stock adjustments. Search and filter by keywords, terminal IDs, or cashier names.</p>
+      <p>A complete audit log of all system actions: logs transactions, refunds, logins, settings modifications, voided sales, and stock adjustments. Search and filter by keywords, terminal IDs, or cashier names. Each sale event details the items sold, payments applied, taxes, discounts, and any VAT exemption amounts removed for BIR auditing compliance.</p>
+      <h3>4. BIR Books of Accounts (RMO No. 10-2005)</h3>
+      <p><strong>Route:</strong> <code>/reports-compliance/bir-books</code></p>
+      <p>Official tax logbooks required to be kept on-premises for BIR audits and tax mapping visits. Admins can select any date range to dynamically pull and verify official registers, with instant <strong>CSV Export</strong> and <strong>Print-Friendly</strong> page formatting:</p>
+      <ul>
+        <li><strong>Z-Reading Log (BIR Cumulative Sales Book):</strong> Chronological record of all daily terminal Z-Readings containing the gross sales, VATable base, VAT amount, VAT-Exempt sales, Zero-Rated sales, discounts applied, and starting/ending invoice ranges along with the cumulative Grand Totals.</li>
+        <li><strong>SC/PWD Discount Book:</strong> Chronological log of all transactions with senior citizen or PWD discounts applied, tracking the customer name, ID card number, gross sales before deduction, VAT-exempt base, 20% discount amount, and net sales.</li>
+        <li><strong>Voids &amp; Adjustments Audit Log:</strong> Chronological history of all transaction voids and refunds, recording action dates, original invoice totals, refunded/voided amounts, reasons, and the authorizing admin account name to audit security adjustments.</li>
+      </ul>
     `
   },
   {
