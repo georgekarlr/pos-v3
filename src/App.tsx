@@ -25,6 +25,7 @@ import Reports from './pages/Reports'
 import XReading from './pages/XReading'
 import ZReading from './pages/ZReading'
 import EJournal from './pages/EJournal'
+import BIRBooks from './pages/BIRBooks'
 import Settings from './pages/Settings'
 import UserManual from './pages/UserManual'
 import Promotions from './pages/Promotions'
@@ -190,6 +191,16 @@ function App() {
                 <PersonaProtectedRoute>
                   <Layout>
                     <EJournal />
+                  </Layout>
+                </PersonaProtectedRoute>
+              </ProtectedRoute>
+            } />
+
+            <Route path="/reports-compliance/bir-books" element={
+              <ProtectedRoute>
+                <PersonaProtectedRoute>
+                  <Layout>
+                    <BIRBooks />
                   </Layout>
                 </PersonaProtectedRoute>
               </ProtectedRoute>

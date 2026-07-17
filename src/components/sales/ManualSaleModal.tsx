@@ -213,6 +213,7 @@ const ManualSaleModal: React.FC<ManualSaleModalProps> = ({ open, onClose, onSucc
       p_loyalty_points_earned: loyaltyPointsEarned,
       p_loyalty_points_redeemed: loyaltyPointsRedeemed,
       p_occurred_at: FormatDateTime.formatLocalTimestampForDatabase(new Date(occurredAt)),
+      p_created_at: FormatDateTime.formatLocalTimestampForDatabase(new Date()),
     }
 
     try {

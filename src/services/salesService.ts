@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase'
 import { SaleDetailsResponse, SalesHistoryRow, RefundDetailRow, RefundableItem } from '../types/sales'
 import { RecordManualSaleParams } from '../types/pos'
+import { FormatDateTime } from '../utils/formatDateTime'
 
 export interface GetSalesHistoryParams {
   limit: number
@@ -141,13 +142,17 @@ export const salesService = {
     requesting_account_id: number
     order_id: number
     reason: string
+    void_date?: string
   }): Promise<VoidSaleResult> {
-    const { requesting_account_id, order_id, reason } = params
+    const { requesting_account_id, order_id, reason, void_date } = params
+
+    const localVoidDate = void_date || FormatDateTime.formatLocalTimestampForDatabase(new Date()).slice(0, 10)
 
     const { data, error } = await supabase.rpc('pos2_void_sale', {
       p_requesting_account_id: requesting_account_id,
       p_order_id: order_id,
-      p_reason: reason
+      p_reason: reason,
+      p_void_date: localVoidDate
     })
 
     if (error) {

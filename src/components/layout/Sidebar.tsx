@@ -11,11 +11,9 @@ import {
   Package,
   ChevronDown,
   ChevronRight,
-  Printer,
   Wallet,
   ClipboardList,
-  CreditCard,
-  Tag
+  CreditCard
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -61,6 +59,7 @@ const adminNavigation: NavigationItem[] = [
       { name: 'X-Reading', href: '/reports-compliance/x-reading' },
       { name: 'Z-Reading', href: '/reports-compliance/z-reading' },
       { name: 'E-Journal', href: '/reports-compliance/e-journal' },
+      { name: 'BIR Books of Accounts', href: '/reports-compliance/bir-books' },
     ]
   },
   { name: 'User Manual', href: '/user-manual', icon: ClipboardList },

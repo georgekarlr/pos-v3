@@ -91,6 +91,7 @@ export interface RecordManualSaleParams {
   p_loyalty_points_earned?: number;
   p_loyalty_points_redeemed?: number;
   p_occurred_at: string; // Required for manual sale
+  p_created_at?: string; // Date/Time cashier entered this manually
 }
 
 // --- Result Interface ---
