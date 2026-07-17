@@ -148,7 +148,7 @@ const chapters: ManualChapter[] = [
         <li><strong>Promotions (Coupon Code Gated):</strong> Active promotions are only applied if a matching coupon code is entered in the cart. The best discount is selected per product among the matches. A <em>Save ₱X</em> badge appears on qualifying items in the cart, and a <strong>Coupon Discount</strong> line is shown in the order summary and receipt.
           <br/><em>Offline Support:</em> Promotions are cached in IndexedDB when loaded online. Validity (start/end dates, active status, product eligibility, and coupon codes) is enforced client-side while offline, using the same logic as the server.
         </li>
-        <li><strong>Senior Citizen (SC) / Person with Disability (PWD):</strong> Applies a 20% discount on VAT-exclusive price and waives tax calculations for BIR compliance.
+        <li><strong>Senior Citizen (SC) / Person with Disability (PWD):</strong> Applies a 20% discount on VAT-exclusive price and waives tax calculations for BIR compliance. The receipt and Electronic Journal (E-Journal) break down the deductions by explicitly showing the 12% VAT exemption and the 20% discount.
           <br/><em>⚠ BIR Compliance:</em> You must provide the beneficiary's <strong>Full Name</strong> and <strong>ID Number</strong> during checkout. The checkout action is disabled until both are entered.
         </li>
       </ul>
@@ -406,7 +406,7 @@ const chapters: ManualChapter[] = [
       <p>The official daily closing procedure required for tax registry and audit logs: compiles active sales transactions, writes them into a permanent ledger lock, increments the Z-Counter, and resets daily counts. Non-reversible transaction.</p>
       <h3>3. Electronic Journal (E-Journal)</h3>
       <p><strong>Route:</strong> <code>/reports-compliance/e-journal</code></p>
-      <p>A complete audit log of all system actions: logs transactions, refunds, logins, settings modifications, voided sales, and stock adjustments. Search and filter by keywords, terminal IDs, or cashier names.</p>
+      <p>A complete audit log of all system actions: logs transactions, refunds, logins, settings modifications, voided sales, and stock adjustments. Search and filter by keywords, terminal IDs, or cashier names. Each sale event details the items sold, payments applied, taxes, discounts, and any VAT exemption amounts removed for BIR auditing compliance.</p>
     `
   },
   {

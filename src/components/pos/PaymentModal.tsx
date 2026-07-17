@@ -28,6 +28,7 @@ interface PaymentModalProps {
     isScPwdDiscount: boolean
     onScPwdToggle: (val: boolean) => void
     scPwdDiscountAmount: number
+    vatExemptDiscountAmount?: number
     scPwdIdNumber: string
     onScPwdIdNumberChange: (val: string) => void
     scPwdName: string
@@ -90,6 +91,7 @@ const PaymentModal: React.FC<PaymentModalProps> = (props) => {
                             isScPwdDiscount={props.isScPwdDiscount}
                             onScPwdToggle={props.onScPwdToggle}
                             scPwdDiscountAmount={props.scPwdDiscountAmount}
+                            vatExemptDiscountAmount={props.vatExemptDiscountAmount}
                             scPwdIdNumber={props.scPwdIdNumber}
                             onScPwdIdNumberChange={props.onScPwdIdNumberChange}
                             scPwdName={props.scPwdName}

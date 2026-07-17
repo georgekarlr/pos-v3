@@ -82,6 +82,7 @@ export const salesService = {
       p_order_id: orderId
     })
     console.log('Sale details', data);
+    console.log('vat_exempt_discount_amount', data.vat_exempt_discount_amount);
     if (error) {
       console.error('Error fetching sale details:', error)
       throw new Error(error.message)
@@ -150,11 +151,15 @@ export const salesService = {
   async recordManualSale(params: RecordManualSaleParams): Promise<{ success: boolean; message: string; data?: any }> {
     const { data, error } = await supabase.rpc('pos2_record_manual_sale', params)
 
+    console.log('Manual sale data:', data);
+    console.log('Manual sale error:', error);
+    console.log('Manual sale params:', params);
     if (error) {
       console.error('Error recording manual sale:', error)
       return { success: false, message: error.message }
     }
 
+    console.log('Manual sale recorded:', data);
     const row = Array.isArray(data) ? data[0] : data
     return {
       success: !!row?.success,

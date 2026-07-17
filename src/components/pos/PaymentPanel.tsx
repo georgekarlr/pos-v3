@@ -9,6 +9,7 @@ interface PaymentPanelProps {
     subtotal: number
     tax: number
     totalPromoDiscount?: number
+    vatExemptDiscountAmount?: number
     // --- Payments ---
     payments: PaymentInput[]
     onAddPayment: () => void
@@ -47,6 +48,7 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
     subtotal,
     tax,
     totalPromoDiscount,
+    vatExemptDiscountAmount,
     payments,
     onAddPayment,
     onUpdatePayment,
@@ -291,6 +293,12 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
                         <div className="flex justify-between text-xs text-gray-400 italic">
                             <span>VAT (included in prices)</span>
                             <span>{formatCurrency(tax)}</span>
+                        </div>
+                    )}
+                    {isScPwdDiscount && vatExemptDiscountAmount !== undefined && vatExemptDiscountAmount > 0 && (
+                        <div className="flex justify-between text-xs text-amber-700">
+                            <span>12% VAT Exemption</span>
+                            <span>-{formatCurrency(vatExemptDiscountAmount)}</span>
                         </div>
                     )}
                     {isScPwdDiscount && (

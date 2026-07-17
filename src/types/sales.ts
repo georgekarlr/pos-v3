@@ -26,6 +26,7 @@ export interface SaleOrderDetails {
   sc_pwd_discount_amount?: number | null
   promo_discount_amount?: number | null
   promo_discount_total?: number | null
+  vat_exempt_discount_amount: number | null
 }
 
 export interface SaleItemDetails {

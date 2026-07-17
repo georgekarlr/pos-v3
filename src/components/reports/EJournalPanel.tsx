@@ -163,6 +163,7 @@ const EJournalPanel: React.FC = () => {
           text += `\n`
         }
 
+        const vatExempt = Number(detailsObj.vat_exempt_discount || 0)
         const totalDiscounts = Number(detailsObj.sc_pwd_discount || 0) + Number(detailsObj.promo_discount || 0)
         const totalVat = Number(detailsObj.tax_amount ?? detailsObj.vat_amount ?? 0)
         // change_due is the authoritative change field set by the API
@@ -170,6 +171,9 @@ const EJournalPanel: React.FC = () => {
 
         text += `Totals:\n`
         text += `  Gross Amount:        ${Number(detailsObj.gross_amount || detailsObj.total_amount || detailsObj.subtotal || 0).toFixed(2).padStart(10)}\n`
+        if (vatExempt > 0) {
+          text += `  VAT Exemption:       ${vatExempt.toFixed(2).padStart(10)}\n`
+        }
         text += `  Discounts:           ${totalDiscounts.toFixed(2).padStart(10)}\n`
         text += `  Net Amount:          ${Number(detailsObj.net_amount || detailsObj.total_amount || detailsObj.total || 0).toFixed(2).padStart(10)}\n`
         text += `  Total VAT:           ${totalVat.toFixed(2).padStart(10)}\n`

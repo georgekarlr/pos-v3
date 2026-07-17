@@ -26,6 +26,7 @@ export interface CartTotals {
   subtotal: number;          // sum of display_price * qty (shelf prices, VAT-inclusive, before discounts)
   tax: number;               // sum of lineTax (on post-discount VAT-exclusive amounts)
   scPwdDiscountAmount: number;
+  vatExemptDiscountAmount: number; // 12% VAT removed for SC/PWD
   totalPromoDiscount: number; // VAT-inclusive total discount (shelf saving)
   total: number;             // Net due
 }
@@ -153,6 +154,7 @@ export function calculateCartTotals(params: {
   let shelfSubtotal = 0;
   let serverTax = 0;
   let serverCalculatedScDiscount = 0;
+  let serverVatExemptionDiscount = 0;
   // VAT-inclusive total promo discount (actual saving from shelf price)
   let serverTotalPromoDiscount = 0;
 
@@ -209,6 +211,7 @@ export function calculateCartTotals(params: {
     if (isScPwdDiscount && product.is_sc_pwd_eligible && isVatable) {
       vatExemptLineTotal = lineGross; // VAT-exclusive post-promo → VAT-Exempt bucket
       serverCalculatedScDiscount += lineGross * 0.20;
+      serverVatExemptionDiscount += lineGross * taxRate;
     } else {
       if (isVatable) {
         lineTax = lineGross * taxRate;
@@ -237,6 +240,7 @@ export function calculateCartTotals(params: {
     subtotal: shelfSubtotal,           // Gross shelf total (VAT-inclusive, before discounts)
     tax: serverTax,
     scPwdDiscountAmount: serverCalculatedScDiscount,
+    vatExemptDiscountAmount: serverVatExemptionDiscount,
     totalPromoDiscount: serverTotalPromoDiscount, // VAT-inclusive total saving
     total: finalTotal,
   };

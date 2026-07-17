@@ -224,6 +224,11 @@ export function layoutReceiptLines(data: ReceiptData, design?: ReceiptDesign): s
     }
   }
 
+  // VAT Exemption line
+  if (data.vatExemptDiscount !== undefined && data.vatExemptDiscount > 0) {
+    pushTotal('Less: 12% VAT Exemption', -data.vatExemptDiscount)
+  }
+
   // SC/PWD discount line
   if (isScPwd && (data.scPwdDiscount ?? 0) > 0) {
     pushTotal('Less: SC/PWD Disc (20%)', -(data.scPwdDiscount!))
