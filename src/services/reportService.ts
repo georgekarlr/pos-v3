@@ -67,7 +67,7 @@ export const ReportService = {
 
   /**
    * Generate an X-Reading (mid-day snapshot) for a terminal on a given date.
-   * Read-only – nothing is persisted to the database.
+   * Logs a permanent X_READING entry to the E-Journal on every call.
    */
   async generateXReading(params: GenerateXReadingParams): Promise<XReadingResult> {
     const { requesting_account_id, terminal_id, target_date } = params

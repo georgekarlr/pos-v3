@@ -33,7 +33,7 @@ export interface GetSalesOverTimeParams {
   end_date: string // ISO timestamp
 }
 
-export interface GetSalesByStaffParams extends GetSalesOverTimeParams {}
+export interface GetSalesByStaffParams extends GetSalesOverTimeParams { }
 
 export interface GetBestSellingProductsParams extends GetSalesOverTimeParams {
   limit: number
@@ -57,8 +57,9 @@ export interface CollectionDetails {
 }
 
 export interface XReadingDeductions {
-  SC_PWD: number
-  Regular: number
+  SC_PWD_Discount: number
+  VAT_Exempt_Discount: number
+  Promotions: number
   Refunds: number
   Voids: number
 }
@@ -113,7 +114,7 @@ export interface ZReadingResult {
   Invoices: { Start: string | null; End: string | null }
   GrossSales: number
   NetSales: number
-  Deductions: { SC_PWD: number; Regular: number; Refunds: number; Voids: number }
+  Deductions: { SC_PWD_Discount: number; VAT_Exempt_Discount: number; Promotions: number; Refunds: number; Voids: number }
   VAT: ZReadingVAT
   GrandTotals: ZReadingGrandTotals
   Collections?: CollectionDetails

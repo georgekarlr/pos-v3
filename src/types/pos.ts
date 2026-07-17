@@ -76,6 +76,7 @@ export interface CreatePosSaleParams {
 
 export interface RecordManualSaleParams {
   p_account_id: number;
+  p_terminal_id: number | null;
   p_customer_id: number | null;
   p_manual_or_number: string;
   p_cart_items: { product_id: number; quantity: number; promo_id?: number | null }[];

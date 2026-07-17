@@ -226,19 +226,147 @@ const EJournalPanel: React.FC = () => {
         text += `  Amount Reversed: ${amountReversed}\n`
         text += `  Status of Invoice ${targetInvoice} changed to VOIDED.\n`
       } else if (row.event_type === 'Z_READING') {
-        const detailsText = row.event_description
-        const grossSales = Number(detailsObj.gross_sales || detailsObj.GrossSales || 0).toFixed(2)
-        const netSales = Number(detailsObj.net_sales || detailsObj.NetSales || 0).toFixed(2)
-        const oldGT = Number(detailsObj.old_grand_total || detailsObj.OldCumulative || 0).toFixed(2)
-        const newGT = Number(detailsObj.new_grand_total || detailsObj.NewCumulative || 0).toFixed(2)
+        // The new SQL function stores the full nested report JSON in details.
+        // Top-level keys: GrossSales, NetSales, Deductions{}, VAT{}, GrandTotals{}, Invoices{}, Collections{}, Terminal{}
+        const deductions = (detailsObj.Deductions || {}) as Record<string, number>
+        const vat = (detailsObj.VAT || {}) as Record<string, number>
+        const grandTotals = (detailsObj.GrandTotals || {}) as Record<string, number>
+        const invoices = (detailsObj.Invoices || {}) as Record<string, string | null>
+        const collections = (detailsObj.Collections || {}) as { TotalCollected?: number; Breakdown?: { method: string; amount: number }[] }
+        const terminal = (detailsObj.Terminal || {}) as Record<string, string>
 
-        text += `Details: ${detailsText}\n\n`
-        text += `Summary:\n`
-        text += `  Gross Sales:         ${grossSales.padStart(10)} (Excludes voids/refunds)\n`
-        text += `  Net Sales:           ${netSales.padStart(10)}\n`
-        text += `  Old Grand Total:     ${oldGT.padStart(10)}\n`
-        text += `  New Grand Total:     ${newGT.padStart(10)}\n`
+        const grossSales = Number(detailsObj.GrossSales || 0).toFixed(2)
+        const netSales = Number(detailsObj.NetSales || 0).toFixed(2)
+
+        const promotions = Number(deductions.Promotions || 0).toFixed(2)
+        const vatExemptDisc = Number(deductions.VAT_Exempt_Discount || 0).toFixed(2)
+        const scPwd = Number(deductions.SC_PWD_Discount || 0).toFixed(2)
+        const refunds = Number(deductions.Refunds || 0).toFixed(2)
+        const voids = Number(deductions.Voids || 0).toFixed(2)
+        const totalDeductions = (
+          Number(deductions.Promotions || 0) +
+          Number(deductions.VAT_Exempt_Discount || 0) +
+          Number(deductions.SC_PWD_Discount || 0) +
+          Number(deductions.Refunds || 0) +
+          Number(deductions.Voids || 0)
+        ).toFixed(2)
+
+        const vatableAmt = Number(vat.VATable || 0).toFixed(2)
+        const vatAmount = Number(vat.VATAmount || 0).toFixed(2)
+        const vatExempt = Number(vat.Exempt || 0).toFixed(2)
+        const zeroRated = Number(vat.ZeroRated || 0).toFixed(2)
+
+        const oldGT = Number(grandTotals.OldCumulative || 0).toFixed(2)
+        const todayGT = Number(grandTotals.TodaysSales || 0).toFixed(2)
+        const newGT = Number(grandTotals.NewCumulative || 0).toFixed(2)
+
+        text += `Details: ${row.event_description}\n`
+        if (terminal.Name) text += `Terminal: ${terminal.Name}  MIN: ${terminal.MIN || 'N/A'}  PTU: ${terminal.PTU || 'N/A'}\n`
+        if (terminal.AdminName) text += `Admin: ${terminal.AdminName}\n`
+        if (invoices.Start || invoices.End) {
+          text += `Transaction Range: ${invoices.Start || 'N/A'} to ${invoices.End || 'N/A'}\n`
+        }
+        text += `\n`
+
+        text += `Sales Breakdown:\n`
+        text += `  Gross Sales:           ${grossSales.padStart(12)}\n`
+        text += `  Less Deductions:\n`
+        text += `    Promotions:          ${promotions.padStart(12)}\n`
+        text += `    VAT-Exempt Discount: ${vatExemptDisc.padStart(12)}\n`
+        text += `    SC/PWD Discount:     ${scPwd.padStart(12)}\n`
+        text += `    Refunds/Returns:     ${refunds.padStart(12)}\n`
+        text += `    Voids:               ${voids.padStart(12)}\n`
+        text += `    ----------------------------------\n`
+        text += `  Total Deductions:      ${totalDeductions.padStart(12)}\n`
+        text += `  Net Sales:             ${netSales.padStart(12)}\n`
+        text += `\n`
+
+        text += `VAT Details:\n`
+        text += `  VATable Sales:         ${vatableAmt.padStart(12)}\n`
+        text += `  VAT Amount (12%):      ${vatAmount.padStart(12)}\n`
+        text += `  VAT-Exempt Sales:      ${vatExempt.padStart(12)}\n`
+        text += `  Zero-Rated Sales:      ${zeroRated.padStart(12)}\n`
+        text += `\n`
+
+        text += `Accumulated Grand Totals:\n`
+        text += `  Old Grand Total:       ${oldGT.padStart(12)}\n`
+        text += `  Today's Net Sales:     ${todayGT.padStart(12)}\n`
+        text += `  New Grand Total:       ${newGT.padStart(12)}\n`
+
+        if (collections.TotalCollected != null) {
+          text += `\n`
+          text += `Cash Drawer Collections:\n`
+          const breakdown = collections.Breakdown || []
+          breakdown.forEach((item) => {
+            text += `  ${item.method}:${' '.repeat(Math.max(1, 23 - item.method.length))}${Number(item.amount).toFixed(2).padStart(12)}\n`
+          })
+          text += `  ----------------------------------\n`
+          text += `  Total Collected:       ${Number(collections.TotalCollected).toFixed(2).padStart(12)}\n`
+        }
+      } else if (row.event_type === 'X_READING') {
+        // X-Reading stores the same nested JSON as Z-Reading (minus GrandTotals/PTU).
+        // Keys: GrossSales, NetSales, Deductions{}, VAT{}, TransactionRange{}, Collections{}, Terminal{ CashierName }
+        const xDeductions = (detailsObj.Deductions || {}) as Record<string, number>
+        const xVat = (detailsObj.VAT || {}) as Record<string, number>
+        const xRange = (detailsObj.TransactionRange || {}) as Record<string, string | null>
+        const xCollections = (detailsObj.Collections || {}) as { TotalCollected?: number; Breakdown?: { method: string; amount: number }[] }
+        const xTerminal = (detailsObj.Terminal || {}) as Record<string, string>
+
+        const xGross = Number(detailsObj.GrossSales || 0).toFixed(2)
+        const xNet = Number(detailsObj.NetSales || 0).toFixed(2)
+
+        const xPromotions = Number(xDeductions.Promotions || 0).toFixed(2)
+        const xVatExemptDisc = Number(xDeductions.VAT_Exempt_Discount || 0).toFixed(2)
+        const xScPwd = Number(xDeductions.SC_PWD_Discount || 0).toFixed(2)
+        const xRefunds = Number(xDeductions.Refunds || 0).toFixed(2)
+        const xVoids = Number(xDeductions.Voids || 0).toFixed(2)
+        const xTotalDed = (
+          Number(xDeductions.Promotions || 0) +
+          Number(xDeductions.VAT_Exempt_Discount || 0) +
+          Number(xDeductions.SC_PWD_Discount || 0) +
+          Number(xDeductions.Refunds || 0) +
+          Number(xDeductions.Voids || 0)
+        ).toFixed(2)
+
+        text += `Details: ${row.event_description}\n`
+        if (xTerminal.Name) text += `Terminal: ${xTerminal.Name}  MIN: ${xTerminal.MIN || 'N/A'}\n`
+        if (xTerminal.CashierName) text += `Cashier: ${xTerminal.CashierName}\n`
+        if (xRange.Start || xRange.End) {
+          text += `Transaction Range (so far today): ${xRange.Start || 'N/A'} to ${xRange.End || 'N/A'}\n`
+        }
+        text += `\n`
+
+        text += `Sales Breakdown (Mid-Day Snapshot):\n`
+        text += `  Gross Sales:           ${xGross.padStart(12)}\n`
+        text += `  Less Deductions:\n`
+        text += `    Promotions:          ${xPromotions.padStart(12)}\n`
+        text += `    VAT-Exempt Discount: ${xVatExemptDisc.padStart(12)}\n`
+        text += `    SC/PWD Discount:     ${xScPwd.padStart(12)}\n`
+        text += `    Refunds/Returns:     ${xRefunds.padStart(12)}\n`
+        text += `    Voids:               ${xVoids.padStart(12)}\n`
+        text += `    ----------------------------------\n`
+        text += `  Total Deductions:      ${xTotalDed.padStart(12)}\n`
+        text += `  Net Sales:             ${xNet.padStart(12)}\n`
+        text += `\n`
+
+        text += `VAT Details:\n`
+        text += `  VATable Sales:         ${Number(xVat.VATable || 0).toFixed(2).padStart(12)}\n`
+        text += `  VAT Amount (12%):      ${Number(xVat.VATAmount || 0).toFixed(2).padStart(12)}\n`
+        text += `  VAT-Exempt Sales:      ${Number(xVat.Exempt || 0).toFixed(2).padStart(12)}\n`
+        text += `  Zero-Rated Sales:      ${Number(xVat.ZeroRated || 0).toFixed(2).padStart(12)}\n`
+
+        if (xCollections.TotalCollected != null) {
+          text += `\n`
+          text += `Cash Drawer Collections:\n`
+          const xBreakdown = xCollections.Breakdown || []
+          xBreakdown.forEach((item) => {
+            text += `  ${item.method}:${' '.repeat(Math.max(1, 23 - item.method.length))}${Number(item.amount).toFixed(2).padStart(12)}\n`
+          })
+          text += `  ----------------------------------\n`
+          text += `  Total Collected:       ${Number(xCollections.TotalCollected).toFixed(2).padStart(12)}\n`
+        }
       } else if (row.event_type === 'COLLECTION') {
+
         // Sub-type 1: Installment schedule payment (pos2_pay_installment_schedule)
         //   details: { contract_id, amount_paid, method, months_affected[] }
         // Sub-type 2: Installment bad-debt recovery (pos2_recover_installment_debt)

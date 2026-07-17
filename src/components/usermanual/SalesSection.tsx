@@ -48,7 +48,7 @@ export const SalesSection: React.FC = () => {
 
       <h3 className="text-base font-semibold text-gray-800 mt-4">4. Manual Sales Logs &amp; Refunds Ledger</h3>
       <ul className="list-disc list-inside space-y-1.5 ml-2">
-        <li><strong>Record Manual Sale:</strong> Backdate or log a sales record completed outside the terminal interface. Form requires adding items, amounts, and customer context.</li>
+        <li><strong>Record Manual Sale:</strong> Backdate or log a sales record completed outside the terminal interface. Form requires adding items, amounts, customer context, and automatically logs the transaction in the E-Journal audit log under the active terminal.</li>
         <li><strong>View All Refunds:</strong> Open a centralized refunds audit log auditing all partial/full transaction returns in the system.</li>
       </ul>
     </div>
