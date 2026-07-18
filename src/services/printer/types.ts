@@ -3,7 +3,7 @@
 // ---------------------------------------------------------------------------
 
 /** Which platform/protocol handles the physical print job */
-export type TransportType = 'qz' | 'webusb' | 'bridge'
+export type TransportType = 'qz' | 'webusb' | 'bridge' | 'android-bt'
 
 // --- QZ Tray (desktop: Windows / Linux / macOS) ---
 export type QzConnectionType = 'usb' | 'serial' | 'network' | 'file'
@@ -37,7 +37,20 @@ export interface BridgeConfig {
   endpoint?: string
 }
 
-export type PrinterConfig = QzConfig | WebUsbConfig | BridgeConfig
+// --- Android Web Bluetooth (BLE receipt printers) ---
+export interface AndroidBtConfig {
+  type: 'android-bt'
+  /** Display name of the paired BT device (filled in after connect) */
+  deviceName?: string
+  /** Browser-assigned device ID (filled in after connect) */
+  deviceId?: string
+  /** Override BLE service UUID (leave empty to auto-detect from known list) */
+  serviceUuid?: string
+  /** Override write characteristic UUID (leave empty to auto-detect) */
+  characteristicUuid?: string
+}
+
+export type PrinterConfig = QzConfig | WebUsbConfig | BridgeConfig | AndroidBtConfig
 
 // ---------------------------------------------------------------------------
 // Transport lifecycle status
