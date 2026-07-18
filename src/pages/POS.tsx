@@ -23,6 +23,7 @@ import { PosService } from '../services/posService'
 import { useHardwareScanner } from '../hooks/useHardwareScanner'
 import CameraScanner from '../components/pos/CameraScanner'
 import { useScannerSettings } from '../contexts/ScannerSettingsContext'
+import { usePrinter } from '../contexts/PrinterContext'
 import OfflineSalesModal from '../components/pos/OfflineSalesModal'
 import PettyCashModal from '../components/pos/PettyCashModal'
 import { getCachedBusinessSettings } from '../utils/settingsCache'
@@ -73,6 +74,7 @@ const POS: React.FC = () => {
   const [viewMode, setViewMode] = useState<PosViewMode>('everything')
 
   const { scanMode } = useScannerSettings()
+  const { autoPrint } = usePrinter()
   const [isCameraOpen, setIsCameraOpen] = useState(false)
   const [offlineSalesOpen, setOfflineSalesOpen] = useState(false)
   const [isPettyCashOpen, setIsPettyCashOpen] = useState(false)
@@ -776,6 +778,7 @@ const POS: React.FC = () => {
         open={receiptOpen}
         data={receiptData}
         onClose={() => setReceiptOpen(false)}
+        autoDevicePrint={autoPrint}
       />
 
       {/* Payment modal */}

@@ -1,36 +1,83 @@
-export type TransportType = 'serial' | 'usb' | 'ble'
+// ---------------------------------------------------------------------------
+// Transport platform types
+// ---------------------------------------------------------------------------
 
-export interface SerialConfig {
-  type: 'serial'
-  baudRate: number
-  dataBits?: 7 | 8
-  stopBits?: 1 | 2
-  parity?: 'none' | 'even' | 'odd'
+/** Which platform/protocol handles the physical print job */
+export type TransportType = 'qz' | 'android-bt' | 'bridge'
+
+// --- QZ Tray (desktop: Windows / Linux / macOS) ---
+export type QzConnectionType = 'usb' | 'serial' | 'network' | 'file'
+
+export interface QzConfig {
+  type: 'qz'
+  /** QZ Tray WebSocket host (default: localhost) */
+  host?: string
+  /** QZ Tray WebSocket port (default: 8181) */
+  port?: number
+  /** Exact printer name as shown in QZ Tray / OS printer list. Empty = OS default printer */
+  printerName?: string
+  /** Physical connection type of the printer attached to the desktop */
+  connectionType?: QzConnectionType
+  /** Optional: path to PEM certificate for signed printing */
+  certPath?: string
 }
 
-export interface USBConfig {
-  type: 'usb'
-  vendorId?: number
-  productId?: number
-  configurationValue?: number
-  interfaceNumber?: number
-  endpointOut?: number
+// --- Android Bluetooth (Capacitor native) ---
+export interface AndroidBtConfig {
+  type: 'android-bt'
+  /** Friendly Bluetooth device name to auto-connect (empty = prompt scan) */
+  deviceName?: string
+  /** GATT Service UUID */
+  serviceUUID?: string
+  /** GATT Characteristic UUID (write) */
+  characteristicUUID?: string
 }
 
-export interface BLEConfig {
-  type: 'ble'
-  serviceUUID: string | number
-  characteristicUUID: string | number
+// --- Bridge Printer (coming soon) ---
+export interface BridgeConfig {
+  type: 'bridge'
+  /** HTTP endpoint for the bridge server */
+  endpoint?: string
 }
 
-export type PrinterConfig = SerialConfig | USBConfig | BLEConfig
+export type PrinterConfig = QzConfig | AndroidBtConfig | BridgeConfig
 
+// ---------------------------------------------------------------------------
+// Transport lifecycle status
+// ---------------------------------------------------------------------------
+export type PrinterStatus =
+  | 'idle'          // not yet attempted
+  | 'connecting'    // in progress
+  | 'connected'     // ready to print
+  | 'disconnected'  // cleanly closed
+  | 'error'         // failed
+
+export interface PrinterStatusDetail {
+  status: PrinterStatus
+  message?: string
+  /** Whether QZ Tray (or the native plugin) is reachable at all */
+  serviceAvailable?: boolean
+}
+
+// ---------------------------------------------------------------------------
+// Core transport interface
+// ---------------------------------------------------------------------------
 export interface PrinterTransport {
+  /** Check whether the transport service (QZ Tray / BT) is reachable */
+  checkStatus(): Promise<PrinterStatusDetail>
+  /** Return list of printer names available on this transport */
+  getPrinters(): Promise<string[]>
+  /** Connect to the configured printer (or the first/default one) */
   connect(opts?: { requestDevice?: boolean }): Promise<void>
+  /** Send raw ESC/POS bytes to the connected printer */
   write(data: Uint8Array): Promise<void>
-  close(): Promise<void>
+  /** Gracefully disconnect / release resources */
+  disconnect(): Promise<void>
 }
 
+// ---------------------------------------------------------------------------
+// ESC/POS encoder interface (unchanged)
+// ---------------------------------------------------------------------------
 export interface ESCPOSEncoder {
   initialize(): Uint8Array
   text(text: string): Uint8Array
@@ -41,14 +88,17 @@ export interface ESCPOSEncoder {
   cut(): Uint8Array
 }
 
+// ---------------------------------------------------------------------------
+// Persistence helpers
+// ---------------------------------------------------------------------------
 export const PRINTER_CONFIG_KEY = 'pos_printer_config'
+export const PRINTER_AUTO_PRINT_KEY = 'pos_printer_auto_print'
 
 export function loadPrinterConfig(): PrinterConfig | null {
   try {
     const raw = localStorage.getItem(PRINTER_CONFIG_KEY)
     if (!raw) return null
-    const parsed = JSON.parse(raw)
-    return parsed as PrinterConfig
+    return JSON.parse(raw) as PrinterConfig
   } catch (e) {
     console.warn('Failed to load printer config', e)
     return null
@@ -59,7 +109,17 @@ export function savePrinterConfig(cfg: PrinterConfig) {
   localStorage.setItem(PRINTER_CONFIG_KEY, JSON.stringify(cfg))
 }
 
-// --- Receipt design configuration ---
+export function loadAutoPrint(): boolean {
+  return localStorage.getItem(PRINTER_AUTO_PRINT_KEY) === 'true'
+}
+
+export function saveAutoPrint(enabled: boolean) {
+  localStorage.setItem(PRINTER_AUTO_PRINT_KEY, String(enabled))
+}
+
+// ---------------------------------------------------------------------------
+// Receipt design configuration (unchanged)
+// ---------------------------------------------------------------------------
 export type ReceiptTextAlign = 'left' | 'center' | 'right'
 export type ReceiptTextSize = 'normal' | 'double'
 

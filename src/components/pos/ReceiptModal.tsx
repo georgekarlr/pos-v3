@@ -1,24 +1,41 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Receipt, { ReceiptData } from './Receipt'
-import { loadPrinterConfig } from '../../services/printer/types'
-import { printReceiptWithConfig } from '../../services/printer'
+import { usePrinter } from '../../contexts/PrinterContext'
 
 interface ReceiptModalProps {
   open: boolean
   data: ReceiptData | null
   onClose: () => void
+  /** When true this modal fires the device print immediately on open (used by checkout autoPrint) */
+  autoDevicePrint?: boolean
 }
 
-const ReceiptModal: React.FC<ReceiptModalProps> = ({ open, data, onClose }) => {
+const ReceiptModal: React.FC<ReceiptModalProps> = ({ open, data, onClose, autoDevicePrint }) => {
   const [show, setShow] = useState(false)
   const [deviceBusy, setDeviceBusy] = useState(false)
+  const [deviceMsg, setDeviceMsg] = useState<string | null>(null)
   const receiptRef = useRef<HTMLDivElement>(null)
+  const { print: printerPrint, config: printerConfig } = usePrinter()
+  const autoPrintFired = useRef(false)
 
   useEffect(() => {
     if (open) setTimeout(() => setShow(true), 10)
-    else setShow(false)
+    else {
+      setShow(false)
+      autoPrintFired.current = false
+      setDeviceMsg(null)
+    }
   }, [open])
+
+  // Auto-print on open when autoDevicePrint=true and a printer is configured
+  useEffect(() => {
+    if (open && autoDevicePrint && data && printerConfig && !autoPrintFired.current) {
+      autoPrintFired.current = true
+      handleDevicePrint()
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, autoDevicePrint, data, printerConfig])
 
   if (!open || !data) return null
 
@@ -51,12 +68,10 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ open, data, onClose }) => {
       doc.write('<!doctype html><html><head><meta charset="utf-8"><title>Receipt</title></head><body></body></html>')
       doc.close()
 
-      // Clone current styles (Tailwind is injected via <style> in dev and <link> in prod)
       const head = doc.head
       const styleNodes = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
       styleNodes.forEach((n) => head.appendChild(n.cloneNode(true)))
 
-      // Add print-specific CSS to match POS printer width
       const extraStyle = doc.createElement('style')
       extraStyle.type = 'text/css'
       extraStyle.textContent = `
@@ -66,16 +81,13 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ open, data, onClose }) => {
           html, body { margin: 0; padding: 0; background: #ffffff; }
           .receipt-paper { width: var(--receipt-width) !important; }
         }
-        /* On screen inside the print window, center the receipt */
         body { display: flex; justify-content: center; }
       `
       head.appendChild(extraStyle)
 
-      // Clone the receipt DOM
       const sourceNode = container.cloneNode(true) as HTMLElement
       doc.body.appendChild(sourceNode)
 
-      // Ensure styles are applied before printing (wait for stylesheets to load)
       const waitForLinks = Array.from(head.querySelectorAll('link[rel="stylesheet"]'))
         .map((lnk) => new Promise<void>((resolve) => {
           if ((lnk as HTMLLinkElement).sheet) return resolve()
@@ -85,7 +97,6 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ open, data, onClose }) => {
 
       Promise.all(waitForLinks).then(() => {
         printWindow.focus()
-        // Short delay to allow layout to settle
         setTimeout(() => {
           printWindow.print()
           printWindow.close()
@@ -99,21 +110,19 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ open, data, onClose }) => {
 
   const handleDevicePrint = async () => {
     if (!data) return
-    const cfg = loadPrinterConfig()
-    if (!cfg) {
+    if (!printerConfig) {
       const go = confirm('No receipt printer configured. Open the Receipt Printer settings now?')
-      if (go) {
-        window.location.href = '/settings/receipt-printer'
-      }
+      if (go) window.location.href = '/settings'
       return
     }
+    setDeviceBusy(true)
+    setDeviceMsg(null)
     try {
-      setDeviceBusy(true)
-      await printReceiptWithConfig(cfg, data)
-      alert('Receipt sent to printer.')
+      await printerPrint(data)
+      setDeviceMsg('Receipt sent to printer ✓')
     } catch (e: any) {
       console.error(e)
-      alert('Device print failed: ' + (e?.message || e))
+      setDeviceMsg('Device print failed: ' + (e?.message || e))
     } finally {
       setDeviceBusy(false)
     }
@@ -137,9 +146,22 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ open, data, onClose }) => {
           </div>
         </div>
 
+        {deviceMsg && (
+          <div className={`mx-4 mb-2 px-3 py-2 rounded text-sm ${deviceMsg.includes('failed') ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
+            {deviceMsg}
+          </div>
+        )}
+
         <div className="px-4 pb-4 flex flex-col sm:flex-row gap-2 sm:justify-end">
           <button onClick={handlePrint} className="w-full sm:w-auto px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700">Print</button>
-          <button disabled={deviceBusy} onClick={handleDevicePrint} className="w-full sm:w-auto px-4 py-2 rounded-md bg-green-600 text-white hover:bg-green-700 disabled:opacity-60">Send to Printer</button>
+          <button
+            id="btn-send-to-printer"
+            disabled={deviceBusy}
+            onClick={handleDevicePrint}
+            className="w-full sm:w-auto px-4 py-2 rounded-md bg-green-600 text-white hover:bg-green-700 disabled:opacity-60"
+          >
+            {deviceBusy ? 'Sending…' : 'Send to Printer'}
+          </button>
           <button onClick={handleSaveImage} className="w-full sm:w-auto px-4 py-2 rounded-md border border-gray-300 bg-white hover:bg-gray-50">Save Image</button>
         </div>
       </div>

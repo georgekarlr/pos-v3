@@ -1,22 +1,48 @@
-import { BLEConfig, PrinterConfig, PrinterTransport, SerialConfig, USBConfig, loadReceiptDesign, type ReceiptDesign } from './types'
-import { BLETransport, SerialTransport, USBTransport } from './transports'
+import {
+  PrinterConfig,
+  PrinterTransport,
+  loadReceiptDesign,
+  type ReceiptDesign,
+} from './types'
+import { QzTransport } from './transports/qz'
+import { AndroidBtTransport } from './transports/android-bt'
+import { BridgeTransport } from './transports/bridge'
 import { joinBytes, SimpleESCPOSEncoder } from './escpos'
 import type { ReceiptData } from '../../components/pos/Receipt'
 
+// ---------------------------------------------------------------------------
+// Transport factory
+// ---------------------------------------------------------------------------
 export function createTransport(cfg: PrinterConfig): PrinterTransport {
   switch (cfg.type) {
-    case 'serial':
-      return new SerialTransport(cfg as SerialConfig)
-    case 'usb':
-      return new USBTransport(cfg as USBConfig)
-    case 'ble':
-      return new BLETransport(cfg as BLEConfig)
+    case 'qz':
+      return new QzTransport(cfg)
+    case 'android-bt':
+      return new AndroidBtTransport(cfg)
+    case 'bridge':
+      return new BridgeTransport(cfg)
     default:
-      // @ts-ignore
-      throw new Error('Unknown transport type: ' + (cfg as any)?.type)
+      throw new Error('Unknown printer transport type: ' + (cfg as any)?.type)
   }
 }
 
+// ---------------------------------------------------------------------------
+// Convenience: one-shot print with connect → write → disconnect lifecycle
+// ---------------------------------------------------------------------------
+export async function printReceiptWithConfig(cfg: PrinterConfig, receipt: ReceiptData): Promise<void> {
+  const transport = createTransport(cfg)
+  await transport.connect({ requestDevice: true })
+  try {
+    const payload = buildEscposFromReceipt(receipt)
+    await transport.write(payload)
+  } finally {
+    await transport.disconnect()
+  }
+}
+
+// ---------------------------------------------------------------------------
+// ESC/POS builder — Receipt → raw bytes
+// ---------------------------------------------------------------------------
 export function buildEscposFromReceipt(data: ReceiptData): Uint8Array {
   const enc = new SimpleESCPOSEncoder()
   const parts: Uint8Array[] = []
@@ -70,6 +96,7 @@ export function buildEscposFromReceipt(data: ReceiptData): Uint8Array {
     pushText(data.notes + '\n')
     parts.push(enc.newline())
   }
+
   // Footer
   if (design.footerText && design.footerText.trim().length > 0) {
     parts.push(enc.align((design.footerAlign ?? 'center') as any))
@@ -82,6 +109,7 @@ export function buildEscposFromReceipt(data: ReceiptData): Uint8Array {
     parts.push(enc.align('center'))
     pushText('Thank you for your business!\n')
   }
+
   // BIR / Provider footer
   parts.push(enc.align('left'))
   if (data.ptuIssuedBy) pushText(`PTU Issued by RDO: ${data.ptuIssuedBy}\n`)
@@ -98,18 +126,9 @@ export function buildEscposFromReceipt(data: ReceiptData): Uint8Array {
   return joinBytes(parts)
 }
 
-export async function printReceiptWithConfig(cfg: PrinterConfig, receipt: ReceiptData): Promise<void> {
-  const transport = createTransport(cfg)
-  await transport.connect({ requestDevice: true })
-  try {
-    const payload = buildEscposFromReceipt(receipt)
-    await transport.write(payload)
-  } finally {
-    await transport.close()
-  }
-}
-
-// --- Shared layout helpers ---
+// ---------------------------------------------------------------------------
+// Shared layout helpers (unchanged)
+// ---------------------------------------------------------------------------
 export function withDesignDefaults(design?: ReceiptDesign): Required<Pick<ReceiptDesign,
   'paperWidth' | 'itemLabel' | 'qtyLabel' | 'totalLabel' |
   'itemWidth' | 'qtyWidth' | 'totalWidth' |
@@ -118,14 +137,12 @@ export function withDesignDefaults(design?: ReceiptDesign): Required<Pick<Receip
 >> & ReceiptDesign {
   const d = design || {}
   const paperWidth = d.paperWidth && d.paperWidth > 16 ? d.paperWidth : 32
-  // defaults that fit 32 cols: item 18, qty 5, total 7, with 1 space between columns
   const itemWidth = d.itemWidth && d.itemWidth > 4 ? d.itemWidth : 18
   const qtyWidth = d.qtyWidth && d.qtyWidth > 2 ? d.qtyWidth : 5
   const spacing = 1
   let totalWidth = d.totalWidth && d.totalWidth > 4 ? d.totalWidth : (paperWidth - itemWidth - qtyWidth - spacing * 2)
   if (totalWidth < 4) totalWidth = 4
   const fit = itemWidth + qtyWidth + totalWidth + spacing * 2
-  // If overflows, shrink item first
   if (fit > paperWidth) {
     const over = fit - paperWidth
     const newItem = Math.max(4, itemWidth - over)
@@ -203,7 +220,7 @@ export function layoutReceiptLines(data: ReceiptData, design?: ReceiptDesign): s
 
   if (d.showItemsSeparatorBottom) lines.push(sep)
 
-  // Totals — BIR order: Subtotal → Less Promo → Subtotal After Promo → Less SC/PWD → TOTAL DUE
+  // Totals — BIR order
   const pushTotal = (label: string, value: number) => {
     const v = money(value)
     const lbl = label + ': '
@@ -215,21 +232,17 @@ export function layoutReceiptLines(data: ReceiptData, design?: ReceiptDesign): s
   const promoDiscount = data.totalPromoDiscount ?? 0
   pushTotal('Subtotal', data.subtotal)
 
-  // Promo discount line (before SC/PWD — BIR compliant order)
   if (promoDiscount > 0) {
     pushTotal('Less: Promo Discount', -promoDiscount)
-    // Show intermediate subtotal only when both promo AND SC/PWD are active
     if (isScPwd) {
       pushTotal('Subtotal After Promo', data.subtotal - promoDiscount)
     }
   }
 
-  // VAT Exemption line
   if (data.vatExemptDiscount !== undefined && data.vatExemptDiscount > 0) {
     pushTotal('Less: 12% VAT Exemption', -data.vatExemptDiscount)
   }
 
-  // SC/PWD discount line
   if (isScPwd && (data.scPwdDiscount ?? 0) > 0) {
     pushTotal('Less: SC/PWD Disc (20%)', -(data.scPwdDiscount!))
   }
@@ -241,7 +254,7 @@ export function layoutReceiptLines(data: ReceiptData, design?: ReceiptDesign): s
   pushTotal('Change', data.change)
   lines.push('')
 
-  // VAT Breakdown — derived from line items for BIR-correct amounts
+  // VAT Breakdown
   if (data.isVatRegistered === true) {
     let vatableAmt: number
     let vatAmt: number
@@ -249,19 +262,16 @@ export function layoutReceiptLines(data: ReceiptData, design?: ReceiptDesign): s
     let zeroRated: number
 
     if (data.vatableAmount != null || data.vatAmount != null || data.vatExemptAmount != null || data.zeroRatedAmount != null) {
-      // Explicit overrides — use them directly
       vatableAmt = data.vatableAmount ?? 0
       vatAmt     = data.vatAmount ?? 0
       vatExempt  = data.vatExemptAmount ?? 0
       zeroRated  = data.zeroRatedAmount ?? 0
     } else {
-      // Derive from line items (same logic as Receipt.tsx)
       vatableAmt = 0; vatAmt = 0; vatExempt = 0; zeroRated = 0
       for (const l of data.lines) {
         const isVatable = l.taxType === 'VATable' || !l.taxType
         const lineIsScPwdVatExempt = isScPwd && l.isScPwdEligible && isVatable
         if (lineIsScPwdVatExempt) {
-          // Post-promo VAT-exclusive amount — BIR VAT-Exempt bucket
           const vatExemptAmt = l.vatExemptLineTotal != null && l.vatExemptLineTotal > 0
             ? l.vatExemptLineTotal
             : (l.baseUnitPrice != null ? l.baseUnitPrice * l.qty : l.lineTotal)
