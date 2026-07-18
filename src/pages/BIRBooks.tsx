@@ -4,12 +4,12 @@ import { ReportService } from '../services/reportService'
 import { BIRSalesBookRow, SCPWDBookRow, VoidsAndRefundsRow } from '../types/report'
 import LoadingSpinner from '../components/LoadingSpinner'
 import { FormatDateTime } from '../utils/formatDateTime'
-import { 
-  BookOpen, 
-  Users, 
-  Trash2, 
-  Download, 
-  Printer, 
+import {
+  BookOpen,
+  Users,
+  Trash2,
+  Download,
+  Printer,
   Calendar,
   DollarSign,
   Receipt,
@@ -171,14 +171,14 @@ const BIRBooks: React.FC = () => {
         'Net Sales'
       ]
       rows = scPwdData.map(r => [
-        r.transaction_date,
-        r.invoice_number,
-        r.sc_pwd_name,
-        r.sc_pwd_id,
-        String(r.gross_sales),
-        String(r.vat_exempt_sales),
-        String(r.discount_amount),
-        String(r.net_sales)
+        r.transaction_date || '',
+        r.invoice_number || 'N/A',
+        r.sc_pwd_name || 'N/A',
+        r.sc_pwd_id || 'N/A',
+        String(r.gross_sales ?? 0),
+        String(r.vat_exempt_sales ?? 0),
+        String(r.discount_amount ?? 0),
+        String(r.net_sales ?? 0)
       ])
     } else if (activeTab === 'voids-refunds') {
       filename = `BIR_Voids_and_Refunds_Log_${startDate}_to_${endDate}`
@@ -192,11 +192,11 @@ const BIRBooks: React.FC = () => {
         'Authorized By'
       ]
       rows = voidsRefundsData.map(r => [
-        r.action_date,
-        r.adjustment_type,
-        r.invoice_number,
-        String(r.original_total),
-        String(r.adjusted_amount),
+        r.action_date || '',
+        r.adjustment_type || '',
+        r.invoice_number || 'N/A',
+        String(r.original_total ?? 0),
+        String(r.adjusted_amount ?? 0),
         r.reason || 'N/A',
         r.authorized_by || 'N/A'
       ])
@@ -205,9 +205,9 @@ const BIRBooks: React.FC = () => {
     // Convert arrays to CSV format, handling quotes/commas correctly
     const csvContent = [
       headers.join(','),
-      ...rows.map(row => 
+      ...rows.map(row =>
         row.map(cell => {
-          const clean = cell.replace(/"/g, '""')
+          const clean = String(cell ?? '').replace(/"/g, '""')
           return clean.includes(',') || clean.includes('\n') || clean.includes('"') ? `"${clean}"` : clean
         }).join(',')
       )
@@ -241,7 +241,8 @@ const BIRBooks: React.FC = () => {
   return (
     <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
       {/* CSS style overlay to cleanly support physical prints with custom headers/margins */}
-      <style dangerouslySetInnerHTML={{__html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         @media print {
           body * {
             visibility: hidden;
@@ -277,7 +278,7 @@ const BIRBooks: React.FC = () => {
         <div className="flex items-center gap-2">
           <button
             onClick={exportToCSV}
-            disabled={loading || (activeTab === 'z-reading' && zReadingData.length === 0) || (activeTab === 'sc-pwd' && scPwdData.length === 0) || (activeTab === 'voids-refunds' && voidsRefundsData.length === 0)}
+            disabled={loading}
             className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm"
           >
             <Download className="w-4 h-4" />
@@ -335,33 +336,30 @@ const BIRBooks: React.FC = () => {
       <div className="flex border-b border-slate-200 no-print">
         <button
           onClick={() => setActiveTab('z-reading')}
-          className={`flex items-center gap-2 py-3 px-4 border-b-2 font-medium text-sm transition-colors ${
-            activeTab === 'z-reading'
+          className={`flex items-center gap-2 py-3 px-4 border-b-2 font-medium text-sm transition-colors ${activeTab === 'z-reading'
               ? 'border-blue-600 text-blue-600'
               : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
-          }`}
+            }`}
         >
           <Receipt className="w-4 h-4" />
           Z-Reading Log (Cumulative Sales)
         </button>
         <button
           onClick={() => setActiveTab('sc-pwd')}
-          className={`flex items-center gap-2 py-3 px-4 border-b-2 font-medium text-sm transition-colors ${
-            activeTab === 'sc-pwd'
+          className={`flex items-center gap-2 py-3 px-4 border-b-2 font-medium text-sm transition-colors ${activeTab === 'sc-pwd'
               ? 'border-blue-600 text-blue-600'
               : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
-          }`}
+            }`}
         >
           <Users className="w-4 h-4" />
           SC/PWD Discount Book
         </button>
         <button
           onClick={() => setActiveTab('voids-refunds')}
-          className={`flex items-center gap-2 py-3 px-4 border-b-2 font-medium text-sm transition-colors ${
-            activeTab === 'voids-refunds'
+          className={`flex items-center gap-2 py-3 px-4 border-b-2 font-medium text-sm transition-colors ${activeTab === 'voids-refunds'
               ? 'border-blue-600 text-blue-600'
               : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
-          }`}
+            }`}
         >
           <Trash2 className="w-4 h-4" />
           Voids & Adjustments Audit Log
@@ -380,8 +378,8 @@ const BIRBooks: React.FC = () => {
           <div>
             <p><span className="font-semibold">Book Sub-Type:</span> {
               activeTab === 'z-reading' ? 'BIR Z-Reading Log (Cumulative Sales Book)' :
-              activeTab === 'sc-pwd' ? 'Senior Citizen & PWD Discount Book' :
-              'Voids and Refunds Audit Ledger'
+                activeTab === 'sc-pwd' ? 'Senior Citizen & PWD Discount Book' :
+                  'Voids and Refunds Audit Ledger'
             }</p>
             <p><span className="font-semibold">Regulatory Framework:</span> BIR RMO No. 10-2005</p>
             <p><span className="font-semibold">Verified Auditor PIN Status:</span> Active Admin Session</p>
@@ -391,7 +389,7 @@ const BIRBooks: React.FC = () => {
 
       {/* Main Report Area - Printed content goes here */}
       <div id="print-area" className="space-y-6">
-        
+
         {/* KPI Summaries - Dynamic per active tab */}
         {activeTab === 'z-reading' && !loading && !error && (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -515,7 +513,7 @@ const BIRBooks: React.FC = () => {
         {/* Table Content */}
         {!loading && !error && (
           <div className="bg-white border rounded-xl shadow-sm overflow-hidden">
-            
+
             {/* Z-Reading Log Table */}
             {activeTab === 'z-reading' && (
               <div className="overflow-x-auto">
@@ -669,9 +667,8 @@ const BIRBooks: React.FC = () => {
                       <tr key={idx} className="hover:bg-slate-50/50 odd:bg-white even:bg-slate-50/20">
                         <td className="py-3 px-4 font-medium whitespace-nowrap">{row.action_date}</td>
                         <td className="py-3 px-4 whitespace-nowrap">
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${
-                            row.adjustment_type === 'VOID' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'
-                          }`}>
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${row.adjustment_type === 'VOID' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'
+                            }`}>
                             {row.adjustment_type}
                           </span>
                         </td>
