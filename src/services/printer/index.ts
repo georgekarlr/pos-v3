@@ -7,6 +7,7 @@ import {
 import { QzTransport } from './transports/qz'
 import { WebUsbTransport } from './transports/webusb'
 import { BridgeTransport } from './transports/bridge'
+import { AndroidBtTransport } from './transports/android-bt'
 import { joinBytes, SimpleESCPOSEncoder } from './escpos'
 import type { ReceiptData } from '../../components/pos/Receipt'
 
@@ -21,6 +22,8 @@ export function createTransport(cfg: PrinterConfig): PrinterTransport {
       return new WebUsbTransport(cfg)
     case 'bridge':
       return new BridgeTransport(cfg)
+    case 'android-bt':
+      return new AndroidBtTransport(cfg)
     default:
       throw new Error('Unknown printer transport type: ' + (cfg as any)?.type)
   }
