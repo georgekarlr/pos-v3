@@ -38,22 +38,41 @@ export class QzTransport implements PrinterTransport {
   }
 
   // -------------------------------------------------------------------------
+  // _connectWs — shared websocket connect logic
+  // -------------------------------------------------------------------------
+  private async _connectWs(): Promise<any> {
+    const qz = await loadQz()
+    const isSecure = typeof window !== 'undefined' && window.location.protocol === 'https:'
+    const host = this.cfg.host || 'localhost'
+    const port = this.cfg.port || 8181
+    const usingSecure = port === 8181 ? true : (port === 8182 ? false : isSecure)
+    const hosts = (host === '127.0.0.1' || host === 'localhost')
+      ? ['localhost', 'localhost.qz.io', '127.0.0.1']
+      : [host]
+
+    qz.api.setWebSocketType(WebSocket)
+    qz.websocket.setClosedCallbacks([])
+    qz.websocket.setErrorCallbacks([])
+
+    if (!qz.websocket.isActive()) {
+      await qz.websocket.connect({
+        host: hosts,
+        port: { secure: [port], insecure: [port] },
+        usingSecure,
+        keepAlive: 20,
+      })
+    }
+    return qz
+  }
+
+  // -------------------------------------------------------------------------
   // checkStatus — ping QZ Tray WebSocket, return availability + connection
   // -------------------------------------------------------------------------
   async checkStatus(): Promise<PrinterStatusDetail> {
     try {
-      const qz = await loadQz()
-      const isSecure = typeof window !== 'undefined' && window.location.protocol === 'https:'
-      const host = this.cfg.host || '127.0.0.1'
-      const port = this.cfg.port || (isSecure ? 8182 : 8181)
+      const qz = await this._connectWs()
 
-      qz.api.setWebSocketType(WebSocket)
-      qz.websocket.setClosedCallbacks([])
-      qz.websocket.setErrorCallbacks([])
-
-      await qz.websocket.connect({ host, port, usingSecure: isSecure, keepAlive: 20 })
-
-      // If we reach here QZ Tray is running
+      // If we were already connected keep the socket alive; otherwise close it
       if (!this.connected) {
         await qz.websocket.disconnect()
       }
@@ -79,36 +98,37 @@ export class QzTransport implements PrinterTransport {
   }
 
   // -------------------------------------------------------------------------
-  // getPrinters — return OS printer list via QZ Tray
+  // getPrinters — return full OS printer list via QZ Tray
+  // Manages its own WS connection lifecycle if not already connected.
   // -------------------------------------------------------------------------
   async getPrinters(): Promise<string[]> {
-    const qz = await this._ensureConnected()
-    const printers: string[] = await qz.printers.find()
-    return printers
+    const wasActive = (await loadQz()).websocket.isActive()
+    const qz = await this._connectWs()
+    try {
+      const list: string[] = await qz.printers.find()
+      return list
+    } finally {
+      // Only disconnect if we opened the socket ourselves
+      if (!wasActive && !this.connected) {
+        qz.websocket.disconnect().catch(() => {})
+      }
+    }
   }
 
   // -------------------------------------------------------------------------
   // connect — establish WS to QZ Tray and select the configured printer
   // -------------------------------------------------------------------------
   async connect(_opts?: { requestDevice?: boolean }): Promise<void> {
-    const qz = await loadQz()
-    const isSecure = typeof window !== 'undefined' && window.location.protocol === 'https:'
-    const host = this.cfg.host || '127.0.0.1'
-    const port = this.cfg.port || (isSecure ? 8182 : 8181)
-
-    qz.api.setWebSocketType(WebSocket)
-
-    if (!qz.websocket.isActive()) {
-      await qz.websocket.connect({ host, port, usingSecure: isSecure, keepAlive: 20 })
-    }
+    const qz = await this._connectWs()
 
     // Resolve printer name
     const desiredName = (this.cfg.printerName ?? '').trim()
     if (desiredName) {
       const allPrinters: string[] = await qz.printers.find(desiredName)
       if (!allPrinters.length) {
+        const available: string[] = await qz.printers.find()
         throw new Error(
-          `Printer "${desiredName}" not found. Available: ${(await qz.printers.find()).join(', ')}`
+          `Printer "${desiredName}" not found. Available: ${available.join(', ')}`
         )
       }
       this.printer = allPrinters[0]
@@ -128,11 +148,15 @@ export class QzTransport implements PrinterTransport {
     }
     const qz = await loadQz()
 
-    // Convert Uint8Array to a plain JS Array of numbers (QZ Tray expects this)
-    const byteArray = Array.from(data)
-
-    const config = qz.configs.create(this.printer)
-    const printData = [{ type: 'raw', format: 'command', data: byteArray }]
+    /**
+     * Pass the Uint8Array directly with flavor:'base64'.
+     * QZ Tray has built-in Uint8Array→base64 conversion (qz-tray.js line ~895).
+     * Using Array.from() + flavor:'plain' would serialize the byte values as
+     * a JSON array of numbers and print that text literally — causing the
+     * "random words / PostScript garbage" output on the paper.
+     */
+    const config = qz.configs.create(this.printer, { jobName: 'Receipt' })
+    const printData = [{ type: 'raw', format: 'command', flavor: 'base64', data }]
     await qz.print(config, printData)
   }
 
@@ -153,16 +177,7 @@ export class QzTransport implements PrinterTransport {
     }
   }
 
-  // -------------------------------------------------------------------------
-  // Internal helpers
-  // -------------------------------------------------------------------------
-  private async _ensureConnected(): Promise<any> {
-    const qz = await loadQz()
-    if (!qz.websocket.isActive()) {
-      await this.connect()
-    }
-    return qz
-  }
+
 }
 
 // ---------------------------------------------------------------------------
@@ -171,8 +186,19 @@ export class QzTransport implements PrinterTransport {
 export async function isQzAvailable(host = 'localhost', port = 8181): Promise<boolean> {
   try {
     const qz = await loadQz()
+    const hosts = (host === '127.0.0.1' || host === 'localhost')
+      ? ['localhost', 'localhost.qz.io', '127.0.0.1']
+      : [host]
     qz.api.setWebSocketType(WebSocket)
-    await qz.websocket.connect({ host, port, usingSecure: false, keepAlive: 20 })
+    await qz.websocket.connect({
+      host: hosts,
+      port: {
+        secure: [port],
+        insecure: [port]
+      },
+      usingSecure: port === 8181 ? true : false,
+      keepAlive: 20
+    })
     await qz.websocket.disconnect()
     return true
   } catch {

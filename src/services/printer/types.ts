@@ -3,7 +3,7 @@
 // ---------------------------------------------------------------------------
 
 /** Which platform/protocol handles the physical print job */
-export type TransportType = 'qz' | 'android-bt' | 'bridge'
+export type TransportType = 'qz' | 'webusb' | 'bridge'
 
 // --- QZ Tray (desktop: Windows / Linux / macOS) ---
 export type QzConnectionType = 'usb' | 'serial' | 'network' | 'file'
@@ -22,15 +22,12 @@ export interface QzConfig {
   certPath?: string
 }
 
-// --- Android Bluetooth (Capacitor native) ---
-export interface AndroidBtConfig {
-  type: 'android-bt'
-  /** Friendly Bluetooth device name to auto-connect (empty = prompt scan) */
+// --- WebUSB (direct USB printing in browser) ---
+export interface WebUsbConfig {
+  type: 'webusb'
+  vendorId?: number
+  productId?: number
   deviceName?: string
-  /** GATT Service UUID */
-  serviceUUID?: string
-  /** GATT Characteristic UUID (write) */
-  characteristicUUID?: string
 }
 
 // --- Bridge Printer (coming soon) ---
@@ -40,7 +37,7 @@ export interface BridgeConfig {
   endpoint?: string
 }
 
-export type PrinterConfig = QzConfig | AndroidBtConfig | BridgeConfig
+export type PrinterConfig = QzConfig | WebUsbConfig | BridgeConfig
 
 // ---------------------------------------------------------------------------
 // Transport lifecycle status
