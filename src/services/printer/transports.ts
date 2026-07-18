@@ -110,7 +110,14 @@ export class BLETransport implements PrinterTransport {
 
   async write(data: Uint8Array): Promise<void> {
     if (!this.characteristic) throw new Error('BLE not connected')
-    await this.characteristic.writeValue(data)
+    
+    // Web Bluetooth GATT characteristic writeValue has a limit, typically 512 bytes.
+    // We chunk the data to stay within this limit and ensure compatibility across devices.
+    const CHUNK_SIZE = 512
+    for (let i = 0; i < data.length; i += CHUNK_SIZE) {
+      const chunk = data.slice(i, i + CHUNK_SIZE)
+      await this.characteristic.writeValue(chunk)
+    }
   }
 
   async close(): Promise<void> {
