@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { useEffect } from 'react'
 import { AuthProvider } from './contexts/AuthContext'
 import { ScannerSettingsProvider } from './contexts/ScannerSettingsContext'
+import { PrinterProvider } from './contexts/PrinterContext'
 import { SyncService } from './services/syncService'
 
 import ProtectedRoute from './components/ProtectedRoute'
@@ -38,6 +39,7 @@ function App() {
   return (
     <AuthProvider>
       <ScannerSettingsProvider>
+        <PrinterProvider>
         <Router>
           <Routes>
             {/* Public routes */}
@@ -230,6 +232,7 @@ function App() {
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </Router>
+        </PrinterProvider>
       </ScannerSettingsProvider>
     </AuthProvider>
   )

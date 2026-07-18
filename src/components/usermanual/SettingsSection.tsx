@@ -33,7 +33,10 @@ export const SettingsSection: React.FC = () => {
         <div className="border border-gray-200 rounded-lg p-3 bg-gray-50/50">
           <h4 className="font-semibold text-gray-800">🖨️ Receipt Printer Tab</h4>
           <p className="text-xs text-gray-600 mt-1">
-            Set up connection configs: **Serial** (Baud Rate), **USB** (using WebUSB; requires Chrome or Edge), and **Bluetooth** (BLE Service/Characteristic UUIDs). Click **Save &amp; Connect** to pair, and **Test Print** to request a mock receipt printing page.
+            Configure receipt printing for your platform:
+            - **QZ Tray (Desktop):** Connects to a local QZ Tray instance via WebSocket (supporting USB, Serial, Network/LAN, or file output). Allows fetching the printer list and setting custom WebSocket host/ports.
+            - **Android Bluetooth:** Connects to Bluetooth printers via native Capacitor BLE clients.
+            Toggle **Auto-Print on Checkout** to automatically send receipts to the configured printer after every completed sale.
           </p>
         </div>
 
