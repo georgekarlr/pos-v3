@@ -146,7 +146,7 @@ export const salesService = {
   }): Promise<VoidSaleResult> {
     const { requesting_account_id, order_id, reason, void_date } = params
 
-    const localVoidDate = void_date || FormatDateTime.formatLocalTimestampForDatabase(new Date()).slice(0, 10)
+    const localVoidDate = FormatDateTime.formatLocalTimestampForDatabase(new Date(void_date || new Date())).slice(0, 10)
 
     const { data, error } = await supabase.rpc('pos2_void_sale', {
       p_requesting_account_id: requesting_account_id,

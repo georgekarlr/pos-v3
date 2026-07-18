@@ -75,6 +75,7 @@ export const ReportService = {
    */
   async generateXReading(params: GenerateXReadingParams): Promise<XReadingResult> {
     const { requesting_account_id, terminal_id, target_date } = params
+    console.log('params x-reading', params);
     const { data, error } = await supabase.rpc('pos2_generate_x_reading', {
       p_requesting_account_id: requesting_account_id,
       p_terminal_id: terminal_id,
