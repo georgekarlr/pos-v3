@@ -3,14 +3,14 @@
  *
  * Global React context that manages the ESC/POS printer lifecycle:
  *   - Connection status (idle / connecting / connected / disconnected / error)
- *   - Available printer list (from QZ Tray or Android BT)
+ *   - Available printer list (from QZ Tray or WebUSB)
  *   - Connect / disconnect lifecycle
  *   - autoPrint toggle: when true, the receipt is automatically sent to the
  *     configured printer after every successful checkout (no manual click needed)
  *   - print(receiptData) — sends ESC/POS bytes through the active transport
  *
  * The context keeps a single long-lived transport instance while connected,
- * so the WebSocket to QZ Tray (or the GATT connection on Android) stays open
+ * so the WebSocket to QZ Tray (or the WebUSB interface claim) stays open
  * across multiple print jobs during a session.
  */
 
@@ -42,9 +42,9 @@ interface PrinterContextType {
   status: PrinterStatus
   /** Human-readable status message (errors, info) */
   statusMessage: string
-  /** Whether the QZ Tray / BT service is reachable at all */
+  /** Whether the QZ Tray / WebUSB service is reachable at all */
   serviceAvailable: boolean
-  /** Printers reported by the active transport (QZ printer list, BT device names) */
+  /** Printers reported by the active transport (QZ printer list, paired USB devices) */
   printers: string[]
   /** Currently selected/connected printer name */
   selectedPrinter: string | null
@@ -150,6 +150,16 @@ export const PrinterProvider: React.FC<{ children: ReactNode }> = ({ children })
       const transport = transportRef.current ?? createTransport(config)
       const detail: PrinterStatusDetail = await transport.checkStatus()
       applyStatusDetail(detail)
+
+      // Auto-fetch printer list if QZ service is active
+      if (detail.serviceAvailable && config.type === 'qz') {
+        try {
+          const list = await transport.getPrinters()
+          setPrinters(list)
+        } catch {
+          // ignore non-fatal retrieval errors
+        }
+      }
     } catch (err: any) {
       setStatus('error')
       setStatusMessage(err?.message ?? 'Unknown error')
@@ -193,6 +203,13 @@ export const PrinterProvider: React.FC<{ children: ReactNode }> = ({ children })
       const transport = createTransport(config)
       await transport.connect({ requestDevice: true })
       transportRef.current = transport
+
+      // If it's WebUSB, retrieve details of the device user actually paired
+      if (config.type === 'webusb' && 'getConfig' in transport) {
+        const updatedConfig = (transport as any).getConfig() as PrinterConfig
+        savePrinterConfig(updatedConfig)
+        setConfigState(updatedConfig)
+      }
 
       // Fetch printer name from status after connect
       const detail = await transport.checkStatus()

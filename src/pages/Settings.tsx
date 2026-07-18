@@ -23,10 +23,9 @@ import { usePrinter } from '../contexts/PrinterContext'
 import { useAuth } from '../contexts/AuthContext'
 import { SettingsService } from '../services/settingsService'
 import { BusinessSettings, Terminal } from '../types/settings'
-import { QzConfig, AndroidBtConfig } from '../services/printer/types'
+import { QzConfig, WebUsbConfig } from '../services/printer/types'
 import { DEFAULT_QZ_CONFIG } from '../services/printer/config/qz-defaults'
-import { DEFAULT_ANDROID_BT_CONFIG } from '../services/printer/config/android-bt-defaults'
-import { isAndroidBtAvailable } from '../services/printer/transports/android-bt'
+import { DEFAULT_WEBUSB_CONFIG } from '../services/printer/config/webusb-defaults'
 import type { ReceiptData } from '../components/pos/Receipt'
 
 // Composable settings sub-components
@@ -44,7 +43,7 @@ import { FormatDateTime } from '../utils/formatDateTime'
 // ---------------------------------------------------------------------------
 // Printer helpers
 // ---------------------------------------------------------------------------
-type PrinterTab = 'qz' | 'android-bt'
+type PrinterTab = 'qz' | 'webusb'
 
 
 function sampleReceipt(): ReceiptData {
@@ -154,20 +153,28 @@ const Settings: React.FC = () => {
     busy: printerBusy,
   } = usePrinter()
 
-  const isAndroid = isAndroidBtAvailable()
-  const initialTab: PrinterTab = isAndroid ? 'android-bt' : 'qz'
+  const initialTab: PrinterTab = 'qz'
   const [printerTab, setPrinterTab] = useState<PrinterTab>(
-    () => (printerConfig?.type === 'android-bt' ? 'android-bt' : initialTab)
+    () => (printerConfig?.type === 'webusb' ? 'webusb' : initialTab)
   )
 
   // Local form state for each platform
   const [qzForm, setQzForm] = useState<QzConfig>(
     printerConfig?.type === 'qz' ? (printerConfig as QzConfig) : { ...DEFAULT_QZ_CONFIG }
   )
-  const [btForm, setBtForm] = useState<AndroidBtConfig>(
-    printerConfig?.type === 'android-bt' ? (printerConfig as AndroidBtConfig) : { ...DEFAULT_ANDROID_BT_CONFIG }
+  const [usbForm, setUsbForm] = useState<WebUsbConfig>(
+    printerConfig?.type === 'webusb' ? (printerConfig as WebUsbConfig) : { ...DEFAULT_WEBUSB_CONFIG }
   )
   const [printerMessage, setPrinterMessage] = useState<string | null>(null)
+
+  // Sync state if printerConfig updates in background
+  useEffect(() => {
+    if (printerConfig?.type === 'qz') {
+      setQzForm(printerConfig)
+    } else if (printerConfig?.type === 'webusb') {
+      setUsbForm(printerConfig)
+    }
+  }, [printerConfig])
 
 
   // ---------------------------------------------------------------------------
@@ -350,9 +357,16 @@ const Settings: React.FC = () => {
   // ---------------------------------------------------------------------------
   // Printer handlers (via PrinterContext)
   // ---------------------------------------------------------------------------
+  const handleTabChange = useCallback((tab: PrinterTab) => {
+    setPrinterTab(tab)
+    const cfg = tab === 'qz' ? qzForm : usbForm
+    setPrinterConfig(cfg)
+    setPrinterMessage(null)
+  }, [qzForm, usbForm, setPrinterConfig])
+
   const handleSaveConfig = useCallback(async (withTest: boolean) => {
     setPrinterMessage(null)
-    const cfg = printerTab === 'qz' ? qzForm : btForm
+    const cfg = printerTab === 'qz' ? qzForm : usbForm
     setPrinterConfig(cfg)
     if (withTest) {
       try {
@@ -364,7 +378,7 @@ const Settings: React.FC = () => {
     } else {
       setPrinterMessage('Configuration saved.')
     }
-  }, [printerTab, qzForm, btForm, setPrinterConfig, printReceipt])
+  }, [printerTab, qzForm, usbForm, setPrinterConfig, printReceipt])
 
   const handleConnect = useCallback(async () => {
     setPrinterMessage(null)
@@ -748,336 +762,421 @@ const Settings: React.FC = () => {
         {/* ---------------------------------------------------------------- */}
         {activeTab === 'printer' && (
           <div className="space-y-5">
-            {/* ── Status Bar ── */}
+            {/* ── Platform Tabs at the Top ── */}
             <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <Printer className="h-5 w-5 text-gray-500" />
-                  <h2 className="text-lg font-semibold text-gray-800">Receipt Printer</h2>
-                </div>
-                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
-                  printerStatus === 'connected' ? 'bg-green-100 text-green-800' :
-                  printerStatus === 'connecting' ? 'bg-yellow-100 text-yellow-800' :
-                  printerStatus === 'error' ? 'bg-red-100 text-red-700' :
-                  printerStatus === 'disconnected' ? 'bg-gray-100 text-gray-600' :
-                  'bg-gray-100 text-gray-500'
-                }`}>
-                  {printerStatus === 'connected' ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
-                  {printerStatus.charAt(0).toUpperCase() + printerStatus.slice(1)}
-                </span>
-              </div>
-              <div className="px-6 py-4 flex flex-col sm:flex-row sm:items-center gap-3">
-                <p className="text-sm text-gray-600 flex-1">
-                  {printerStatusMsg || (printerConfig ? 'Printer configured. Ready to connect.' : 'No printer configured yet.')}
-                  {selectedPrinter && <span className="ml-1 font-medium text-gray-800">— {selectedPrinter}</span>}
-                </p>
-                <div className="flex gap-2 flex-shrink-0">
-                  <button
-                    id="btn-check-printer-status"
-                    type="button"
-                    disabled={printerBusy}
-                    onClick={handleCheckStatus}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-                  >
-                    <RefreshCw className={`h-3.5 w-3.5 ${printerBusy ? 'animate-spin' : ''}`} />
-                    Check Status
-                  </button>
-                  {isConnected ? (
-                    <button
-                      id="btn-disconnect-printer"
-                      type="button"
-                      disabled={printerBusy}
-                      onClick={handleDisconnect}
-                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-red-50 border border-red-200 rounded-md text-red-700 hover:bg-red-100 disabled:opacity-50"
-                    >
-                      <Power className="h-3.5 w-3.5" />
-                      Disconnect
-                    </button>
-                  ) : (
-                    <button
-                      id="btn-connect-printer"
-                      type="button"
-                      disabled={printerBusy || !printerConfig}
-                      onClick={handleConnect}
-                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
-                    >
-                      <Plug className="h-3.5 w-3.5" />
-                      Connect
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {printers.length > 0 && (
-                <div className="px-6 pb-4">
-                  <p className="text-xs text-gray-500 mb-2 font-medium uppercase tracking-wide">Available Printers</p>
-                  <div className="flex flex-wrap gap-2">
-                    {printers.map((p) => (
-                      <span
-                        key={p}
-                        className={`inline-flex items-center px-2.5 py-1 rounded text-xs font-medium border ${
-                          selectedPrinter === p
-                            ? 'bg-blue-50 border-blue-300 text-blue-800'
-                            : 'bg-gray-50 border-gray-200 text-gray-700'
-                        }`}
-                      >
-                        {p}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* ── Platform Tabs ── */}
-            <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
-              <div className="px-6 pt-4">
-                <div className="inline-flex rounded-md shadow-sm border bg-gray-50 p-0.5 mb-5">
+              <div className="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+                <span className="text-sm font-semibold text-gray-800">Select Platform</span>
+                <div className="inline-flex rounded-md shadow-sm border bg-white p-0.5">
                   {([
-                    { id: 'qz' as const, label: '🖥 QZ Tray (Desktop)' },
-                    { id: 'android-bt' as const, label: '📱 Android Bluetooth' },
+                    { id: 'qz' as const, label: '🖥 QZ Tray' },
+                    { id: 'webusb' as const, label: '📱 Android' },
                   ]).map(({ id, label }) => (
                     <button
                       key={id}
                       type="button"
-                      onClick={() => setPrinterTab(id)}
-                      className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${printerTab === id
-                        ? 'bg-blue-600 text-white shadow-sm'
-                        : 'bg-transparent text-gray-700 hover:text-gray-900'
+                      onClick={() => handleTabChange(id)}
+                      className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all ${
+                        printerTab === id
+                          ? 'bg-blue-600 text-white shadow-sm'
+                          : 'bg-transparent text-gray-700 hover:text-gray-900'
                       }`}
                     >
                       {label}
                     </button>
                   ))}
                 </div>
+              </div>
+            </div>
 
-                <div className="max-w-xl space-y-4 pb-6">
-                  {/* ── QZ Tray form ── */}
-                  {printerTab === 'qz' && (
-                    <div className="space-y-4">
-                      <p className="text-sm text-gray-500">
-                        <strong>QZ Tray</strong> is a free desktop app that bridges the browser to your
-                        USB / Serial / Network printer. Install it from{' '}
-                        <a href="https://qz.io/download/" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">qz.io</a>{' '}
-                        and keep it running in the system tray.
-                      </p>
+            {/* ── Status Bar & Details (Below) ── */}
+            <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden p-6 space-y-6">
+              {/* Receipt Printer Status Box */}
+              <div className="border border-gray-200 rounded-lg overflow-hidden bg-white">
+                <div className="px-4 py-3 border-b border-gray-200 bg-gray-50 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <Printer className="h-4 w-4 text-gray-500" />
+                    <h3 className="text-sm font-semibold text-gray-800">Receipt Printer</h3>
+                  </div>
+                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                    printerStatus === 'connected' ? 'bg-green-100 text-green-800' :
+                    printerStatus === 'connecting' ? 'bg-yellow-100 text-yellow-800' :
+                    printerStatus === 'error' ? 'bg-red-100 text-red-700' :
+                    printerStatus === 'disconnected' ? 'bg-gray-100 text-gray-600' :
+                    'bg-gray-100 text-gray-500'
+                  }`}>
+                    {printerStatus === 'connected' ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
+                    {printerStatus.charAt(0).toUpperCase() + printerStatus.slice(1)}
+                  </span>
+                </div>
+                <div className="px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-3 bg-white">
+                  <p className="text-xs text-gray-600 flex-1 font-mono">
+                    {printerStatusMsg || (printerConfig ? 'Printer configured. Ready to connect.' : 'No printer configured yet.')}
+                    {selectedPrinter && <span className="ml-1 font-medium text-gray-800">— {selectedPrinter}</span>}
+                  </p>
+                  <div className="flex gap-2 flex-shrink-0">
+                    <button
+                      id="btn-check-printer-status"
+                      type="button"
+                      disabled={printerBusy}
+                      onClick={handleCheckStatus}
+                      className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                    >
+                      <RefreshCw className={`h-3 w-3 ${printerBusy ? 'animate-spin' : ''}`} />
+                      Check Status
+                    </button>
+                    {isConnected ? (
+                      <button
+                        id="btn-disconnect-printer"
+                        type="button"
+                        disabled={printerBusy}
+                        onClick={handleDisconnect}
+                        className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium bg-red-50 border border-red-200 rounded-md text-red-700 hover:bg-red-100 disabled:opacity-50"
+                      >
+                        <Power className="h-3 w-3" />
+                        Disconnect
+                      </button>
+                    ) : (
+                      <button
+                        id="btn-connect-printer"
+                        type="button"
+                        disabled={printerBusy || !printerConfig}
+                        onClick={handleConnect}
+                        className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                      >
+                        <Plug className="h-3 w-3" />
+                        Connect
+                      </button>
+                    )}
+                  </div>
+                </div>
 
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Host</label>
-                          <input
-                            id="qz-host"
-                            type="text"
-                            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                            value={qzForm.host ?? 'localhost'}
-                            onChange={(e) => setQzForm({ ...qzForm, host: e.target.value })}
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Port</label>
-                          <input
-                            id="qz-port"
-                            type="number"
-                            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                            value={qzForm.port ?? 8181}
-                            onChange={(e) => setQzForm({ ...qzForm, port: Number(e.target.value) })}
-                          />
-                        </div>
-                      </div>
+                {printers.length > 0 && (
+                  <div className="px-4 py-3 border-t border-gray-100 pt-2 bg-gray-50/30">
+                    <p className="text-[10px] text-gray-400 mb-1.5 font-semibold uppercase tracking-wide">Available Printers</p>
+                    <div className="flex flex-wrap gap-1">
+                      {printers.map((p) => (
+                        <span
+                          key={p}
+                          className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium border ${
+                            selectedPrinter === p
+                              ? 'bg-blue-50 border-blue-300 text-blue-800'
+                              : 'bg-gray-50 border-gray-200 text-gray-700'
+                          }`}
+                        >
+                          {p}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
 
+              <div className="max-w-xl space-y-4 pt-2">
+                {/* ── QZ Tray form ── */}
+                {printerTab === 'qz' && (
+                  <div className="space-y-4">
+                    <p className="text-sm text-gray-500">
+                      <strong>QZ Tray</strong> is a free desktop app that bridges the browser to your
+                      USB / Serial / Network printer. Install it from{' '}
+                      <a href="https://qz.io/download/" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">qz.io</a>{' '}
+                      and keep it running in the system tray.
+                    </p>
+
+                    <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Printer Name
-                          <span className="ml-1 text-xs font-normal text-gray-400">(empty = OS default)</span>
-                        </label>
-                        <div className="flex gap-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Host</label>
+                        <input
+                          id="qz-host"
+                          type="text"
+                          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                          value={qzForm.host ?? 'localhost'}
+                          onChange={(e) => setQzForm({ ...qzForm, host: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Port</label>
+                        <input
+                          id="qz-port"
+                          type="number"
+                          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                          value={qzForm.port ?? 8181}
+                          onChange={(e) => setQzForm({ ...qzForm, port: Number(e.target.value) })}
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Printer Name
+                        <span className="ml-1 text-xs font-normal text-gray-400">(empty = OS default)</span>
+                      </label>
+                      <div className="flex gap-2">
+                        {printers.length > 0 ? (
+                          <select
+                            id="qz-printer-name"
+                            className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none bg-white"
+                            value={qzForm.printerName ?? ''}
+                            onChange={(e) => setQzForm({ ...qzForm, printerName: e.target.value })}
+                          >
+                            <option value="">— OS Default —</option>
+                            {printers.map((p) => (
+                              <option key={p} value={p}>{p}</option>
+                            ))}
+                          </select>
+                        ) : (
                           <input
                             id="qz-printer-name"
                             type="text"
                             className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                            placeholder="e.g. EPSON TM-T82"
+                            placeholder="e.g. EPSON TM-T82 (click ↻ to load list)"
                             value={qzForm.printerName ?? ''}
                             onChange={(e) => setQzForm({ ...qzForm, printerName: e.target.value })}
                           />
-                          <button
-                            id="btn-get-printers"
-                            type="button"
-                            disabled={printerBusy}
-                            onClick={handleGetPrinters}
-                            title="Fetch printer list from QZ Tray"
-                            className="px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50 text-gray-600 disabled:opacity-50 flex-shrink-0 flex items-center justify-center"
-                          >
-                            <RefreshCw className={`h-4 w-4 ${printerBusy ? 'animate-spin' : ''}`} />
-                          </button>
-                        </div>
-                        {printers.length > 0 && (
-                          <div className="mt-2 flex flex-wrap gap-1">
-                            {printers.map((p) => (
-                              <button
-                                key={p}
-                                type="button"
-                                onClick={() => setQzForm({ ...qzForm, printerName: p })}
-                                className="text-xs px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100"
-                              >
-                                {p}
-                              </button>
-                            ))}
-                          </div>
                         )}
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Connection Type</label>
-                        <select
-                          id="qz-connection-type"
-                          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                          value={qzForm.connectionType ?? 'usb'}
-                          onChange={(e) => setQzForm({ ...qzForm, connectionType: e.target.value as any })}
-                        >
-                          <option value="usb">USB</option>
-                          <option value="serial">Serial / COM Port</option>
-                          <option value="network">Network / LAN (TCP)</option>
-                          <option value="file">File (print to file)</option>
-                        </select>
-                      </div>
-
-                      <div className="flex gap-2 pt-2">
                         <button
+                          id="btn-get-printers"
                           type="button"
                           disabled={printerBusy}
-                          onClick={() => handleSaveConfig(false)}
-                          className="px-4 py-2 text-sm font-medium border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                          onClick={handleGetPrinters}
+                          title="Fetch printer list from QZ Tray"
+                          className="px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50 text-gray-600 disabled:opacity-50 flex-shrink-0 flex items-center justify-center gap-1.5"
                         >
-                          Save
-                        </button>
-                        <button
-                          type="button"
-                          disabled={printerBusy}
-                          onClick={() => handleSaveConfig(true)}
-                          className="px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-md shadow-sm disabled:opacity-50"
-                        >
-                          Save &amp; Test Print
+                          <RefreshCw className={`h-4 w-4 ${printerBusy ? 'animate-spin' : ''}`} />
+                          {printers.length === 0 && <span className="text-xs">Load</span>}
                         </button>
                       </div>
-                    </div>
-                  )}
-
-                  {/* ── Android BT form ── */}
-                  {printerTab === 'android-bt' && (
-                    <div className="space-y-4">
-                      {!isAndroid && (
-                        <div className="p-3 bg-amber-50 border border-amber-200 rounded-md text-sm text-amber-800">
-                          ⚠️ Android Bluetooth is only active when running as a native Android app (Capacitor).
-                          This configuration will be saved but will not function in a browser.
-                        </div>
+                      {printers.length > 0 && (
+                        <p className="mt-1 text-xs text-gray-400">{printers.length} printer{printers.length !== 1 ? 's' : ''} found</p>
                       )}
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Device Name
-                          <span className="ml-1 text-xs font-normal text-gray-400">(empty = scan on connect)</span>
-                        </label>
-                        <input
-                          id="bt-device-name"
-                          type="text"
-                          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                          placeholder="e.g. BlueTooth Printer"
-                          value={btForm.deviceName ?? ''}
-                          onChange={(e) => setBtForm({ ...btForm, deviceName: e.target.value })}
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Service UUID</label>
-                        <input
-                          id="bt-service-uuid"
-                          type="text"
-                          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm font-mono focus:border-blue-500 focus:outline-none"
-                          value={btForm.serviceUUID ?? ''}
-                          onChange={(e) => setBtForm({ ...btForm, serviceUUID: e.target.value })}
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Characteristic UUID</label>
-                        <input
-                          id="bt-characteristic-uuid"
-                          type="text"
-                          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm font-mono focus:border-blue-500 focus:outline-none"
-                          value={btForm.characteristicUUID ?? ''}
-                          onChange={(e) => setBtForm({ ...btForm, characteristicUUID: e.target.value })}
-                        />
-                      </div>
-
-                      <div className="flex gap-2 pt-2">
-                        <button
-                          type="button"
-                          disabled={printerBusy}
-                          onClick={() => handleSaveConfig(false)}
-                          className="px-4 py-2 text-sm font-medium border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-                        >
-                          Save
-                        </button>
-                        <button
-                          type="button"
-                          disabled={printerBusy || !isAndroid}
-                          onClick={() => handleSaveConfig(true)}
-                          className="px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-md shadow-sm disabled:opacity-50"
-                        >
-                          Save &amp; Test Print
-                        </button>
-                      </div>
                     </div>
-                  )}
 
-                  {/* ── Shared: Test Print + Auto-print toggle ── */}
-                  <div className="pt-4 border-t space-y-4">
-                    <div className="flex items-center gap-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Connection Type</label>
+                      <select
+                        id="qz-connection-type"
+                        className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                        value={qzForm.connectionType ?? 'usb'}
+                        onChange={(e) => setQzForm({ ...qzForm, connectionType: e.target.value as any })}
+                      >
+                        <option value="usb">USB</option>
+                        <option value="serial">Serial / COM Port</option>
+                        <option value="network">Network / LAN (TCP)</option>
+                        <option value="file">File (print to file)</option>
+                      </select>
+                    </div>
+
+                    <div className="flex gap-2 pt-2">
                       <button
-                        id="btn-test-print"
                         type="button"
                         disabled={printerBusy}
-                        onClick={handleTestPrint}
-                        className="px-4 py-2 text-sm font-medium bg-green-600 hover:bg-green-700 text-white rounded-md shadow-sm disabled:opacity-50"
+                        onClick={() => handleSaveConfig(false)}
+                        className="px-4 py-2 text-sm font-medium border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50"
                       >
-                        Test Print
+                        Save
                       </button>
-                      {printerBusy && <span className="text-sm text-gray-500 animate-pulse">Working…</span>}
+                      <button
+                        type="button"
+                        disabled={printerBusy}
+                        onClick={() => handleSaveConfig(true)}
+                        className="px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-md shadow-sm disabled:opacity-50"
+                      >
+                        Save &amp; Test Print
+                      </button>
                     </div>
+                  </div>
+                )}
 
-                    {printerMessage && (
-                      <p className={`text-sm font-medium ${printerMessage.includes('failed') || printerMessage.includes('Failed') ? 'text-red-600' : 'text-green-700'}`}>
-                        {printerMessage}
-                      </p>
+                {/* ── WebUSB form ── */}
+                {printerTab === 'webusb' && (
+                  <div className="space-y-4">
+                    {typeof navigator === 'undefined' || !('usb' in navigator) ? (
+                      <div className="p-3 bg-red-50 border border-red-200 rounded-md text-sm text-red-800">
+                        ⚠️ WebUSB is not supported in this browser. Please use a Chromium-based browser like Google Chrome, Microsoft Edge, or Opera.
+                      </div>
+                    ) : (
+                      <div className="p-3 bg-blue-50 border border-blue-200 rounded-md text-sm text-blue-800">
+                        🔌 WebUSB allows you to connect directly to standard USB receipt printers from the browser without installing any bridge software.
+                      </div>
                     )}
 
-                    {/* Auto-print toggle */}
-                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
-                      <div>
-                        <p className="text-sm font-medium text-gray-800">Auto-Print on Checkout</p>
-                        <p className="text-xs text-gray-500 mt-0.5">
-                          Automatically send receipt to printer after every successful sale
-                        </p>
+                    <div className="border border-gray-200 rounded-lg p-4 bg-gray-50/50 space-y-3">
+                      <h4 className="text-sm font-semibold text-gray-800">Paired Printer Device</h4>
+                      {usbForm.vendorId !== undefined ? (
+                        <div className="space-y-1.5 text-xs text-gray-600">
+                          <div><strong className="text-gray-700">Device:</strong> {usbForm.deviceName || 'Standard USB Printer'}</div>
+                          <div><strong className="text-gray-700">Vendor ID (Hex):</strong> 0x{usbForm.vendorId.toString(16).padStart(4, '0')} ({usbForm.vendorId})</div>
+                          <div><strong className="text-gray-700">Product ID (Hex):</strong> {usbForm.productId !== undefined ? `0x${usbForm.productId.toString(16).padStart(4, '0')} (${usbForm.productId})` : 'N/A'}</div>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-gray-500 italic">No USB printer paired yet. Click the button below to connect/pair a device.</p>
+                      )}
+
+                      <div className="pt-2 flex flex-wrap gap-2">
+                        <button
+                          id="btn-pair-usb-printer"
+                          type="button"
+                          disabled={printerBusy || (typeof navigator !== 'undefined' && !('usb' in navigator))}
+                          onClick={handleConnect}
+                          className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-md text-xs font-semibold shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          {usbForm.vendorId !== undefined ? 'Change / Reconnect USB Printer' : 'Select & Pair USB Printer'}
+                        </button>
+                        {usbForm.vendorId !== undefined && (
+                          <button
+                            id="btn-clear-usb-printer"
+                            type="button"
+                            onClick={() => {
+                              setUsbForm({
+                                type: 'webusb',
+                                vendorId: undefined,
+                                productId: undefined,
+                                deviceName: '',
+                              })
+                              handleDisconnect()
+                            }}
+                            className="px-3.5 py-1.5 border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-md text-xs font-semibold transition-all focus:outline-none"
+                          >
+                            Reset
+                          </button>
+                        )}
                       </div>
-                      <button
-                        id="btn-toggle-auto-print"
-                        type="button"
-                        onClick={() => setAutoPrint(!autoPrint)}
-                        className={`flex-shrink-0 transition-colors ${autoPrint ? 'text-blue-600' : 'text-gray-400'}`}
-                        title={autoPrint ? 'Auto-print ON — click to disable' : 'Auto-print OFF — click to enable'}
-                      >
-                        {autoPrint
-                          ? <ToggleRight className="h-8 w-8" />
-                          : <ToggleLeft className="h-8 w-8" />
-                        }
-                      </button>
                     </div>
 
-                    <p className="text-xs text-gray-400">
-                      Desktop: Requires <strong>QZ Tray</strong> running on this machine.<br />
-                      Android: Requires the Capacitor Android app with Bluetooth permission.
-                    </p>
+                    {/* Manual Override Settings */}
+                    <details className="text-xs text-gray-500">
+                      <summary className="cursor-pointer hover:text-gray-700 font-medium select-none">
+                        Advanced / Manual Settings
+                      </summary>
+                      <div className="space-y-3 mt-3 pl-3 border-l-2 border-gray-200">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-600 mb-1">
+                            Vendor ID (Decimal or Hex)
+                          </label>
+                          <input
+                            type="text"
+                            className="w-full rounded-md border border-gray-300 px-3 py-1.5 text-xs font-mono focus:border-blue-500 focus:outline-none"
+                            placeholder="e.g. 0x0fe5 or 4069"
+                            value={usbForm.vendorId !== undefined ? (usbForm.vendorId.toString().startsWith('0x') ? usbForm.vendorId : '0x' + usbForm.vendorId.toString(16)) : ''}
+                            onChange={(e) => {
+                              const val = e.target.value.trim()
+                              if (!val) {
+                                setUsbForm({ ...usbForm, vendorId: undefined })
+                                return
+                              }
+                              const num = val.toLowerCase().startsWith('0x') ? parseInt(val, 16) : parseInt(val, 10)
+                              if (!isNaN(num)) {
+                                setUsbForm({ ...usbForm, vendorId: num })
+                              }
+                            }}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-medium text-gray-600 mb-1">
+                            Product ID (Decimal or Hex)
+                          </label>
+                          <input
+                            type="text"
+                            className="w-full rounded-md border border-gray-300 px-3 py-1.5 text-xs font-mono focus:border-blue-500 focus:outline-none"
+                            placeholder="e.g. 0x0801 or 2049"
+                            value={usbForm.productId !== undefined ? (usbForm.productId.toString().startsWith('0x') ? usbForm.productId : '0x' + usbForm.productId.toString(16)) : ''}
+                            onChange={(e) => {
+                              const val = e.target.value.trim()
+                              if (!val) {
+                                setUsbForm({ ...usbForm, productId: undefined })
+                                return
+                              }
+                              const num = val.toLowerCase().startsWith('0x') ? parseInt(val, 16) : parseInt(val, 10)
+                              if (!isNaN(num)) {
+                                setUsbForm({ ...usbForm, productId: num })
+                              }
+                            }}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-medium text-gray-600 mb-1">
+                            Custom Display Name
+                          </label>
+                          <input
+                            type="text"
+                            className="w-full rounded-md border border-gray-300 px-3 py-1.5 text-xs focus:border-blue-500 focus:outline-none"
+                            placeholder="e.g. My USB Printer"
+                            value={usbForm.deviceName ?? ''}
+                            onChange={(e) => setUsbForm({ ...usbForm, deviceName: e.target.value })}
+                          />
+                        </div>
+                      </div>
+                    </details>
+
+                    <div className="flex gap-2 pt-2">
+                      <button
+                        type="button"
+                        disabled={printerBusy}
+                        onClick={() => handleSaveConfig(false)}
+                        className="px-4 py-2 text-sm font-medium border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                      >
+                        Save
+                      </button>
+                      <button
+                        type="button"
+                        disabled={printerBusy || usbForm.vendorId === undefined}
+                        onClick={() => handleSaveConfig(true)}
+                        className="px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-md shadow-sm disabled:opacity-50"
+                      >
+                        Save &amp; Test Print
+                      </button>
+                    </div>
                   </div>
+                )}
+
+                {/* ── Shared: Test Print + Auto-print toggle ── */}
+                <div className="pt-4 border-t space-y-4">
+                  <div className="flex items-center gap-3">
+                    <button
+                      id="btn-test-print"
+                      type="button"
+                      disabled={printerBusy}
+                      onClick={handleTestPrint}
+                      className="px-4 py-2 text-sm font-medium bg-green-600 hover:bg-green-700 text-white rounded-md shadow-sm disabled:opacity-50"
+                    >
+                      Test Print
+                    </button>
+                    {printerBusy && <span className="text-sm text-gray-500 animate-pulse">Working…</span>}
+                  </div>
+
+                  {printerMessage && (
+                    <p className={`text-sm font-medium ${printerMessage.includes('failed') || printerMessage.includes('Failed') ? 'text-red-600' : 'text-green-700'}`}>
+                      {printerMessage}
+                    </p>
+                  )}
+
+                  {/* Auto-print toggle */}
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <div>
+                      <p className="text-sm font-medium text-gray-800">Auto-Print on Checkout</p>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        Automatically send receipt to printer after every successful sale
+                      </p>
+                    </div>
+                    <button
+                      id="btn-toggle-auto-print"
+                      type="button"
+                      onClick={() => setAutoPrint(!autoPrint)}
+                      className={`flex-shrink-0 transition-colors ${autoPrint ? 'text-blue-600' : 'text-gray-400'}`}
+                      title={autoPrint ? 'Auto-print ON — click to disable' : 'Auto-print OFF — click to enable'}
+                    >
+                      {autoPrint
+                        ? <ToggleRight className="h-8 w-8" />
+                        : <ToggleLeft className="h-8 w-8" />
+                      }
+                    </button>
+                  </div>
+
+                  <p className="text-xs text-gray-400">
+                    Desktop: Requires <strong>QZ Tray</strong> running on this machine.<br />
+                    WebUSB: Directly access local USB receipt printers from compatible browsers (Chrome, Edge, Opera).
+                  </p>
                 </div>
               </div>
             </div>
