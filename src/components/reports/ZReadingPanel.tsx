@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { AlertTriangle, FileCheck, RefreshCw } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
+import { usePrinter } from '../../contexts/PrinterContext'
 import { ReportService } from '../../services/reportService'
 import { SettingsService } from '../../services/settingsService'
 import { Terminal, BusinessSettings } from '../../types/settings'
@@ -186,6 +187,7 @@ export const ZReadingDisplay: React.FC<ZReadingDisplayProps> = ({ report, busine
  */
 const ZReadingPanel: React.FC = () => {
   const { persona } = useAuth()
+  const { printRaw, config: printerConfig } = usePrinter()
 
   const [terminals, setTerminals] = useState<Terminal[]>([])
   const [terminalId, setTerminalId] = useState<number | ''>('')
@@ -236,6 +238,26 @@ const ZReadingPanel: React.FC = () => {
       setLoading(false)
     }
   }, [terminalId, date, persona?.id])
+
+  const [deviceBusy, setDeviceBusy] = useState(false)
+  const handleDevicePrint = useCallback(async () => {
+    if (!report || !businessSettings) return
+    if (!printerConfig) {
+      const go = confirm('No receipt printer configured. Open the Receipt Printer settings now?')
+      if (go) window.location.href = '/settings'
+      return
+    }
+    setDeviceBusy(true)
+    try {
+      const text = generateZReadingText(report, businessSettings, persona)
+      await printRaw(text)
+    } catch (e: any) {
+      console.error(e)
+      alert('Device print failed: ' + (e?.message || e))
+    } finally {
+      setDeviceBusy(false)
+    }
+  }, [report, businessSettings, persona, printerConfig, printRaw])
 
   return (
     <div className="space-y-5">
@@ -348,6 +370,8 @@ const ZReadingPanel: React.FC = () => {
           badge="Saved"
           badgeVariant="emerald"
           printTargetId="z-reading-printout"
+          onDevicePrint={handleDevicePrint}
+          deviceBusy={deviceBusy}
         >
           <ZReadingDisplay report={report} businessSettings={businessSettings} persona={persona} />
         </ReportCard>

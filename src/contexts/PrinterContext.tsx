@@ -30,7 +30,7 @@ import {
   saveAutoPrint,
   savePrinterConfig,
 } from '../services/printer/types'
-import { createTransport, buildEscposFromReceipt } from '../services/printer'
+import { createTransport, buildEscposFromReceipt, buildEscposFromRawText } from '../services/printer'
 import type { PrinterTransport } from '../services/printer/types'
 import type { ReceiptData } from '../components/pos/Receipt'
 
@@ -68,6 +68,8 @@ interface PrinterContextType {
   disconnect: () => Promise<void>
   /** Send a receipt to the printer (must be connected) */
   print: (data: ReceiptData) => Promise<void>
+  /** Send raw text to the printer (must be connected) */
+  printRaw: (text: string) => Promise<void>
   /** True while any async printer operation is in flight */
   busy: boolean
 }
@@ -282,6 +284,27 @@ export const PrinterProvider: React.FC<{ children: ReactNode }> = ({ children })
     [config, isConnected]
   )
 
+  const printRaw = useCallback(
+    async (text: string) => {
+      if (!config) throw new Error('No printer configured.')
+      setBusy(true)
+      try {
+        if (!transportRef.current || !isConnected) {
+          const transport = createTransport(config)
+          await transport.connect({ requestDevice: true })
+          transportRef.current = transport
+          setIsConnected(true)
+          setStatus('connected')
+        }
+        const payload = buildEscposFromRawText(text)
+        await transportRef.current!.write(payload)
+      } finally {
+        setBusy(false)
+      }
+    },
+    [config, isConnected]
+  )
+
   // -------------------------------------------------------------------------
   // On mount: ping status if config exists
   // -------------------------------------------------------------------------
@@ -328,6 +351,7 @@ export const PrinterProvider: React.FC<{ children: ReactNode }> = ({ children })
         connect,
         disconnect,
         print,
+        printRaw,
         busy,
       }}
     >

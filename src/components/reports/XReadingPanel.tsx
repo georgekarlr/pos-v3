@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { ScanLine, RefreshCw } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
+import { usePrinter } from '../../contexts/PrinterContext'
 import { ReportService } from '../../services/reportService'
 import { Terminal, BusinessSettings } from '../../types/settings'
 import { XReadingResult } from '../../types/report'
@@ -138,6 +139,7 @@ import { SettingsService } from '../../services/settingsService'
  */
 const XReadingPanel: React.FC = () => {
   const { persona } = useAuth()
+  const { printRaw, config: printerConfig } = usePrinter()
 
   const [terminals, setTerminals] = useState<Terminal[]>([])
   const [terminalId, setTerminalId] = useState<number | ''>('')
@@ -181,6 +183,26 @@ const XReadingPanel: React.FC = () => {
       setLoading(false)
     }
   }, [terminalId, date, persona?.id])
+
+  const [deviceBusy, setDeviceBusy] = useState(false)
+  const handleDevicePrint = useCallback(async () => {
+    if (!report || !businessSettings) return
+    if (!printerConfig) {
+      const go = confirm('No receipt printer configured. Open the Receipt Printer settings now?')
+      if (go) window.location.href = '/settings'
+      return
+    }
+    setDeviceBusy(true)
+    try {
+      const text = generateXReadingText(report, businessSettings, persona)
+      await printRaw(text)
+    } catch (e: any) {
+      console.error(e)
+      alert('Device print failed: ' + (e?.message || e))
+    } finally {
+      setDeviceBusy(false)
+    }
+  }, [report, businessSettings, persona, printerConfig, printRaw])
 
   return (
     <div className="space-y-5">
@@ -262,6 +284,8 @@ const XReadingPanel: React.FC = () => {
           badge="Preview"
           badgeVariant="emerald"
           printTargetId="x-reading-printout"
+          onDevicePrint={handleDevicePrint}
+          deviceBusy={deviceBusy}
         >
           <XReadingDisplay report={report} businessSettings={businessSettings} persona={persona} />
         </ReportCard>

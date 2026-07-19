@@ -80,7 +80,7 @@ export interface CreateInstallmentSaleParams {
   p_account_id: number;
   p_terminal_id: number | null;
   p_customer_id: number;
-  p_cart_items: { product_id: number; quantity: number }[];
+  p_cart_items: { product_id: number; quantity: number; promo_id?: number | null }[];
   p_downpayment_amount: number;
   p_downpayment_method: string;
   p_months_to_pay: number;

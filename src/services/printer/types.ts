@@ -94,6 +94,7 @@ export interface ESCPOSEncoder {
   bold(on: boolean): Uint8Array
   align(mode: 'left' | 'center' | 'right'): Uint8Array
   size(widthMul: 1 | 2, heightMul: 1 | 2): Uint8Array
+  setFont(font: 'A' | 'B'): Uint8Array
   newline(lines?: number): Uint8Array
   cut(): Uint8Array
 }
@@ -131,7 +132,7 @@ export function saveAutoPrint(enabled: boolean) {
 // Receipt design configuration (unchanged)
 // ---------------------------------------------------------------------------
 export type ReceiptTextAlign = 'left' | 'center' | 'right'
-export type ReceiptTextSize = 'normal' | 'double'
+export type ReceiptTextSize = 'small' | 'normal' | 'double'
 
 export interface ReceiptDesign {
   headerText?: string

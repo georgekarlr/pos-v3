@@ -1,17 +1,17 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import Receipt, { ReceiptData } from './Receipt'
+import { ReceiptData } from './Receipt'
+import InstallmentReceipt from './InstallmentReceipt'
 import { usePrinter } from '../../contexts/PrinterContext'
 
-interface ReceiptModalProps {
+interface InstallmentReceiptModalProps {
   open: boolean
   data: ReceiptData | null
   onClose: () => void
-  /** When true this modal fires the device print immediately on open (used by checkout autoPrint) */
   autoDevicePrint?: boolean
 }
 
-const ReceiptModal: React.FC<ReceiptModalProps> = ({ open, data, onClose, autoDevicePrint }) => {
+const InstallmentReceiptModal: React.FC<InstallmentReceiptModalProps> = ({ open, data, onClose, autoDevicePrint }) => {
   const [show, setShow] = useState(false)
   const [deviceBusy, setDeviceBusy] = useState(false)
   const [deviceMsg, setDeviceMsg] = useState<string | null>(null)
@@ -28,7 +28,6 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ open, data, onClose, autoDe
     }
   }, [open])
 
-  // Auto-print on open when autoDevicePrint=true and a printer is configured
   useEffect(() => {
     if (open && autoDevicePrint && data && printerConfig && !autoPrintFired.current) {
       autoPrintFired.current = true
@@ -46,7 +45,7 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ open, data, onClose, autoDe
       const { toPng } = await import('html-to-image')
       const dataUrl = await toPng(node, { cacheBust: true, pixelRatio: 2, backgroundColor: '#ffffff' })
       const link = document.createElement('a')
-      link.download = `receipt-${data.orderId ?? 'sale'}.png`
+      link.download = `receipt-installment-${data.installmentContract?.invoiceNumber || 'payment'}.png`
       link.href = dataUrl
       link.click()
     } catch (e) {
@@ -65,7 +64,7 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ open, data, onClose, autoDe
 
       const doc = printWindow.document
       doc.open()
-      doc.write('<!doctype html><html><head><meta charset="utf-8"><title>Receipt</title></head><body></body></html>')
+      doc.write('<!doctype html><html><head><meta charset="utf-8"><title>Installment Receipt</title></head><body></body></html>')
       doc.close()
 
       const head = doc.head
@@ -135,14 +134,14 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ open, data, onClose, autoDe
       <div className={`relative bg-white w-full sm:w-auto sm:max-w-md rounded-t-lg sm:rounded-lg shadow-xl transition-all duration-300 ${show ? 'opacity-100 translate-y-0 sm:scale-100' : 'opacity-0 translate-y-3 sm:scale-95'}`}>
         <div className="px-4 py-3 border-b">
           <div className="flex items-center justify-between">
-            <h3 className="text-base font-semibold">Receipt</h3>
+            <h3 className="text-base font-semibold">Installment Receipt</h3>
             <button onClick={onClose} className="text-gray-500 hover:text-gray-700">Close</button>
           </div>
         </div>
 
         <div className="p-4 flex items-start justify-center overflow-y-auto max-h-[calc(100vh-16rem)] min-h-[200px]">
           <div ref={receiptRef}>
-            <Receipt data={data} />
+            <InstallmentReceipt data={data} />
           </div>
         </div>
 
@@ -155,7 +154,6 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ open, data, onClose, autoDe
         <div className="px-4 pb-4 flex flex-col sm:flex-row gap-2 sm:justify-end">
           <button onClick={handlePrint} className="w-full sm:w-auto px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700">Print</button>
           <button
-            id="btn-send-to-printer"
             disabled={deviceBusy}
             onClick={handleDevicePrint}
             className="w-full sm:w-auto px-4 py-2 rounded-md bg-green-600 text-white hover:bg-green-700 disabled:opacity-60"
@@ -171,4 +169,4 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ open, data, onClose, autoDe
   return createPortal(modal, document.body)
 }
 
-export default ReceiptModal
+export default InstallmentReceiptModal

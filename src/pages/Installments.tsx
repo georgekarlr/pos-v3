@@ -20,6 +20,10 @@ import CreateInstallmentModal from '../components/installments/CreateInstallment
 import WriteOffModal from '../components/installments/WriteOffModal';
 import DebtRecoveryModal from '../components/installments/DebtRecoveryModal';
 import {PosService} from "../services/posService.ts";
+import ReceiptModal from '../components/pos/ReceiptModal';
+import InstallmentReceiptModal from '../components/pos/InstallmentReceiptModal';
+import { ReceiptData } from '../components/pos/Receipt';
+import { getCachedBusinessSettings } from '../utils/settingsCache';
 
 const Installments: React.FC = () => {
   const { persona } = useAuth();
@@ -67,6 +71,10 @@ const Installments: React.FC = () => {
   const [recoveryLoading, setRecoveryLoading] = useState(false);
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [selectedTerminalId, setSelectedTerminalId] = useState<number | null>(null);
+
+  const [receiptData, setReceiptData] = useState<ReceiptData | null>(null);
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
+  const [showInstallmentReceiptModal, setShowInstallmentReceiptModal] = useState(false);
 
   const showToast = (type: 'success' | 'error', message: string) => {
     setToast({ type, message });
@@ -139,13 +147,90 @@ const Installments: React.FC = () => {
     setPayLoading(false);
     setShowPayModal(false);
 
-    if (result.success) {
+    if (result.data && result.data.success) {
       showToast('success', 'Payment processed successfully!');
+      
+      // Prepare business settings for receipt
+      let businessName = 'Installment Payment Receipt';
+      let businessAddress1: string | undefined;
+      let tin: string | undefined;
+      let isVatRegistered: boolean | undefined;
+      let min: string | undefined;
+      let ptuIssuedBy: string | undefined;
+      let softwareProviderName: string | undefined;
+      let softwareProviderAddress: string | undefined;
+      let softwareProviderTin: string | undefined;
+      let softwareProviderAccreditationNo: string | undefined;
+
+      try {
+        const settings = getCachedBusinessSettings();
+        if (settings) {
+          businessName = settings.business_name || businessName;
+          businessAddress1 = settings.address || undefined;
+          tin = settings.tin || undefined;
+          isVatRegistered = settings.is_vat_registered !== undefined ? Boolean(settings.is_vat_registered) : undefined;
+          min = settings.min || undefined;
+          ptuIssuedBy = settings.ptu_issued_by || undefined;
+          softwareProviderName = settings.software_provider_name || undefined;
+          softwareProviderAddress = settings.software_provider_address || undefined;
+          softwareProviderTin = settings.software_provider_tin || undefined;
+          softwareProviderAccreditationNo = settings.software_provider_accreditation_no || undefined;
+        }
+      } catch (e) {
+        console.error('Error reading cached business settings in Installments:', e);
+      }
+      
+      // Prepare receipt data
+      const newRemainingBalance = selectedContract.schedules.reduce((sum, s) => sum + (s.amount_due - s.amount_paid), 0) - result.data.data.amount_applied;
+      
+      const rData: ReceiptData = {
+        dateISO: new Date().toISOString(),
+        businessName,
+        businessAddress1,
+        tin,
+        isVatRegistered,
+        min,
+        cashier: persona.full_name,
+        terminalId: selectedTerminalId,
+        lines: [], // No items for simple payment
+        subtotal: 0,
+        tax: 0,
+        total: amount,
+        payments: [{ method, amount }],
+        totalPaid: amount,
+        change: 0,
+        isInstallment: true,
+        ptuIssuedBy,
+        softwareProviderName,
+        softwareProviderAddress,
+        softwareProviderTin,
+        softwareProviderAccreditationNo,
+        installmentContract: {
+          contractId: selectedContract.contract_id,
+          invoiceNumber: selectedContract.invoice_number,
+          customerName: selectedSummary?.customer_name || 'Customer',
+          remainingBalance: newRemainingBalance,
+          monthlyDue: selectedContract.monthly_due,
+          monthsToPay: selectedContract.months_to_pay,
+          totalPaid: selectedContract.schedules.reduce((sum, s) => sum + s.amount_paid, 0) + result.data.data.amount_applied
+        },
+        installmentPayment: {
+          amountApplied: result.data.data.amount_applied,
+          monthsAffected: result.data.data.months_affected.map(m => ({
+            month: m.month,
+            amountApplied: m.amount_applied,
+            newStatus: m.new_status
+          }))
+        }
+      }
+      setReceiptData(rData);
+      setShowInstallmentReceiptModal(true);
+
       setSelectedContract(null);
       setSelectedSummary(null);
       if (persona?.id) loadAllContracts(persona.id);
-    } else {
-      showToast('error', result.message);
+    } else if (result.error || (result.data && !result.data.success)) {
+      showToast('error', result.error || result.data?.message || 'Payment failed');
     }
   };
 
@@ -161,13 +246,13 @@ const Installments: React.FC = () => {
     setWriteOffLoading(false);
     setShowWriteOffModal(false);
 
-    if (result.success) {
+    if (result.data && result.data.success) {
       showToast('success', 'Contract successfully written off as bad debt!');
       setSelectedContract(null);
       setSelectedSummary(null);
       if (persona?.id) loadAllContracts(persona.id);
     } else {
-      showToast('error', result.message);
+      showToast('error', result.error || (result.data && result.data.message) || 'Write-off failed');
     }
   };
 
@@ -190,13 +275,80 @@ const Installments: React.FC = () => {
     setRecoveryLoading(false);
     setShowRecoveryModal(false);
 
-    if (result.success) {
+    if (result.data && result.data.success) {
       showToast('success', 'Installment bad debt recovery processed successfully!');
+
+      // Prepare business settings for receipt
+      let businessName = 'Debt Recovery Receipt';
+      let businessAddress1: string | undefined;
+      let tin: string | undefined;
+      let isVatRegistered: boolean | undefined;
+      let min: string | undefined;
+      let ptuIssuedBy: string | undefined;
+      let softwareProviderName: string | undefined;
+      let softwareProviderAddress: string | undefined;
+      let softwareProviderTin: string | undefined;
+      let softwareProviderAccreditationNo: string | undefined;
+
+      try {
+        const settings = getCachedBusinessSettings();
+        if (settings) {
+          businessName = settings.business_name || businessName;
+          businessAddress1 = settings.address || undefined;
+          tin = settings.tin || undefined;
+          isVatRegistered = settings.is_vat_registered !== undefined ? Boolean(settings.is_vat_registered) : undefined;
+          min = settings.min || undefined;
+          ptuIssuedBy = settings.ptu_issued_by || undefined;
+          softwareProviderName = settings.software_provider_name || undefined;
+          softwareProviderAddress = settings.software_provider_address || undefined;
+          softwareProviderTin = settings.software_provider_tin || undefined;
+          softwareProviderAccreditationNo = settings.software_provider_accreditation_no || undefined;
+        }
+      } catch (e) {
+        console.error('Error reading cached business settings in Installments:', e);
+      }
+
+      const rData: ReceiptData = {
+        dateISO: new Date().toISOString(),
+        businessName,
+        businessAddress1,
+        tin,
+        isVatRegistered,
+        min,
+        cashier: persona.full_name,
+        terminalId: selectedTerminalId,
+        lines: [],
+        subtotal: 0,
+        tax: 0,
+        total: amount,
+        payments: [{ method, amount }],
+        totalPaid: amount,
+        change: 0,
+        isInstallment: true,
+        ptuIssuedBy,
+        softwareProviderName,
+        softwareProviderAddress,
+        softwareProviderTin,
+        softwareProviderAccreditationNo,
+        installmentContract: {
+          contractId: selectedContract.contract_id,
+          invoiceNumber: selectedContract.invoice_number,
+          customerName: selectedSummary?.customer_name || 'Customer',
+          remainingBalance: selectedContract.schedules.reduce((sum, s) => sum + (s.amount_due - s.amount_paid), 0) - result.data.data.amount_recovered,
+          monthlyDue: selectedContract.monthly_due,
+          monthsToPay: selectedContract.months_to_pay,
+          totalPaid: selectedContract.schedules.reduce((sum, s) => sum + s.amount_paid, 0) + result.data.data.amount_recovered
+        },
+        notes: notes
+      }
+      setReceiptData(rData);
+      setShowInstallmentReceiptModal(true);
+
       setSelectedContract(null);
       setSelectedSummary(null);
       if (persona?.id) loadAllContracts(persona.id);
-    } else {
-      showToast('error', result.message);
+    } else if (result.error || (result.data && !result.data.success)) {
+      showToast('error', result.error || result.data?.message || 'Recovery failed');
     }
   };
 
@@ -207,12 +359,82 @@ const Installments: React.FC = () => {
     const result = await createSale({ ...params, p_account_id: persona.id });
     setCreateLoading(false);
 
-    if (result.success) {
+    if (result.data && result.data.success) {
       setShowCreateModal(false);
       showToast('success', 'Installment contract created successfully!');
+
+      // Prepare business settings for receipt
+      let businessName = 'Installment Downpayment Receipt';
+      let businessAddress1: string | undefined;
+      let tin: string | undefined;
+      let isVatRegistered: boolean | undefined;
+      let min: string | undefined;
+      let ptuIssuedBy: string | undefined;
+      let softwareProviderName: string | undefined;
+      let softwareProviderAddress: string | undefined;
+      let softwareProviderTin: string | undefined;
+      let softwareProviderAccreditationNo: string | undefined;
+
+      try {
+        const settings = getCachedBusinessSettings();
+        if (settings) {
+          businessName = settings.business_name || businessName;
+          businessAddress1 = settings.address || undefined;
+          tin = settings.tin || undefined;
+          isVatRegistered = settings.is_vat_registered !== undefined ? Boolean(settings.is_vat_registered) : undefined;
+          min = settings.min || undefined;
+          ptuIssuedBy = settings.ptu_issued_by || undefined;
+          softwareProviderName = settings.software_provider_name || undefined;
+          softwareProviderAddress = settings.software_provider_address || undefined;
+          softwareProviderTin = settings.software_provider_tin || undefined;
+          softwareProviderAccreditationNo = settings.software_provider_accreditation_no || undefined;
+        }
+      } catch (e) {
+        console.error('Error reading cached business settings in Installments:', e);
+      }
+
+      // Prepare receipt for the new installment sale (downpayment)
+      const rData: ReceiptData = {
+        dateISO: new Date().toISOString(),
+        businessName,
+        businessAddress1,
+        tin,
+        isVatRegistered,
+        min,
+        cashier: persona.full_name,
+        invoiceNumber: result.data.data.invoice_number,
+        lines: [], // Items are in the original cart, but here we're showing the installment info
+        subtotal: 0,
+        tax: 0,
+        total: params.p_downpayment_amount,
+        payments: [{ method: params.p_downpayment_method, amount: params.p_downpayment_amount }],
+        totalPaid: params.p_downpayment_amount,
+        change: 0,
+        isInstallment: true,
+        ptuIssuedBy,
+        softwareProviderName,
+        softwareProviderAddress,
+        softwareProviderTin,
+        softwareProviderAccreditationNo,
+        installmentContract: {
+          contractId: result.data.data.contract_id,
+          invoiceNumber: result.data.data.invoice_number,
+          customerName: selectedCustomer?.full_name || 'Customer',
+          remainingBalance: (result.data.data.monthly_due * params.p_months_to_pay),
+          monthlyDue: result.data.data.monthly_due,
+          monthsToPay: params.p_months_to_pay,
+          totalPaid: params.p_downpayment_amount,
+          interestRate: params.p_interest_rate,
+          totalInterestAmount: result.data.data.total_interest
+        }
+      }
+      setReceiptData(rData);
+      setShowInstallmentReceiptModal(true);
+
       if (persona?.id) loadAllContracts(persona.id);
+      return { success: true, message: result.data.message };
     }
-    return result;
+    return { success: false, message: result.error || result.data?.message || 'Failed to create sale' };
   };
 
   const accountId = persona?.id ?? 0;
@@ -420,6 +642,18 @@ const Installments: React.FC = () => {
           isLoading={createLoading}
         />
       )}
+
+      <ReceiptModal
+        open={showReceiptModal}
+        data={receiptData}
+        onClose={() => setShowReceiptModal(false)}
+      />
+
+      <InstallmentReceiptModal
+        open={showInstallmentReceiptModal}
+        data={receiptData}
+        onClose={() => setShowInstallmentReceiptModal(false)}
+      />
     </div>
   );
 };
