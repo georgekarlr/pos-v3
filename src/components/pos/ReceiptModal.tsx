@@ -140,7 +140,7 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ open, data, onClose, autoDe
           </div>
         </div>
 
-        <div className="p-4 flex items-center justify-center">
+        <div className="p-4 flex items-start justify-center overflow-y-auto max-h-[calc(100vh-16rem)] min-h-[200px]">
           <div ref={receiptRef}>
             <Receipt data={data} />
           </div>

@@ -54,14 +54,18 @@ export function buildEscposFromReceipt(data: ReceiptData): Uint8Array {
   const design = withDesignDefaults(loadReceiptDesign())
 
   parts.push(enc.initialize())
+  parts.push(enc.setFont('B')) // Set to smallest font (Font B) by default
   // Header (customizable block)
   if (design.headerText && design.headerText.trim().length > 0) {
     parts.push(enc.align((design.headerAlign ?? 'center') as any))
     parts.push(enc.bold(!!design.headerBold))
     parts.push(enc.size(design.headerSize === 'double' ? 2 : 1, design.headerSize === 'double' ? 2 : 1))
+    if (design.headerSize === 'small') parts.push(enc.setFont('B'))
+    else if (design.headerSize === 'normal') parts.push(enc.setFont('A'))
     pushText(design.headerText + '\n')
     parts.push(enc.bold(false))
     parts.push(enc.size(1, 1))
+    parts.push(enc.setFont('B'))
     parts.push(enc.newline())
   }
 
@@ -105,9 +109,12 @@ export function buildEscposFromReceipt(data: ReceiptData): Uint8Array {
     parts.push(enc.align((design.footerAlign ?? 'center') as any))
     parts.push(enc.bold(!!design.footerBold))
     parts.push(enc.size(design.footerSize === 'double' ? 2 : 1, design.footerSize === 'double' ? 2 : 1))
+    if (design.footerSize === 'small') parts.push(enc.setFont('B'))
+    else if (design.footerSize === 'normal') parts.push(enc.setFont('A'))
     pushText(design.footerText + '\n')
     parts.push(enc.bold(false))
     parts.push(enc.size(1, 1))
+    parts.push(enc.setFont('B'))
   } else {
     parts.push(enc.align('center'))
     pushText('Thank you for your business!\n')
@@ -115,6 +122,7 @@ export function buildEscposFromReceipt(data: ReceiptData): Uint8Array {
 
   // BIR / Provider footer
   parts.push(enc.align('left'))
+  parts.push(enc.setFont('B')) // Ensure small font for provider info
   if (data.ptuIssuedBy) pushText(`PTU Issued by RDO: ${data.ptuIssuedBy}\n`)
   if (data.softwareProviderName) pushText(`Software Provider: ${data.softwareProviderName}\n`)
   if (data.softwareProviderAddress) pushText(`Provider Address: ${data.softwareProviderAddress}\n`)
@@ -124,6 +132,20 @@ export function buildEscposFromReceipt(data: ReceiptData): Uint8Array {
     parts.push(enc.align('center'))
     pushText('THIS RECEIPT SHALL BE VALID FOR 5 YEARS\nFROM THE DATE OF THE PERMIT TO USE.\n')
   }
+  parts.push(enc.newline(3))
+  parts.push(enc.cut())
+  return joinBytes(parts)
+}
+
+/**
+ * ESC/POS builder — Raw text to raw bytes
+ */
+export function buildEscposFromRawText(text: string): Uint8Array {
+  const enc = new SimpleESCPOSEncoder()
+  const parts: Uint8Array[] = []
+  parts.push(enc.initialize())
+  parts.push(enc.setFont('B')) // Use small font for reports
+  parts.push(enc.text(text))
   parts.push(enc.newline(3))
   parts.push(enc.cut())
   return joinBytes(parts)
@@ -139,7 +161,7 @@ export function withDesignDefaults(design?: ReceiptDesign): Required<Pick<Receip
   'separatorChar' | 'showTopSeparator' | 'showHeaderSeparator' | 'showItemsSeparatorBottom'
 >> & ReceiptDesign {
   const d = design || {}
-  const paperWidth = d.paperWidth && d.paperWidth > 16 ? d.paperWidth : 32
+  const paperWidth = d.paperWidth && d.paperWidth > 16 ? d.paperWidth : 42
   const itemWidth = d.itemWidth && d.itemWidth > 4 ? d.itemWidth : 18
   const qtyWidth = d.qtyWidth && d.qtyWidth > 2 ? d.qtyWidth : 5
   const spacing = 1

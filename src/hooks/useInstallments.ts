@@ -4,10 +4,15 @@ import {
   CustomerInstallments,
   InstallmentContract,
   CreateInstallmentSaleParams,
+  CreateInstallmentSaleResult,
   PayInstallmentScheduleParams,
+  PayInstallmentScheduleResult,
   WriteOffInstallmentContractParams,
+  WriteOffInstallmentContractResult,
   RecoverInstallmentDebtParams,
+  RecoverInstallmentDebtResult,
 } from '../types/installment';
+import { ServiceResponse } from '../types/pos';
 
 interface UseInstallmentsReturn {
   installments: CustomerInstallments | null;
@@ -16,17 +21,10 @@ interface UseInstallmentsReturn {
   error: string | null;
   setSelectedContract: (contract: InstallmentContract | null) => void;
   loadCustomerInstallments: (customerId: number) => Promise<void>;
-  createSale: (params: CreateInstallmentSaleParams) => Promise<{ success: boolean; message: string }>;
-  paySchedule: (params: PayInstallmentScheduleParams) => Promise<{ success: boolean; message: string }>;
-  writeOff: (params: WriteOffInstallmentContractParams) => Promise<{ success: boolean; message: string }>;
-  recoverDebt: (params: {
-    p_requesting_account_id: number;
-    p_terminal_id: number | null;
-    p_contract_id: number;
-    p_recovery_amount: number;
-    p_payment_method: string;
-    p_notes: string
-  }) => Promise<{ success: boolean; message: string }>;
+  createSale: (params: CreateInstallmentSaleParams) => Promise<ServiceResponse<CreateInstallmentSaleResult>>;
+  paySchedule: (params: PayInstallmentScheduleParams) => Promise<ServiceResponse<PayInstallmentScheduleResult>>;
+  writeOff: (params: WriteOffInstallmentContractParams) => Promise<ServiceResponse<WriteOffInstallmentContractResult>>;
+  recoverDebt: (params: RecoverInstallmentDebtParams) => Promise<ServiceResponse<RecoverInstallmentDebtResult>>;
   clearError: () => void;
   reset: () => void;
 }
@@ -65,77 +63,73 @@ export function useInstallments(): UseInstallmentsReturn {
     setLoading(true);
     setError(null);
 
-    const { data, error: serviceError } = await InstallmentService.createInstallmentSale(params);
+    const result = await InstallmentService.createInstallmentSale(params);
 
     setLoading(false);
 
-    if (serviceError) {
-      setError(serviceError);
-      return { success: false, message: serviceError };
+    if (result.error) {
+      setError(result.error);
     }
 
-    return { success: true, message: data?.message || 'Installment sale created.' };
+    return result;
   }, []);
 
   const paySchedule = useCallback(async (params: PayInstallmentScheduleParams) => {
     setLoading(true);
     setError(null);
 
-    const { data, error: serviceError } = await InstallmentService.payInstallmentSchedule(params);
+    const result = await InstallmentService.payInstallmentSchedule(params);
 
     setLoading(false);
 
-    if (serviceError) {
-      setError(serviceError);
-      return { success: false, message: serviceError };
+    if (result.error) {
+      setError(result.error);
+    } else {
+      // Refresh the contract list after payment so schedules update live
+      if (installments?.customer?.id) {
+        await loadCustomerInstallments(installments.customer.id);
+      }
     }
 
-    // Refresh the contract list after payment so schedules update live
-    if (installments?.customer?.id) {
-      await loadCustomerInstallments(installments.customer.id);
-    }
-
-    return { success: true, message: data?.message || 'Payment processed.' };
+    return result;
   }, [installments, loadCustomerInstallments]);
 
   const writeOff = useCallback(async (params: WriteOffInstallmentContractParams) => {
     setLoading(true);
     setError(null);
 
-    const { data, error: serviceError } = await InstallmentService.writeOffContract(params);
+    const result = await InstallmentService.writeOffContract(params);
 
     setLoading(false);
 
-    if (serviceError) {
-      setError(serviceError);
-      return { success: false, message: serviceError };
+    if (result.error) {
+      setError(result.error);
+    } else {
+      if (installments?.customer?.id) {
+        await loadCustomerInstallments(installments.customer.id);
+      }
     }
 
-    if (installments?.customer?.id) {
-      await loadCustomerInstallments(installments.customer.id);
-    }
-
-    return { success: true, message: data?.message || 'Contract written off.' };
+    return result;
   }, [installments, loadCustomerInstallments]);
 
   const recoverDebt = useCallback(async (params: RecoverInstallmentDebtParams) => {
     setLoading(true);
     setError(null);
 
-    const { data, error: serviceError } = await InstallmentService.recoverDebt(params);
+    const result = await InstallmentService.recoverDebt(params);
 
     setLoading(false);
 
-    if (serviceError) {
-      setError(serviceError);
-      return { success: false, message: serviceError };
+    if (result.error) {
+      setError(result.error);
+    } else {
+      if (installments?.customer?.id) {
+        await loadCustomerInstallments(installments.customer.id);
+      }
     }
 
-    if (installments?.customer?.id) {
-      await loadCustomerInstallments(installments.customer.id);
-    }
-
-    return { success: true, message: data?.message || 'Debt recovery processed.' };
+    return result;
   }, [installments, loadCustomerInstallments]);
 
   return {

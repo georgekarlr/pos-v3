@@ -9,6 +9,10 @@ interface ReportCardProps {
   children: React.ReactNode
   /** Optionally override the element that gets printed (defaults to the card itself) */
   printTargetId?: string
+  /** Optional callback for direct device printing */
+  onDevicePrint?: () => Promise<void>
+  /** Busy state for device printing */
+  deviceBusy?: boolean
 }
 
 /**
@@ -22,6 +26,8 @@ const ReportCard: React.FC<ReportCardProps> = ({
   badgeVariant = 'blue',
   children,
   printTargetId,
+  onDevicePrint,
+  deviceBusy = false,
 }) => {
   const badgeColors: Record<string, string> = {
     blue: 'bg-blue-100 text-blue-700',
@@ -123,13 +129,25 @@ const ReportCard: React.FC<ReportCardProps> = ({
           </div>
           {subtitle && <p className="mt-0.5 text-xs text-gray-500">{subtitle}</p>}
         </div>
-        <button
-          onClick={handlePrint}
-          className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-800 border border-gray-200 hover:border-gray-300 rounded-lg px-3 py-1.5 transition-colors"
-        >
-          <Printer className="h-3.5 w-3.5" />
-          Print
-        </button>
+        <div className="flex items-center gap-2">
+          {onDevicePrint && (
+            <button
+              onClick={onDevicePrint}
+              disabled={deviceBusy}
+              className="flex items-center gap-1.5 text-xs text-green-600 hover:text-green-800 border border-green-200 hover:border-green-300 rounded-lg px-3 py-1.5 transition-colors disabled:opacity-50"
+            >
+              <Printer className="h-3.5 w-3.5" />
+              {deviceBusy ? 'Sending…' : 'Send to Printer'}
+            </button>
+          )}
+          <button
+            onClick={handlePrint}
+            className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-800 border border-gray-200 hover:border-gray-300 rounded-lg px-3 py-1.5 transition-colors"
+          >
+            <Printer className="h-3.5 w-3.5" />
+            Print
+          </button>
+        </div>
       </div>
 
       {/* Content */}

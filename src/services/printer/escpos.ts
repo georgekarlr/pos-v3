@@ -45,6 +45,11 @@ export class SimpleESCPOSEncoder implements ESCPOSEncoder {
     return new Uint8Array([0x1d, 0x21, n]) // GS ! n
   }
 
+  setFont(font: 'A' | 'B'): Uint8Array {
+    const n = font === 'A' ? 0 : 1
+    return new Uint8Array([0x1b, 0x4d, n]) // ESC M n
+  }
+
   newline(lines: number = 1): Uint8Array {
     return new Uint8Array(Array(lines).fill(0x0a))
   }
