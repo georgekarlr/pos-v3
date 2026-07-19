@@ -387,35 +387,90 @@ export const ReceiptFooter: React.FC<{ data: ReceiptData }> = ({ data }) => {
     )
 }
 
-// Narrow, thermal-like receipt using Tailwind
-const Receipt: React.FC<{ data: ReceiptData; className?: string }>
-    = ({ data, className }) => {
+export const POSReceipt: React.FC<{ data: ReceiptData; className?: string }> = ({ data, className }) => {
     return (
         <div className={"receipt-paper bg-white text-gray-900 mx-auto " + (className || '')} style={{ width: 320, fontSize: '9px' }}>
             <ReceiptHeader data={data} />
             <div className="my-2 border-t border-dashed" />
-            
-            {data.isInstallment ? (
-                <InstallmentDetails data={data} />
-            ) : (
-                <>
-                    <ReceiptLineItems data={data} />
-                    <div className="my-2 border-t border-dashed" />
-                    <ReceiptSummary data={data} />
-                </>
-            )}
-
-            {!data.isInstallment && data.isVatRegistered && (
+            <ReceiptLineItems data={data} />
+            <div className="my-2 border-t border-dashed" />
+            <ReceiptSummary data={data} />
+            {data.isVatRegistered && (
                 <>
                     <div className="my-2 border-t-2 border-dashed" />
                     <VATBreakdown data={data} />
                 </>
             )}
-            
             <div className="my-2 border-t border-dashed" />
             <ReceiptFooter data={data} />
         </div>
     )
+}
+
+export const InstallmentContractReceipt: React.FC<{ data: ReceiptData; className?: string }> = ({ data, className }) => {
+    return (
+        <div className={"receipt-paper bg-white text-gray-900 mx-auto " + (className || '')} style={{ width: 320, fontSize: '9px' }}>
+            <ReceiptHeader data={data} />
+            <div className="my-2 border-t border-dashed" />
+            <div className="px-4 text-[11px] font-bold text-center uppercase mb-2">Installment Contract</div>
+            <ReceiptLineItems data={data} />
+            <div className="my-2 border-t border-dashed" />
+            <ReceiptSummary data={data} />
+            {data.installmentContract && (
+                <>
+                    <div className="my-2 border-t border-dashed" />
+                    <div className="px-4 text-[11px] space-y-1">
+                        <div className="font-bold text-center mb-1 uppercase">Contract Terms</div>
+                        <div className="flex justify-between">
+                            <span>Customer</span>
+                            <span className="font-semibold">{data.installmentContract.customerName}</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span>Months to Pay</span>
+                            <span>{data.installmentContract.monthsToPay}</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span>Monthly Due</span>
+                            <span>{formatCurrency(data.installmentContract.monthlyDue)}</span>
+                        </div>
+                        {data.installmentContract.interestRate !== undefined && (
+                            <div className="flex justify-between">
+                                <span>Interest Rate</span>
+                                <span>{data.installmentContract.interestRate}%</span>
+                            </div>
+                        )}
+                    </div>
+                </>
+            )}
+            <div className="my-2 border-t border-dashed" />
+            <ReceiptFooter data={data} />
+        </div>
+    )
+}
+
+export const InstallmentPaymentReceipt: React.FC<{ data: ReceiptData; className?: string }> = ({ data, className }) => {
+    return (
+        <div className={"receipt-paper bg-white text-gray-900 mx-auto " + (className || '')} style={{ width: 320, fontSize: '9px' }}>
+            <ReceiptHeader data={data} />
+            <div className="my-2 border-t border-dashed" />
+            <div className="px-4 text-[11px] font-bold text-center uppercase mb-2">Installment Payment</div>
+            <InstallmentDetails data={data} />
+            <div className="my-2 border-t border-dashed" />
+            <ReceiptFooter data={data} />
+        </div>
+    )
+}
+
+// Narrow, thermal-like receipt using Tailwind
+const Receipt: React.FC<{ data: ReceiptData; className?: string }>
+    = ({ data, className }) => {
+    if (data.isInstallment) {
+        if (data.installmentPayment) {
+            return <InstallmentPaymentReceipt data={data} className={className} />
+        }
+        return <InstallmentContractReceipt data={data} className={className} />
+    }
+    return <POSReceipt data={data} className={className} />
 }
 
 export default Receipt
