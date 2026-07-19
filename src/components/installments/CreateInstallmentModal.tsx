@@ -193,7 +193,8 @@ const CreateInstallmentModal: React.FC<CreateInstallmentModalProps> = ({
       p_months_to_pay: monthsNum,
       p_interest_rate: interestRateNum, // NEW
       p_occurred_at: null,
-    });
+      p_cart_full: cart.map(i => ({ ...i.product, qty: i.quantity, lineTotal: i.product.display_price * i.quantity, unitPrice: i.product.display_price }))
+    } as any);
     if (!result.success) setError(result.message);
   };
 

@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { ReceiptData } from './Receipt'
-import InstallmentReceipt from './InstallmentReceipt'
+import Receipt, { ReceiptData } from './Receipt'
 import { usePrinter } from '../../contexts/PrinterContext'
 
 interface InstallmentReceiptModalProps {
@@ -141,7 +140,7 @@ const InstallmentReceiptModal: React.FC<InstallmentReceiptModalProps> = ({ open,
 
         <div className="p-4 flex items-start justify-center overflow-y-auto max-h-[calc(100vh-16rem)] min-h-[200px]">
           <div ref={receiptRef}>
-            <InstallmentReceipt data={data} />
+            <Receipt data={data} />
           </div>
         </div>
 

@@ -24,6 +24,7 @@ import ReceiptModal from '../components/pos/ReceiptModal';
 import InstallmentReceiptModal from '../components/pos/InstallmentReceiptModal';
 import { ReceiptData } from '../components/pos/Receipt';
 import { getCachedBusinessSettings } from '../utils/settingsCache';
+import {FormatDateTime} from "../utils/formatDateTime.ts";
 
 const Installments: React.FC = () => {
   const { persona } = useAuth();
@@ -184,13 +185,13 @@ const Installments: React.FC = () => {
       const newRemainingBalance = selectedContract.schedules.reduce((sum, s) => sum + (s.amount_due - s.amount_paid), 0) - result.data.data.amount_applied;
       
       const rData: ReceiptData = {
-        dateISO: new Date().toISOString(),
+        dateISO: FormatDateTime.formatLocalTimestampForDatabase(new Date()),
         businessName,
         businessAddress1,
         tin,
         isVatRegistered,
         min,
-        cashier: persona.full_name,
+        cashier: persona.personName,
         terminalId: selectedTerminalId,
         lines: [], // No items for simple payment
         subtotal: 0,
@@ -309,13 +310,13 @@ const Installments: React.FC = () => {
       }
 
       const rData: ReceiptData = {
-        dateISO: new Date().toISOString(),
+        dateISO: FormatDateTime.formatLocalTimestampForDatabase(new Date()),
         businessName,
         businessAddress1,
         tin,
         isVatRegistered,
         min,
-        cashier: persona.full_name,
+        cashier: persona.personName,
         terminalId: selectedTerminalId,
         lines: [],
         subtotal: 0,
@@ -353,7 +354,7 @@ const Installments: React.FC = () => {
   };
 
   // --- Create sale ---
-  const handleCreateSale = async (params: Omit<CreateInstallmentSaleParams, 'p_account_id'>) => {
+  const handleCreateSale = async (params: Omit<CreateInstallmentSaleParams, 'p_account_id'> & { p_cart_full?: any[] }) => {
     if (!persona?.id) return { success: false, message: 'No active persona.' };
     setCreateLoading(true);
     const result = await createSale({ ...params, p_account_id: persona.id });
@@ -364,7 +365,7 @@ const Installments: React.FC = () => {
       showToast('success', 'Installment contract created successfully!');
 
       // Prepare business settings for receipt
-      let businessName = 'Installment Downpayment Receipt';
+      let businessName = 'Installment Contract';
       let businessAddress1: string | undefined;
       let tin: string | undefined;
       let isVatRegistered: boolean | undefined;
@@ -393,21 +394,21 @@ const Installments: React.FC = () => {
         console.error('Error reading cached business settings in Installments:', e);
       }
 
-      // Prepare receipt for the new installment sale (downpayment)
+      // Prepare receipt for the new installment sale
       const rData: ReceiptData = {
-        dateISO: new Date().toISOString(),
+        dateISO: FormatDateTime.formatLocalTimestampForDatabase(new Date()),
         businessName,
         businessAddress1,
         tin,
         isVatRegistered,
         min,
-        cashier: persona.full_name,
-        invoiceNumber: result.data.data.invoice_number,
-        lines: [], // Items are in the original cart, but here we're showing the installment info
-        subtotal: 0,
-        tax: 0,
-        total: params.p_downpayment_amount,
-        payments: [{ method: params.p_downpayment_method, amount: params.p_downpayment_amount }],
+        cashier: persona.personName,
+        invoiceNumber: result.data.data?.invoice_number || 'N/A',
+        lines: params.p_cart_full || [],
+        subtotal: (params.p_cart_full || []).reduce((acc, l) => acc + l.lineTotal, 0),
+        tax: 0, // Simplified for now
+        total: (params.p_cart_full || []).reduce((acc, l) => acc + l.lineTotal, 0),
+        payments: params.p_downpayment_amount > 0 ? [{ method: params.p_downpayment_method, amount: params.p_downpayment_amount }] : [],
         totalPaid: params.p_downpayment_amount,
         change: 0,
         isInstallment: true,
@@ -417,19 +418,23 @@ const Installments: React.FC = () => {
         softwareProviderTin,
         softwareProviderAccreditationNo,
         installmentContract: {
-          contractId: result.data.data.contract_id,
-          invoiceNumber: result.data.data.invoice_number,
-          customerName: selectedCustomer?.full_name || 'Customer',
-          remainingBalance: (result.data.data.monthly_due * params.p_months_to_pay),
-          monthlyDue: result.data.data.monthly_due,
+          contractId: result.data.data?.contract_id || 0,
+          invoiceNumber: result.data.data?.invoice_number || 'N/A',
+          customerName: selectedSummary?.customer_name || 'Customer',
+          remainingBalance: ((result.data.data?.monthly_due || 0) * params.p_months_to_pay),
+          monthlyDue: result.data.data?.monthly_due || 0,
           monthsToPay: params.p_months_to_pay,
           totalPaid: params.p_downpayment_amount,
           interestRate: params.p_interest_rate,
-          totalInterestAmount: result.data.data.total_interest
+          totalInterestAmount: result.data.data?.total_interest || 0
         }
       }
       setReceiptData(rData);
-      setShowInstallmentReceiptModal(true);
+      
+      // Use a small delay to ensure state updates from closing the create modal have settled
+      setTimeout(() => {
+        setShowInstallmentReceiptModal(true);
+      }, 100);
 
       if (persona?.id) loadAllContracts(persona.id);
       return { success: true, message: result.data.message };
