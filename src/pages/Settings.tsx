@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import {
   Camera,
   Keyboard,
@@ -23,8 +23,7 @@ import { usePrinter } from '../contexts/PrinterContext'
 import { useAuth } from '../contexts/AuthContext'
 import { SettingsService } from '../services/settingsService'
 import { BusinessSettings, Terminal } from '../types/settings'
-import { QzConfig, WebUsbConfig, AndroidBtConfig } from '../services/printer/types'
-import { DEFAULT_QZ_CONFIG } from '../services/printer/config/qz-defaults'
+import { WebUsbConfig, AndroidBtConfig } from '../services/printer/types'
 import { DEFAULT_WEBUSB_CONFIG } from '../services/printer/config/webusb-defaults'
 import { DEFAULT_ANDROID_BT_CONFIG } from '../services/printer/config/android-bt-defaults'
 import type { ReceiptData } from '../components/pos/Receipt'
@@ -44,7 +43,7 @@ import { FormatDateTime } from '../utils/formatDateTime'
 // ---------------------------------------------------------------------------
 // Printer helpers
 // ---------------------------------------------------------------------------
-type PrinterTab = 'qz' | 'webusb' | 'android-bt'
+type PrinterTab = 'webusb' | 'android-bt'
 
 
 function sampleReceipt(): ReceiptData {
@@ -67,12 +66,6 @@ function sampleReceipt(): ReceiptData {
     change: 99,
     notes: 'Test print from Receipt Printer configuration page.',
   }
-}
-
-const capability = {
-  serial: typeof (navigator as any).serial !== 'undefined',
-  usb: typeof (navigator as any).usb !== 'undefined',
-  ble: typeof (navigator as any).bluetooth !== 'undefined',
 }
 
 // ---------------------------------------------------------------------------
@@ -138,7 +131,6 @@ const Settings: React.FC = () => {
   const {
     status: printerStatus,
     statusMessage: printerStatusMsg,
-    serviceAvailable,
     printers,
     selectedPrinter,
     isConnected,
@@ -147,27 +139,20 @@ const Settings: React.FC = () => {
     config: printerConfig,
     setConfig: setPrinterConfig,
     checkStatus,
-    getPrinters,
     connect: connectPrinter,
     disconnect: disconnectPrinter,
     print: printReceipt,
     busy: printerBusy,
   } = usePrinter()
 
-  const initialTab: PrinterTab = 'qz'
   const [printerTab, setPrinterTab] = useState<PrinterTab>(
     () =>
       printerConfig?.type === 'webusb'
         ? 'webusb'
         : printerConfig?.type === 'android-bt'
-        ? 'android-bt'
-        : initialTab
+        ? 'android-bt' : 'android-bt'
   )
 
-  // Local form state for each platform
-  const [qzForm, setQzForm] = useState<QzConfig>(
-    printerConfig?.type === 'qz' ? (printerConfig as QzConfig) : { ...DEFAULT_QZ_CONFIG }
-  )
   const [usbForm, setUsbForm] = useState<WebUsbConfig>(
     printerConfig?.type === 'webusb' ? (printerConfig as WebUsbConfig) : { ...DEFAULT_WEBUSB_CONFIG }
   )
@@ -178,9 +163,7 @@ const Settings: React.FC = () => {
 
   // Sync state if printerConfig updates in background
   useEffect(() => {
-    if (printerConfig?.type === 'qz') {
-      setQzForm(printerConfig)
-    } else if (printerConfig?.type === 'webusb') {
+    if (printerConfig?.type === 'webusb') {
       setUsbForm(printerConfig)
     } else if (printerConfig?.type === 'android-bt') {
       setBtForm(printerConfig)
@@ -370,14 +353,14 @@ const Settings: React.FC = () => {
   // ---------------------------------------------------------------------------
   const handleTabChange = useCallback((tab: PrinterTab) => {
     setPrinterTab(tab)
-    const cfg = tab === 'qz' ? qzForm : tab === 'webusb' ? usbForm : btForm
+    const cfg = tab === 'webusb' ? usbForm : btForm
     setPrinterConfig(cfg)
     setPrinterMessage(null)
-  }, [qzForm, usbForm, btForm, setPrinterConfig])
+  }, [usbForm, btForm, setPrinterConfig])
 
   const handleSaveConfig = useCallback(async (withTest: boolean) => {
     setPrinterMessage(null)
-    const cfg = printerTab === 'qz' ? qzForm : printerTab === 'webusb' ? usbForm : btForm
+    const cfg = printerTab === 'webusb' ? usbForm : btForm
     setPrinterConfig(cfg)
     if (withTest) {
       try {
@@ -389,7 +372,7 @@ const Settings: React.FC = () => {
     } else {
       setPrinterMessage('Configuration saved.')
     }
-  }, [printerTab, qzForm, usbForm, btForm, setPrinterConfig, printReceipt])
+  }, [printerTab, usbForm, btForm, setPrinterConfig, printReceipt])
 
   const handleConnect = useCallback(async () => {
     setPrinterMessage(null)
@@ -411,11 +394,6 @@ const Settings: React.FC = () => {
     setPrinterMessage(null)
     await checkStatus()
   }, [checkStatus])
-
-  const handleGetPrinters = useCallback(async () => {
-    setPrinterMessage(null)
-    await getPrinters()
-  }, [getPrinters])
 
   const handleTestPrint = useCallback(async () => {
     setPrinterMessage(null)
@@ -778,9 +756,7 @@ const Settings: React.FC = () => {
               <div className="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
                 <span className="text-sm font-semibold text-gray-800">Select Platform</span>
                 <div className="inline-flex rounded-md shadow-sm border bg-white p-0.5">
-                  {([
-                    { id: 'qz' as const, label: '🖥 QZ Tray' },
-                    { id: 'webusb' as const, label: '🔌 USB' },
+                  {([{ id: 'webusb' as const, label: '🔌 USB' },
                     { id: 'android-bt' as const, label: '📶 Bluetooth' },
                   ]).map(({ id, label }) => (
                     <button
@@ -884,120 +860,6 @@ const Settings: React.FC = () => {
               </div>
 
               <div className="max-w-xl space-y-4 pt-2">
-                {/* ── QZ Tray form ── */}
-                {printerTab === 'qz' && (
-                  <div className="space-y-4">
-                    <p className="text-sm text-gray-500">
-                      <strong>QZ Tray</strong> is a free desktop app that bridges the browser to your
-                      USB / Serial / Network printer. Install it from{' '}
-                      <a href="https://qz.io/download/" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">qz.io</a>{' '}
-                      and keep it running in the system tray.
-                    </p>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Host</label>
-                        <input
-                          id="qz-host"
-                          type="text"
-                          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                          value={qzForm.host ?? 'localhost'}
-                          onChange={(e) => setQzForm({ ...qzForm, host: e.target.value })}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Port</label>
-                        <input
-                          id="qz-port"
-                          type="number"
-                          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                          value={qzForm.port ?? 8181}
-                          onChange={(e) => setQzForm({ ...qzForm, port: Number(e.target.value) })}
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Printer Name
-                        <span className="ml-1 text-xs font-normal text-gray-400">(empty = OS default)</span>
-                      </label>
-                      <div className="flex gap-2">
-                        {printers.length > 0 ? (
-                          <select
-                            id="qz-printer-name"
-                            className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none bg-white"
-                            value={qzForm.printerName ?? ''}
-                            onChange={(e) => setQzForm({ ...qzForm, printerName: e.target.value })}
-                          >
-                            <option value="">— OS Default —</option>
-                            {printers.map((p) => (
-                              <option key={p} value={p}>{p}</option>
-                            ))}
-                          </select>
-                        ) : (
-                          <input
-                            id="qz-printer-name"
-                            type="text"
-                            className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                            placeholder="e.g. EPSON TM-T82 (click ↻ to load list)"
-                            value={qzForm.printerName ?? ''}
-                            onChange={(e) => setQzForm({ ...qzForm, printerName: e.target.value })}
-                          />
-                        )}
-                        <button
-                          id="btn-get-printers"
-                          type="button"
-                          disabled={printerBusy}
-                          onClick={handleGetPrinters}
-                          title="Fetch printer list from QZ Tray"
-                          className="px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50 text-gray-600 disabled:opacity-50 flex-shrink-0 flex items-center justify-center gap-1.5"
-                        >
-                          <RefreshCw className={`h-4 w-4 ${printerBusy ? 'animate-spin' : ''}`} />
-                          {printers.length === 0 && <span className="text-xs">Load</span>}
-                        </button>
-                      </div>
-                      {printers.length > 0 && (
-                        <p className="mt-1 text-xs text-gray-400">{printers.length} printer{printers.length !== 1 ? 's' : ''} found</p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Connection Type</label>
-                      <select
-                        id="qz-connection-type"
-                        className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                        value={qzForm.connectionType ?? 'usb'}
-                        onChange={(e) => setQzForm({ ...qzForm, connectionType: e.target.value as any })}
-                      >
-                        <option value="usb">USB</option>
-                        <option value="serial">Serial / COM Port</option>
-                        <option value="network">Network / LAN (TCP)</option>
-                        <option value="file">File (print to file)</option>
-                      </select>
-                    </div>
-
-                    <div className="flex gap-2 pt-2">
-                      <button
-                        type="button"
-                        disabled={printerBusy}
-                        onClick={() => handleSaveConfig(false)}
-                        className="px-4 py-2 text-sm font-medium border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-                      >
-                        Save
-                      </button>
-                      <button
-                        type="button"
-                        disabled={printerBusy}
-                        onClick={() => handleSaveConfig(true)}
-                        className="px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-md shadow-sm disabled:opacity-50"
-                      >
-                        Save &amp; Test Print
-                      </button>
-                    </div>
-                  </div>
-                )}
-
                 {/* ── WebUSB form ── */}
                 {printerTab === 'webusb' && (
                   <div className="space-y-4">
@@ -1293,7 +1155,6 @@ const Settings: React.FC = () => {
                   </div>
 
                   <p className="text-xs text-gray-400">
-                    <strong>QZ Tray:</strong> Desktop bridge — requires the QZ Tray app running on this machine.<br />
                     <strong>USB:</strong> WebUSB — directly access USB receipt printers from Chrome, Edge, or Opera.<br />
                     <strong>Bluetooth:</strong> Web Bluetooth — pair BLE receipt printers from Android Chrome or desktop Chrome/Edge.
                   </p>

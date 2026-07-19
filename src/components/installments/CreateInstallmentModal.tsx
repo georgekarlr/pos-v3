@@ -54,7 +54,6 @@ const CreateInstallmentModal: React.FC<CreateInstallmentModalProps> = ({
   const [customerResults, setCustomerResults] = useState<CustomerSearchResult[]>([]);
   const [customerSearching, setCustomerSearching] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerSearchResult | null>(null);
-  const [promoId, setPromoId] = useState<number | null>(null);
 
   // Step 2 — Cart
   const [products, setProducts] = useState<Product[]>([]);
@@ -187,7 +186,7 @@ const CreateInstallmentModal: React.FC<CreateInstallmentModalProps> = ({
     const result = await onConfirm({
       p_terminal_id: selectedTerminalId,
       p_customer_id: selectedCustomer.customer_id,
-      p_cart_items: cart.map(i => ({ product_id: i.product.id, quantity: i.quantity, promo_id: promoId })),
+      p_cart_items: cart.map(i => ({ product_id: i.product.id, quantity: i.quantity })),
       p_downpayment_amount: dpNum,
       p_downpayment_method: downpaymentMethod,
       p_months_to_pay: monthsNum,

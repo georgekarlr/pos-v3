@@ -24,7 +24,7 @@ export const ArchitectureSection: React.FC = () => {
 
       <h3 className="text-base font-semibold text-gray-800 mt-4">3. Troubleshooting Flow</h3>
       <ul className="list-disc list-inside space-y-1 ml-2">
-        <li><strong>Receipt printer fails:</strong> For Desktop, make sure QZ Tray is installed and running in your system tray. For WebUSB, ensure you are using a Chromium-based browser (Chrome, Edge, Opera) and the printer is paired via Settings.</li>
+        <li><strong>Receipt printer fails:</strong> For WebUSB, ensure you are using a Chromium-based browser (Chrome, Edge, Opera) and the printer is paired via Settings.</li>
         <li><strong>POS Checkout button disabled:</strong> A terminal MUST be selected in Settings. The system requires an active PTU profile to serialize invoice IDs correctly.</li>
         <li><strong>Sales Sync failures:</strong> If the connection cuts out mid-sync, the queue remains safely stored in IndexedDB. Reloading or reconnecting resumes syncing safely.</li>
       </ul>

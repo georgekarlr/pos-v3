@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
-import { TrendingUp, DollarSign, ShoppingCart, CreditCard, AlertCircle, Calendar } from 'lucide-react'
+import { DollarSign, ShoppingCart, CreditCard, AlertCircle, Calendar } from 'lucide-react'
 import LoadingSpinner from '../components/LoadingSpinner'
 import { dashboardService } from '../services/dashboardService'
 import { DashboardData } from '../types/dashboard'

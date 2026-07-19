@@ -3,14 +3,13 @@
  *
  * Global React context that manages the ESC/POS printer lifecycle:
  *   - Connection status (idle / connecting / connected / disconnected / error)
- *   - Available printer list (from QZ Tray or WebUSB)
  *   - Connect / disconnect lifecycle
  *   - autoPrint toggle: when true, the receipt is automatically sent to the
  *     configured printer after every successful checkout (no manual click needed)
  *   - print(receiptData) — sends ESC/POS bytes through the active transport
  *
  * The context keeps a single long-lived transport instance while connected,
- * so the WebSocket to QZ Tray (or the WebUSB interface claim) stays open
+ * so the WebSocket to the WebUSB interface claim stays open
  * across multiple print jobs during a session.
  */
 
@@ -42,9 +41,9 @@ interface PrinterContextType {
   status: PrinterStatus
   /** Human-readable status message (errors, info) */
   statusMessage: string
-  /** Whether the QZ Tray / WebUSB service is reachable at all */
+  /** WebUSB service is reachable at all */
   serviceAvailable: boolean
-  /** Printers reported by the active transport (QZ printer list, paired USB devices) */
+  /** Printers reported by the active transport (paired USB devices) */
   printers: string[]
   /** Currently selected/connected printer name */
   selectedPrinter: string | null
@@ -153,15 +152,6 @@ export const PrinterProvider: React.FC<{ children: ReactNode }> = ({ children })
       const detail: PrinterStatusDetail = await transport.checkStatus()
       applyStatusDetail(detail)
 
-      // Auto-fetch printer list if QZ service is active
-      if (detail.serviceAvailable && config.type === 'qz') {
-        try {
-          const list = await transport.getPrinters()
-          setPrinters(list)
-        } catch {
-          // ignore non-fatal retrieval errors
-        }
-      }
     } catch (err: any) {
       setStatus('error')
       setStatusMessage(err?.message ?? 'Unknown error')
