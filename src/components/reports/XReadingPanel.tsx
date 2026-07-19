@@ -14,7 +14,6 @@ const todayISO = FormatDateTime.formatLocalTimestampForDatabase(new Date()).slic
 const generateXReadingText = (
   report: XReadingResult,
   businessSettings: BusinessSettings | null,
-  persona: any
 ) => {
   const line = '='.repeat(40);
   const center = (text: string) => {
@@ -119,13 +118,12 @@ const generateXReadingText = (
 interface XReadingDisplayProps {
   report: XReadingResult
   businessSettings: BusinessSettings | null
-  persona: any
 }
 
 /** Pure presentational component – renders an X-Reading as a BIR-style receipt */
-export const XReadingDisplay: React.FC<XReadingDisplayProps> = ({ report, businessSettings, persona }) => (
+export const XReadingDisplay: React.FC<XReadingDisplayProps> = ({ report, businessSettings }) => (
   <div id="x-reading-printout" className="font-mono text-xs whitespace-pre bg-gray-50 border border-gray-200 p-4 rounded-lg leading-relaxed max-w-sm mx-auto shadow-inner select-all">
-    {generateXReadingText(report, businessSettings, persona)}
+    {generateXReadingText(report, businessSettings)}
   </div>
 )
 
@@ -194,7 +192,7 @@ const XReadingPanel: React.FC = () => {
     }
     setDeviceBusy(true)
     try {
-      const text = generateXReadingText(report, businessSettings, persona)
+      const text = generateXReadingText(report, businessSettings)
       await printRaw(text)
     } catch (e: any) {
       console.error(e)
@@ -287,7 +285,7 @@ const XReadingPanel: React.FC = () => {
           onDevicePrint={handleDevicePrint}
           deviceBusy={deviceBusy}
         >
-          <XReadingDisplay report={report} businessSettings={businessSettings} persona={persona} />
+          <XReadingDisplay report={report} businessSettings={businessSettings} />
         </ReportCard>
       )}
     </div>

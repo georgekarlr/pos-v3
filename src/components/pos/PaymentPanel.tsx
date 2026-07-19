@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react'
-import { Plus, Trash2, Award, CreditCard, User } from 'lucide-react'
+import { Plus, Trash2, Award, CreditCard } from 'lucide-react'
 import { PaymentInput } from '../../types/pos'
 import CustomerSearch from './CustomerSearch'
 

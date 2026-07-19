@@ -2,25 +2,6 @@
 // Transport platform types
 // ---------------------------------------------------------------------------
 
-/** Which platform/protocol handles the physical print job */
-export type TransportType = 'qz' | 'webusb' | 'bridge' | 'android-bt'
-
-// --- QZ Tray (desktop: Windows / Linux / macOS) ---
-export type QzConnectionType = 'usb' | 'serial' | 'network' | 'file'
-
-export interface QzConfig {
-  type: 'qz'
-  /** QZ Tray WebSocket host (default: localhost) */
-  host?: string
-  /** QZ Tray WebSocket port (default: 8181) */
-  port?: number
-  /** Exact printer name as shown in QZ Tray / OS printer list. Empty = OS default printer */
-  printerName?: string
-  /** Physical connection type of the printer attached to the desktop */
-  connectionType?: QzConnectionType
-  /** Optional: path to PEM certificate for signed printing */
-  certPath?: string
-}
 
 // --- WebUSB (direct USB printing in browser) ---
 export interface WebUsbConfig {
@@ -30,12 +11,6 @@ export interface WebUsbConfig {
   deviceName?: string
 }
 
-// --- Bridge Printer (coming soon) ---
-export interface BridgeConfig {
-  type: 'bridge'
-  /** HTTP endpoint for the bridge server */
-  endpoint?: string
-}
 
 // --- Android Web Bluetooth (BLE receipt printers) ---
 export interface AndroidBtConfig {
@@ -50,7 +25,7 @@ export interface AndroidBtConfig {
   characteristicUuid?: string
 }
 
-export type PrinterConfig = QzConfig | WebUsbConfig | BridgeConfig | AndroidBtConfig
+export type PrinterConfig = WebUsbConfig | AndroidBtConfig
 
 // ---------------------------------------------------------------------------
 // Transport lifecycle status
@@ -65,7 +40,7 @@ export type PrinterStatus =
 export interface PrinterStatusDetail {
   status: PrinterStatus
   message?: string
-  /** Whether QZ Tray (or the native plugin) is reachable at all */
+  /** the native plugin is reachable at all */
   serviceAvailable?: boolean
 }
 
@@ -73,7 +48,7 @@ export interface PrinterStatusDetail {
 // Core transport interface
 // ---------------------------------------------------------------------------
 export interface PrinterTransport {
-  /** Check whether the transport service (QZ Tray / BT) is reachable */
+  /** Check whether the transport service BT is reachable */
   checkStatus(): Promise<PrinterStatusDetail>
   /** Return list of printer names available on this transport */
   getPrinters(): Promise<string[]>

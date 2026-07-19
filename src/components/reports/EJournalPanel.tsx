@@ -197,7 +197,7 @@ const EJournalPanel: React.FC = () => {
         const totalTendered = Number(detailsObj.tendered ?? detailsObj.total_tendered ?? 0)
         if (payments.length > 0) {
           text += `Payments:\n`
-          payments.forEach((pay: any, idx: number) => {
+          payments.forEach((pay: any) => {
             const method = pay.method || pay.payment_method || 'Cash'
             // If there is exactly one payment, display the full tendered amount;
             // otherwise show the slice amount actually applied for that method.

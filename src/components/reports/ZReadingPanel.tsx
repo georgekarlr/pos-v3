@@ -15,7 +15,6 @@ const todayISO = FormatDateTime.formatLocalTimestampForDatabase(new Date()).slic
 const generateZReadingText = (
   report: ZReadingResult,
   businessSettings: BusinessSettings | null,
-  persona: any
 ) => {
   const line = '='.repeat(40);
   const center = (text: string) => {
@@ -81,7 +80,9 @@ const generateZReadingText = (
       const issueDate = new Date(businessSettings.software_provider_date_issued);
       const validDate = new Date(issueDate.setFullYear(issueDate.getFullYear() + 5));
       providerValidUntil = validDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    } catch { }
+    } catch {
+      throw Error
+    }
   }
 
   const zCounter = (report as any).z_counter || (report as any).id || (report as any).z_reading_id || 142;
@@ -173,9 +174,9 @@ interface ZReadingDisplayProps {
 }
 
 /** Pure presentational component – renders a Z-Reading as a BIR-style receipt */
-export const ZReadingDisplay: React.FC<ZReadingDisplayProps> = ({ report, businessSettings, persona }) => (
+export const ZReadingDisplay: React.FC<ZReadingDisplayProps> = ({ report, businessSettings }) => (
   <div id="z-reading-printout" className="font-mono text-xs whitespace-pre bg-gray-50 border border-gray-200 p-4 rounded-lg leading-relaxed max-w-sm mx-auto shadow-inner select-all">
-    {generateZReadingText(report, businessSettings, persona)}
+    {generateZReadingText(report, businessSettings)}
   </div>
 )
 
@@ -249,7 +250,7 @@ const ZReadingPanel: React.FC = () => {
     }
     setDeviceBusy(true)
     try {
-      const text = generateZReadingText(report, businessSettings, persona)
+      const text = generateZReadingText(report, businessSettings)
       await printRaw(text)
     } catch (e: any) {
       console.error(e)

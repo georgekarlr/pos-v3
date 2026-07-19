@@ -1,6 +1,6 @@
 import React from 'react'
 import { useAuth } from '../contexts/AuthContext'
-import { User, Mail, Calendar, Shield, Users } from 'lucide-react'
+import { User, Mail, Calendar, Shield } from 'lucide-react'
 
 const Profile: React.FC = () => {
   const { user, persona } = useAuth()

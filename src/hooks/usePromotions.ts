@@ -6,7 +6,6 @@ import type {
   GetPromotionsParams,
   CreatePromotionParams,
   UpdatePromotionParams,
-  PromoStatus,
 } from '../types/promotion';
 
 export const usePromotions = () => {

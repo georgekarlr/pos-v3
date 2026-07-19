@@ -16,16 +16,6 @@ const ProductList: React.FC<ProductListProps> = ({ products, onEdit, isAdmin }) 
     }).format(amount)
   }
 
-  const formatDate = (dateString: string) => {
-    return new Intl.DateTimeFormat('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    }).format(new Date(dateString))
-  }
-
   if (products.length === 0) {
     return (
       <div className="text-center py-16">

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { DebtService } from '../services/debtService';
 import { ProductService } from '../services/productService';
@@ -19,8 +19,7 @@ import {
   Loader2,
   Trash2,
   AlertCircle,
-  X,
-  UserPlus
+  X
 } from 'lucide-react';
 
 type Step = 'customer' | 'items' | 'loan' | 'summary';

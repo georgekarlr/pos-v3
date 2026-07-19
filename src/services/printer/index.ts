@@ -4,9 +4,7 @@ import {
   loadReceiptDesign,
   type ReceiptDesign,
 } from './types'
-import { QzTransport } from './transports/qz'
 import { WebUsbTransport } from './transports/webusb'
-import { BridgeTransport } from './transports/bridge'
 import { AndroidBtTransport } from './transports/android-bt'
 import { joinBytes, SimpleESCPOSEncoder } from './escpos'
 import type { ReceiptData } from '../../components/pos/Receipt'
@@ -16,12 +14,8 @@ import type { ReceiptData } from '../../components/pos/Receipt'
 // ---------------------------------------------------------------------------
 export function createTransport(cfg: PrinterConfig): PrinterTransport {
   switch (cfg.type) {
-    case 'qz':
-      return new QzTransport(cfg)
     case 'webusb':
       return new WebUsbTransport(cfg)
-    case 'bridge':
-      return new BridgeTransport(cfg)
     case 'android-bt':
       return new AndroidBtTransport(cfg)
     default:

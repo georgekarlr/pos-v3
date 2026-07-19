@@ -34,7 +34,6 @@ export const SettingsSection: React.FC = () => {
           <h4 className="font-semibold text-gray-800">🖨️ Receipt Printer Tab</h4>
           <p className="text-xs text-gray-600 mt-1">
             Configure receipt printing for your platform:
-            - **QZ Tray (Desktop):** Connects to a local QZ Tray instance via WebSocket (supporting USB, Serial, Network/LAN, or file output). Allows fetching the printer list and setting custom WebSocket host/ports.
             - **WebUSB (Direct USB):** Connects directly to local USB receipt printers from Chromium-based browsers (Chrome, Edge, Opera) without any bridge software. Pair it via the native browser selector.
             Toggle **Auto-Print on Checkout** to automatically send receipts to the configured printer after every completed sale.
           </p>
