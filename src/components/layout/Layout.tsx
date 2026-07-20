@@ -1,9 +1,9 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Sidebar from './Sidebar'
 import Header from './Header'
 import { useLocation, Link } from 'react-router-dom'
 import { getCachedBusinessSettings, isSubscriptionExpired } from '../../utils/settingsCache'
-import { ShieldAlert, ArrowRight } from 'lucide-react'
+import { ShieldAlert, ArrowRight, WifiOff } from 'lucide-react'
 
 interface LayoutProps {
   children: React.ReactNode
@@ -11,7 +11,23 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [isOnline, setIsOnline] = useState(navigator.onLine)
   const location = useLocation()
+  
+  const isPOSPage = location.pathname === '/pos'
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true)
+    const handleOffline = () => setIsOnline(false)
+
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+
+    return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+    }
+  }, [])
   
   // Get settings, ignore expiry check so we can check it explicitly
   const settings = getCachedBusinessSettings(true)
@@ -93,6 +109,21 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         <main className="flex-1 relative overflow-y-auto focus:outline-none">
           <div className="py-6">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              {!isOnline && !isPOSPage && (
+                <div className="mb-6 flex items-center justify-between gap-4 p-4 rounded-xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 shadow-sm backdrop-blur-sm transition-all duration-300">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-amber-500/20 text-amber-600 animate-pulse">
+                      <WifiOff className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-amber-900 text-sm">Working Offline</h4>
+                      <p className="text-amber-800/80 text-xs mt-0.5">
+                        Changes are saved locally and will sync when internet connection is restored. Some features may be limited.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
               {children}
             </div>
           </div>
