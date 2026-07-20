@@ -116,6 +116,11 @@ export class WebUsbTransport implements PrinterTransport {
     }
 
     this.device = device
+
+    // ---- Open the device (close first if it was left open from a prior session) ----
+    if (this.device.opened) {
+      try { await this.device.close() } catch { /* ignore */ }
+    }
     await this.device.open()
 
     // Select configuration 1 by default if configuration not active
@@ -154,8 +159,46 @@ export class WebUsbTransport implements PrinterTransport {
     this.interfaceNumber = foundInterface
     this.endpointNumber = foundEndpoint
 
-    // Claim interface to write to it
-    await this.device.claimInterface(this.interfaceNumber)
+    // Attempt 1: silently release any stale claim from the browser itself, then claim.
+    try {
+      await this.device.releaseInterface(this.interfaceNumber)
+    } catch { /* not previously claimed — fine */ }
+
+    try {
+      await this.device.claimInterface(this.interfaceNumber)
+    } catch (firstErr: any) {
+      // Attempt 2: The OS kernel driver (e.g. Linux usblp) may hold the interface.
+      // Fully close the device and reopen it — Chrome will try to detach the kernel
+      // driver on the new open() call on supported platforms.
+      console.warn('WebUSB: first claimInterface failed, retrying after close/reopen…', firstErr)
+      try {
+        await this.device.close()
+      } catch { /* ignore */ }
+      try {
+        await this.device.open()
+        if (this.device.configuration === null) {
+          await this.device.selectConfiguration(1)
+        }
+        await this.device.claimInterface(this.interfaceNumber)
+      } catch (secondErr: any) {
+        // Both attempts failed — provide a clear, actionable error.
+        const isLinux = navigator.platform?.toLowerCase().includes('linux') ||
+          navigator.userAgent?.toLowerCase().includes('linux')
+        const hint = isLinux
+          ? '\n\nOn Linux, the "usblp" kernel driver may be blocking access.\n' +
+            'Fix option 1 (temporary): run in terminal →  sudo modprobe -r usblp\n' +
+            'Fix option 2 (permanent): add a udev rule:\n' +
+            '  echo \'SUBSYSTEM=="usb", ATTRS{idVendor}=="' +
+            (this.cfg.vendorId ? this.cfg.vendorId.toString(16).padStart(4, '0') : 'XXXX') +
+            '", MODE="0666", GROUP="plugdev"\' | sudo tee /etc/udev/rules.d/99-usb-printer.rules\n' +
+            '  sudo udevadm control --reload-rules && sudo udevadm trigger'
+          : '\n\nMake sure no other application or driver is using the printer.'
+        throw new Error(
+          `Unable to claim the USB printer interface.\n${hint}\n\nOriginal error: ${secondErr?.message ?? secondErr}`
+        )
+      }
+    }
+
     this.connected = true
 
     // Update config reference dynamically with actual selected device info

@@ -400,7 +400,7 @@ const chapters: ManualChapter[] = [
       <p><strong>Sub-Menu:</strong> Reports &amp; Compliance | <strong>Access:</strong> X-Reading (Admin, Staff), Z-Reading, E-Journal &amp; BIR Books (Admin only)</p>
       <h3>1. X-Reading</h3>
       <p><strong>Route:</strong> <code>/reports-compliance/x-reading</code></p>
-      <p>Generates a temporary snapshot report of the selected terminal's daily activity: gross sales, net sales, voids, refunds, senior citizen discounts, tax values, and payment collections breakdown (Cash, Card, GCash, etc.). Non-persistent: no database commits.</p>
+      <p>Generates a temporary snapshot report of the selected terminal's daily activity: gross sales, net sales, voids, refunds, senior citizen discounts, tax values, and payment collections breakdown (Cash, Card, GCash, etc.). Non-persistent: no database commits. The physical printout includes the software provider and PTU compliance footer just like Z-readings.</p>
       <h3>2. Z-Reading</h3>
       <p><strong>Route:</strong> <code>/reports-compliance/z-reading</code></p>
       <p>The official daily closing procedure required for tax registry and audit logs: compiles active sales transactions, writes them into a permanent ledger lock, increments the Z-Counter, and resets daily counts. Non-reversible transaction.</p>

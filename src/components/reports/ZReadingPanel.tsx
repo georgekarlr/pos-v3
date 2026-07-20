@@ -9,6 +9,7 @@ import { ZReadingResult } from '../../types/report'
 import ReportCard from './ReportCard'
 import LoadingSpinner from '../LoadingSpinner'
 import { FormatDateTime } from '../../utils/formatDateTime'
+import { ReceiptHeader, ReceiptFooter, ReceiptData } from '../pos/Receipt'
 
 const todayISO = FormatDateTime.formatLocalTimestampForDatabase(new Date()).slice(0, 10)
 
@@ -173,12 +174,48 @@ interface ZReadingDisplayProps {
   persona: any
 }
 
+/** Builds a minimal ReceiptData shape for the shared header/footer components */
+const buildReceiptDataForZReading = (
+  report: ZReadingResult,
+  businessSettings: BusinessSettings | null,
+): ReceiptData => ({
+  dateISO: report.GeneratedAt,
+  businessName: businessSettings?.business_name || report.Business?.Name || '',
+  businessAddress1: businessSettings?.address || report.Business?.Address || '',
+  tin: businessSettings?.tin || report.Business?.TIN || '',
+  isVatRegistered: businessSettings?.is_vat_registered ?? true,
+  min: businessSettings?.min || report.Terminal?.MIN || '',
+  cashier: report.Terminal?.AdminName || '',
+  ptuIssuedBy: report.Terminal?.PTU || businessSettings?.ptu_issued_by || '',
+  softwareProviderName: businessSettings?.software_provider_name || '',
+  softwareProviderAddress: businessSettings?.software_provider_address || '',
+  softwareProviderTin: businessSettings?.software_provider_tin || '',
+  softwareProviderAccreditationNo: businessSettings?.software_provider_accreditation_no || '',
+  // Required numeric fields (not shown in reading reports)
+  lines: [],
+  subtotal: 0,
+  tax: 0,
+  total: 0,
+  payments: [],
+  totalPaid: 0,
+  change: 0,
+})
+
 /** Pure presentational component – renders a Z-Reading as a BIR-style receipt */
-export const ZReadingDisplay: React.FC<ZReadingDisplayProps> = ({ report, businessSettings }) => (
-  <div id="z-reading-printout" className="font-mono text-xs whitespace-pre bg-gray-50 border border-gray-200 p-4 rounded-lg leading-relaxed max-w-sm mx-auto shadow-inner select-all">
-    {generateZReadingText(report, businessSettings)}
-  </div>
-)
+export const ZReadingDisplay: React.FC<ZReadingDisplayProps> = ({ report, businessSettings }) => {
+  const receiptData = buildReceiptDataForZReading(report, businessSettings)
+  return (
+    <div id="z-reading-printout" className="receipt-paper bg-white text-gray-900 mx-auto border border-gray-200 rounded-lg shadow-inner" style={{ width: 320, fontSize: '9px' }}>
+      <ReceiptHeader data={receiptData} />
+      <div className="my-2 border-t border-dashed" />
+      <div className="font-mono text-xs whitespace-pre px-4 pb-2 leading-relaxed select-all">
+        {generateZReadingText(report, businessSettings)}
+      </div>
+      <div className="my-2 border-t border-dashed" />
+      <ReceiptFooter data={receiptData} />
+    </div>
+  )
+}
 
 // ─── Main Panel ───────────────────────────────────────────────────────────────
 
