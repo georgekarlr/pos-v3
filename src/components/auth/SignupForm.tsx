@@ -67,9 +67,14 @@ const SignupForm: React.FC = () => {
         {/* Top Branding */}
         <div className="flex items-center space-x-3 relative z-10">
           <img src="/icon.svg" alt="CPOS Pro Logo" className="h-10 w-10 filter drop-shadow-[0_2px_8px_rgba(18,156,255,0.3)]" />
-          <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-blue-400 via-indigo-300 to-fuchsia-400 bg-clip-text text-transparent">
-            CPOS Pro
-          </span>
+          <div className="flex flex-col">
+            <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-blue-400 via-indigo-300 to-fuchsia-400 bg-clip-text text-transparent">
+              CPOS Pro
+            </span>
+            <span className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 backdrop-blur-sm">
+              v1.0
+            </span>
+          </div>
         </div>
 
         {/* Content Body */}
@@ -128,9 +133,14 @@ const SignupForm: React.FC = () => {
           {/* Mobile logo */}
           <div className="md:hidden flex items-center justify-center space-x-2.5 mb-2">
             <img src="/icon.svg" alt="CPOS Pro" className="h-10 w-10" />
-            <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-blue-500 to-indigo-600 bg-clip-text text-transparent">
-              CPOS Pro
-            </span>
+            <div className="flex flex-col">
+              <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-blue-500 to-indigo-600 bg-clip-text text-transparent">
+                CPOS Pro
+              </span>
+              <span className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 backdrop-blur-sm">
+                v1.0
+              </span>
+            </div>
           </div>
 
           <div className="text-center md:text-left">
