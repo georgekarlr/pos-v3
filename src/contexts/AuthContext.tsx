@@ -20,7 +20,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
-  
+
   // Persona authentication state
   const [personaLoading, setPersonaLoading] = useState(false)
   const { persona, loading: personaStorageLoading, savePersona, clearPersona } = usePersonaStorage(user?.email || null)
@@ -98,6 +98,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const result = await PersonaService.validateAdminPersona(password)
 
+      console.log('Persona data:', result)
       if (result.success && user?.email) {
         const personaData: PersonaData = {
           type: result.data?.user_type,
@@ -121,6 +122,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const result = await PersonaService.validateStaffPersona(loginName, password)
 
+      console.log('Persona data:', result)
       if (result.success && user?.email) {
         const personaData: PersonaData = {
           type: result.data?.user_type,
@@ -156,7 +158,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signIn,
     signInWithGoogle,
     signOut,
-    
+
     // Persona authentication
     persona,
     personaLoading: personaLoading || personaStorageLoading,

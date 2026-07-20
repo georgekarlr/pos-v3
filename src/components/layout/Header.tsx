@@ -46,9 +46,9 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
                   <Users className="h-4 w-4 text-green-600" />
                 )}
                 <span className="text-xs font-medium text-gray-700">
-                  {persona.type === 'admin' ? 'Admin' : (persona.personName || persona.loginName || 'Staff')}
+                  {persona.personName || persona.loginName}
                 </span>
-                {persona.type === 'staff' && persona.loginName && (
+                {persona.personName && (
                   <span className="text-xs text-gray-500">
                     ({persona.loginName})
                   </span>
@@ -57,19 +57,17 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
             )}
 
             <div className="hidden sm:flex sm:flex-col sm:text-right">
-              <span className="text-sm font-medium text-gray-900">
-                {user?.email}
-              </span>
+
               <span className="text-xs text-gray-500">
-                {persona ? (persona.type === 'admin' ? 'Admin access' : `${persona.personName || persona.loginName || 'Staff'} access`) : 'No persona selected'}
+                {persona?.type.toUpperCase() + ' ACCESS' || 'No persona selected'}
               </span>
             </div>
-            
+
             <div className="flex items-center space-x-2">
               <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center">
                 <User className="h-4 w-4 text-blue-600" />
               </div>
-              
+
               {persona && (
                 <button
                   onClick={handleSwitchPersona}
@@ -80,7 +78,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
                   <RefreshCw className="h-4 w-4" />
                 </button>
               )}
-              
+
               <button
                 onClick={handleLogout}
                 className="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 transition-colors"
