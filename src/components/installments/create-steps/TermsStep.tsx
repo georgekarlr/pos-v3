@@ -14,6 +14,8 @@ interface TermsStepProps {
   setOccurredAt: (val: string) => void;
   paymentMethods: string[];
   cartSubtotal: number;
+  cartTotal: number;
+  totalPromoDiscount: number;
   dpNum: number;
   financed: number;
   totalInterestAmount: number;
@@ -36,6 +38,8 @@ const TermsStep: React.FC<TermsStepProps> = ({
   setOccurredAt,
   paymentMethods,
   cartSubtotal,
+  cartTotal,
+  totalPromoDiscount,
   dpNum,
   financed,
   totalInterestAmount,
@@ -115,22 +119,27 @@ const TermsStep: React.FC<TermsStepProps> = ({
       </div>
 
       {/* Live preview */}
-      {cartSubtotal > 0 && dpNum < cartSubtotal && (
+      {cartSubtotal > 0 && dpNum < cartTotal && (
         <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 space-y-2">
           <p className="text-xs font-bold text-indigo-600 uppercase tracking-wide mb-3">Contract Preview</p>
           {[
-            ['Total Contract Value', `₱${cartSubtotal.toFixed(2)}`],
-            ['Downpayment', `₱${dpNum.toFixed(2)}`],
-            ['Financed Amount', `₱${financed.toFixed(2)}`],
+            ['Gross Subtotal Value', `₱${cartSubtotal.toFixed(2)}`],
+            ...(totalPromoDiscount > 0 ? [['Promo Savings', `-₱${totalPromoDiscount.toFixed(2)}`]] : []),
+            ['Net Order Value', `₱${cartTotal.toFixed(2)}`],
+            ['Downpayment Paid', `₱${dpNum.toFixed(2)}`],
+            ['Financed Principal', `₱${financed.toFixed(2)}`],
             ['Interest Amount', `₱${totalInterestAmount.toFixed(2)} (${interestRateNum}%)`],
-            ['Total Owed', `₱${totalOwed.toFixed(2)}`],
-            ['Monthly Due', `₱${monthlyDue.toFixed(2)} × ${monthsNum} months`],
-          ].map(([label, value]) => (
-            <div key={label} className="flex justify-between text-sm">
-              <span className="text-gray-600">{label}</span>
-              <span className="font-semibold font-mono text-gray-900">{value}</span>
-            </div>
-          ))}
+            ['Total Amount Owed', `₱${totalOwed.toFixed(2)}`],
+            ['Monthly Due Installment', `₱${monthlyDue.toFixed(2)} × ${monthsNum} months`],
+          ].map(([label, value]) => {
+            const isHighlight = label.includes('Owed') || label.includes('Installment') || label.includes('Order');
+            return (
+              <div key={label} className={`flex justify-between text-sm ${isHighlight ? 'font-bold' : ''}`}>
+                <span className={isHighlight ? 'text-gray-900' : 'text-gray-600'}>{label}</span>
+                <span className={`font-mono ${isHighlight ? 'text-indigo-700' : 'text-gray-900'}`}>{value}</span>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
