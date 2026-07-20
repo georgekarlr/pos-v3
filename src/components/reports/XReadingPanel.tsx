@@ -8,6 +8,7 @@ import { XReadingResult } from '../../types/report'
 import ReportCard from './ReportCard'
 import LoadingSpinner from '../LoadingSpinner'
 import { FormatDateTime } from '../../utils/formatDateTime'
+import { ReceiptHeader, ReceiptFooter, ReceiptData } from '../pos/Receipt'
 
 const todayISO = FormatDateTime.formatLocalTimestampForDatabase(new Date()).slice(0, 10)
 
@@ -33,6 +34,16 @@ const generateXReadingText = (
   const fmtAmt = (n: number) => `PHP ${fmtVal(n)}`;
 
 
+  const formatDate = (dateStr: string) => {
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr;
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    } catch {
+      return dateStr;
+    }
+  };
+
   const formatTime = (dateStr: string) => {
     try {
       const d = new Date(dateStr);
@@ -52,6 +63,28 @@ const generateXReadingText = (
   }
   const bTIN = businessSettings?.tin || (report as any).Business?.TIN || '123-456-789-00000';
   const bMIN = businessSettings?.min || report.Terminal?.MIN || '2401234567890123';
+
+  // PTU details
+  const ptuNo = (report.Terminal as any)?.PTU || businessSettings?.ptu_issued_by || '[Subscriber\'s PTU Number]';
+
+  // software provider details
+  const providerName = businessSettings?.software_provider_name || '[Your SaaS Company Name]';
+  const providerAddress = businessSettings?.software_provider_address || '[Your Address]';
+  const providerTIN = businessSettings?.software_provider_tin || '[Your TIN]';
+  const providerAccredNo = businessSettings?.software_provider_accreditation_no || '045-123456789-000000';
+  const providerDateIssued = businessSettings?.software_provider_date_issued ? formatDate(businessSettings.software_provider_date_issued) : 'Jan 01, 2024';
+
+  // Calculate Valid Until: 5 years after software_provider_date_issued
+  let providerValidUntil = 'Jan 01, 2029';
+  if (businessSettings?.software_provider_date_issued) {
+    try {
+      const issueDate = new Date(businessSettings.software_provider_date_issued);
+      const validDate = new Date(issueDate.setFullYear(issueDate.getFullYear() + 5));
+      providerValidUntil = validDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    } catch {
+      // ignore
+    }
+  }
 
   let text = '';
   text += `${line}\n`;
@@ -110,6 +143,19 @@ const generateXReadingText = (
 
   text += `${center('*** THIS IS NOT AN OFFICIAL RECEIPT ***')}\n`;
   text += `${center('*** FOR INTERNAL USE ONLY ***')}\n`;
+  text += `${line}\n`;
+  text += `SOFTWARE PROVIDER DETAILS\n`;
+  text += `${align('Provider:', providerName)}\n`;
+  text += `${align('Address:', providerAddress)}\n`;
+  text += `${align('TIN:', providerTIN)}\n`;
+  text += `${align('Accred. No:', providerAccredNo)}\n`;
+  text += `${align('Date Issued:', providerDateIssued)}\n`;
+  text += `${align('Valid Until:', providerValidUntil)}\n`;
+  text += `${align('PTU No:', ptuNo)}\n`;
+  text += `${line}\n`;
+  text += `${center('THIS RECEIPT SHALL BE VALID')}\n`;
+  text += `${center('FOR 5 YEARS FROM THE DATE OF')}\n`;
+  text += `${center('THE PERMIT TO USE.')}\n`;
   text += `${line}`;
 
   return text;
@@ -120,12 +166,48 @@ interface XReadingDisplayProps {
   businessSettings: BusinessSettings | null
 }
 
+/** Builds a minimal ReceiptData shape for the shared header/footer components */
+const buildReceiptDataForXReading = (
+  report: XReadingResult,
+  businessSettings: BusinessSettings | null,
+): ReceiptData => ({
+  dateISO: report.GeneratedAt,
+  businessName: businessSettings?.business_name || (report as any).Business?.Name || '',
+  businessAddress1: businessSettings?.address || (report as any).Business?.Address || '',
+  tin: businessSettings?.tin || (report as any).Business?.TIN || '',
+  isVatRegistered: businessSettings?.is_vat_registered ?? true,
+  min: businessSettings?.min || report.Terminal?.MIN || '',
+  cashier: report.Terminal?.CashierName || '',
+  ptuIssuedBy: businessSettings?.ptu_issued_by || '',
+  softwareProviderName: businessSettings?.software_provider_name || '',
+  softwareProviderAddress: businessSettings?.software_provider_address || '',
+  softwareProviderTin: businessSettings?.software_provider_tin || '',
+  softwareProviderAccreditationNo: businessSettings?.software_provider_accreditation_no || '',
+  // Required numeric fields (not shown in reading reports)
+  lines: [],
+  subtotal: 0,
+  tax: 0,
+  total: 0,
+  payments: [],
+  totalPaid: 0,
+  change: 0,
+})
+
 /** Pure presentational component – renders an X-Reading as a BIR-style receipt */
-export const XReadingDisplay: React.FC<XReadingDisplayProps> = ({ report, businessSettings }) => (
-  <div id="x-reading-printout" className="font-mono text-xs whitespace-pre bg-gray-50 border border-gray-200 p-4 rounded-lg leading-relaxed max-w-sm mx-auto shadow-inner select-all">
-    {generateXReadingText(report, businessSettings)}
-  </div>
-)
+export const XReadingDisplay: React.FC<XReadingDisplayProps> = ({ report, businessSettings }) => {
+  const receiptData = buildReceiptDataForXReading(report, businessSettings)
+  return (
+    <div id="x-reading-printout" className="receipt-paper bg-white text-gray-900 mx-auto border border-gray-200 rounded-lg shadow-inner" style={{ width: 320, fontSize: '9px' }}>
+      <ReceiptHeader data={receiptData} />
+      <div className="my-2 border-t border-dashed" />
+      <div className="font-mono text-xs whitespace-pre px-4 pb-2 leading-relaxed select-all">
+        {generateXReadingText(report, businessSettings)}
+      </div>
+      <div className="my-2 border-t border-dashed" />
+      <ReceiptFooter data={receiptData} />
+    </div>
+  )
+}
 
 // ─── Main Panel ───────────────────────────────────────────────────────────────
 

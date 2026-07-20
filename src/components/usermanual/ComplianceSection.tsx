@@ -17,6 +17,7 @@ export const ComplianceSection: React.FC = () => {
       <ul className="list-disc list-inside space-y-1 ml-2">
         <li>Displays gross sales, net sales, voids, refunds, senior citizen discounts, tax values, and payment collections breakdown (Cash, Card, GCash, etc.).</li>
         <li><strong>Non-persistent:</strong> No values are committed to database state on creation. Can be printed multiple times throughout shifts.</li>
+        <li><strong>Physical Printout:</strong> Includes the software provider details and PTU compliance footer, matching Z-reading formats.</li>
       </ul>
 
       <h3 className="text-base font-semibold text-gray-800 mt-4">2. Z-Reading</h3>

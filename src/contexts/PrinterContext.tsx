@@ -257,8 +257,9 @@ export const PrinterProvider: React.FC<{ children: ReactNode }> = ({ children })
       if (!config) throw new Error('No printer configured.')
       setBusy(true)
       try {
-        // Auto-connect if not already connected
-        if (!transportRef.current || !isConnected) {
+        // Reuse the existing transport if connected; otherwise connect fresh.
+        // Use transportRef.current (not stale isConnected state) to check.
+        if (!transportRef.current) {
           const transport = createTransport(config)
           await transport.connect({ requestDevice: true })
           transportRef.current = transport
@@ -271,7 +272,7 @@ export const PrinterProvider: React.FC<{ children: ReactNode }> = ({ children })
         setBusy(false)
       }
     },
-    [config, isConnected]
+    [config]
   )
 
   const printRaw = useCallback(
@@ -279,7 +280,8 @@ export const PrinterProvider: React.FC<{ children: ReactNode }> = ({ children })
       if (!config) throw new Error('No printer configured.')
       setBusy(true)
       try {
-        if (!transportRef.current || !isConnected) {
+        // Reuse the existing transport if connected; otherwise connect fresh.
+        if (!transportRef.current) {
           const transport = createTransport(config)
           await transport.connect({ requestDevice: true })
           transportRef.current = transport
@@ -292,7 +294,7 @@ export const PrinterProvider: React.FC<{ children: ReactNode }> = ({ children })
         setBusy(false)
       }
     },
-    [config, isConnected]
+    [config]
   )
 
   // -------------------------------------------------------------------------
