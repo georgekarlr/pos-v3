@@ -1,6 +1,8 @@
 import React from 'react';
 import { Search, Plus, ShoppingCart, Minus, Trash2 } from 'lucide-react';
 import { Product } from '../../../types/product';
+import { CouponSection } from '../../pos/CouponSection';
+import type { CouponStatus, CalculatedLine } from '../../../utils/cartCalculator';
 
 interface CartItem {
   product: Product;
@@ -15,6 +17,12 @@ interface ProductStepProps {
   cart: CartItem[];
   updateQuantity: (productId: number, qty: number) => void;
   cartSubtotal: number;
+  appliedCoupons: string[];
+  onApplyCoupon: (code: string) => CouponStatus;
+  onRemoveCoupon: (code: string) => void;
+  totalPromoDiscount: number;
+  cartTotal: number;
+  calculatedLines: CalculatedLine[];
 }
 
 const ProductStep: React.FC<ProductStepProps> = ({
@@ -25,6 +33,12 @@ const ProductStep: React.FC<ProductStepProps> = ({
   cart,
   updateQuantity,
   cartSubtotal,
+  appliedCoupons,
+  onApplyCoupon,
+  onRemoveCoupon,
+  totalPromoDiscount,
+  cartTotal,
+  calculatedLines,
 }) => {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -72,32 +86,74 @@ const ProductStep: React.FC<ProductStepProps> = ({
           </div>
         ) : (
           <div className="flex-1 space-y-2 overflow-y-auto">
-            {cart.map(item => (
-              <div key={item.product.id} className="flex items-center gap-2 bg-white rounded-lg border border-gray-200 px-3 py-2">
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-gray-900 truncate">{item.product.name}</p>
-                  <p className="text-xs text-gray-500">₱{(item.product.display_price * item.quantity).toFixed(2)}</p>
+            {cart.map(item => {
+              const calcLine = calculatedLines.find(l => l.product.id === item.product.id);
+              const promoDiscount = calcLine?.promoDiscount ?? 0;
+              const hasDiscount = promoDiscount > 0;
+              const lineTotalVal = calcLine
+                ? (calcLine.lineGross + calcLine.lineTax)
+                : (item.product.display_price * item.quantity);
+
+              return (
+                <div key={item.product.id} className="flex items-center gap-2 bg-white rounded-lg border border-gray-200 px-3 py-2">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-gray-900 truncate">{item.product.name}</p>
+                    <div className="text-xs text-gray-55/80 text-gray-500 flex flex-wrap items-center gap-1.5">
+                      {hasDiscount ? (
+                        <>
+                          <span className="line-through text-gray-400">₱{(item.product.display_price * item.quantity).toFixed(2)}</span>
+                          <span className="font-semibold text-violet-75/90 text-violet-700">₱{lineTotalVal.toFixed(2)}</span>
+                          <span className="text-[9px] bg-violet-100 text-violet-85/90 text-violet-800 px-1 rounded font-semibold whitespace-nowrap">
+                            Save ₱{promoDiscount.toFixed(2)}
+                          </span>
+                        </>
+                      ) : (
+                        <span>₱{lineTotalVal.toFixed(2)}</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <button type="button" onClick={() => updateQuantity(item.product.id, item.quantity - 1)} className="p-1 rounded text-gray-500 hover:bg-gray-100">
+                      <Minus size={12} />
+                    </button>
+                    <span className="w-7 text-center text-sm font-mono font-bold text-gray-900">{item.quantity}</span>
+                    <button type="button" onClick={() => updateQuantity(item.product.id, item.quantity + 1)} disabled={item.quantity >= item.product.total_stock} className="p-1 rounded text-gray-500 hover:bg-gray-100 disabled:opacity-30">
+                      <Plus size={12} />
+                    </button>
+                    <button type="button" onClick={() => updateQuantity(item.product.id, 0)} className="p-1 rounded text-red-400 hover:bg-red-50 ml-1">
+                      <Trash2 size={12} />
+                    </button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1">
-                  <button type="button" onClick={() => updateQuantity(item.product.id, item.quantity - 1)} className="p-1 rounded text-gray-500 hover:bg-gray-100">
-                    <Minus size={12} />
-                  </button>
-                  <span className="w-7 text-center text-sm font-mono font-bold text-gray-900">{item.quantity}</span>
-                  <button type="button" onClick={() => updateQuantity(item.product.id, item.quantity + 1)} disabled={item.quantity >= item.product.total_stock} className="p-1 rounded text-gray-500 hover:bg-gray-100 disabled:opacity-30">
-                    <Plus size={12} />
-                  </button>
-                  <button type="button" onClick={() => updateQuantity(item.product.id, 0)} className="p-1 rounded text-red-400 hover:bg-red-50 ml-1">
-                    <Trash2 size={12} />
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
         {cart.length > 0 && (
-          <div className="mt-3 pt-3 border-t border-gray-200 flex justify-between text-sm font-bold text-gray-900">
-            <span>Subtotal</span>
-            <span className="font-mono">₱{cartSubtotal.toFixed(2)}</span>
+          <div className="mt-4 pt-4 border-t border-gray-200 space-y-3">
+            <CouponSection
+              appliedCoupons={appliedCoupons}
+              onApplyCoupon={onApplyCoupon}
+              onRemoveCoupon={onRemoveCoupon}
+              inputId="installment-coupon-code-input"
+            />
+            
+            <div className="space-y-1 text-xs text-gray-600 border-t border-gray-100 pt-3">
+              <div className="flex justify-between">
+                <span>Gross Subtotal</span>
+                <span className="font-mono">₱{cartSubtotal.toFixed(2)}</span>
+              </div>
+              {totalPromoDiscount > 0 && (
+                <div className="flex justify-between text-violet-75/95 text-violet-75/90 text-violet-700 font-semibold">
+                  <span>Promo Discount</span>
+                  <span className="font-mono">-₱{totalPromoDiscount.toFixed(2)}</span>
+                </div>
+              )}
+              <div className="flex justify-between text-sm font-bold text-gray-900 pt-1 border-t border-dashed border-gray-200">
+                <span>Net Total Due</span>
+                <span className="font-mono text-indigo-700">₱{cartTotal.toFixed(2)}</span>
+              </div>
+            </div>
           </div>
         )}
       </div>

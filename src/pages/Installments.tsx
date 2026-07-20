@@ -354,7 +354,14 @@ const Installments: React.FC = () => {
   };
 
   // --- Create sale ---
-  const handleCreateSale = async (params: Omit<CreateInstallmentSaleParams, 'p_account_id'> & { p_cart_full?: any[] }) => {
+  const handleCreateSale = async (params: Omit<CreateInstallmentSaleParams, 'p_account_id'> & {
+    p_cart_full?: any[];
+    p_subtotal?: number;
+    p_tax?: number;
+    p_total_promo_discount?: number;
+    p_total?: number;
+    p_customer_name?: string;
+  }) => {
     if (!persona?.id) return { success: false, message: 'No active persona.' };
     setCreateLoading(true);
     const result = await createSale({ ...params, p_account_id: persona.id });
@@ -405,9 +412,10 @@ const Installments: React.FC = () => {
         cashier: persona.personName,
         invoiceNumber: result.data.data?.invoice_number || 'N/A',
         lines: params.p_cart_full || [],
-        subtotal: (params.p_cart_full || []).reduce((acc, l) => acc + l.lineTotal, 0),
-        tax: 0, // Simplified for now
-        total: (params.p_cart_full || []).reduce((acc, l) => acc + l.lineTotal, 0),
+        subtotal: params.p_subtotal ?? (params.p_cart_full || []).reduce((acc, l) => acc + l.lineTotal, 0),
+        tax: params.p_tax ?? 0,
+        totalPromoDiscount: params.p_total_promo_discount ?? 0,
+        total: params.p_total ?? (params.p_cart_full || []).reduce((acc, l) => acc + l.lineTotal, 0),
         payments: params.p_downpayment_amount > 0 ? [{ method: params.p_downpayment_method, amount: params.p_downpayment_amount }] : [],
         totalPaid: params.p_downpayment_amount,
         change: 0,
@@ -420,7 +428,7 @@ const Installments: React.FC = () => {
         installmentContract: {
           contractId: result.data.data?.contract_id || 0,
           invoiceNumber: result.data.data?.invoice_number || 'N/A',
-          customerName: selectedSummary?.customer_name || 'Customer',
+          customerName: params.p_customer_name || selectedSummary?.customer_name || 'Customer',
           remainingBalance: ((result.data.data?.monthly_due || 0) * params.p_months_to_pay),
           monthlyDue: result.data.data?.monthly_due || 0,
           monthsToPay: params.p_months_to_pay,

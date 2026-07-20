@@ -9,6 +9,10 @@ import { CustomerSearchResult } from '../../types/debt';
 import { Product } from '../../types/product';
 import { CreateInstallmentSaleParams } from '../../types/installment';
 import { PosService } from "../../services/posService.ts";
+import { getCachedBusinessSettings } from '../../utils/settingsCache';
+import { calculateCartTotals, validateCouponCode } from '../../utils/cartCalculator';
+import { PromotionService } from '../../services/promotionService';
+import { Promotion } from '../../types/promotion';
 
 import CustomerStep from './create-steps/CustomerStep';
 import ProductStep from './create-steps/ProductStep';
@@ -55,10 +59,12 @@ const CreateInstallmentModal: React.FC<CreateInstallmentModalProps> = ({
   const [customerSearching, setCustomerSearching] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerSearchResult | null>(null);
 
-  // Step 2 — Cart
+  // Step 2 — Cart & Promotions
   const [products, setProducts] = useState<Product[]>([]);
   const [productQuery, setProductQuery] = useState('');
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [promotions, setPromotions] = useState<Promotion[]>([]);
+  const [appliedCoupons, setAppliedCoupons] = useState<string[]>([]);
 
   // Step 3 — Terms
   const [downpayment, setDownpayment] = useState('');
@@ -98,7 +104,7 @@ const CreateInstallmentModal: React.FC<CreateInstallmentModalProps> = ({
     }
   }
 
-  // Load products and terminals once
+  // Load products, terminals, and promotions once
   useEffect(() => {
     loadTerminals();
     const load = async () => {
@@ -110,7 +116,14 @@ const CreateInstallmentModal: React.FC<CreateInstallmentModalProps> = ({
         await OfflineDB.saveProducts(data);
       }
     };
+    const loadPromos = async () => {
+      const { data } = await PromotionService.getPromotions({ limit: 1000, filterStatus: 'all' });
+      if (data) {
+        setPromotions(data);
+      }
+    };
     load();
+    loadPromos();
   }, []);
 
   // Customer search (debounced)
@@ -141,13 +154,34 @@ const CreateInstallmentModal: React.FC<CreateInstallmentModalProps> = ({
     setCart(prev => prev.map(i => i.product.id === productId ? { ...i, quantity: Math.min(i.product.total_stock, qty) } : i));
   };
 
+  // Composable cart totals calculations
+  const billingType = React.useMemo(() => {
+    const settings = getCachedBusinessSettings();
+    return settings?.billing_type || 'NON-VAT';
+  }, []);
+
+  const cartLines = React.useMemo(() => {
+    return cart.map(item => ({ product: item.product, qty: item.quantity }));
+  }, [cart]);
+
+  const cartCalculations = React.useMemo(() => {
+    return calculateCartTotals({
+      cartLines,
+      promotions,
+      isScPwdDiscount: false, // Installments do not support SC/PWD discounts in the provided SQL logic
+      billingType,
+      appliedCouponCodes: appliedCoupons,
+    });
+  }, [cartLines, promotions, billingType, appliedCoupons]);
+
   // Calculations (Matches backend logic)
-  const cartSubtotal = cart.reduce((s, i) => s + i.product.display_price * i.quantity, 0);
+  const cartSubtotal = cartCalculations.subtotal; // Shelf total (VAT-inclusive, before discounts)
+  const cartTotal = cartCalculations.total;       // Net total (after discounts, including VAT)
   const dpNum = parseFloat(downpayment) || 0;
   const monthsNum = parseInt(monthsToPay) || 1;
   const interestRateNum = parseFloat(interestRate) || 0;
 
-  const financed = cartSubtotal - dpNum;
+  const financed = cartTotal - dpNum;
   const totalInterestAmount = financed * (interestRateNum / 100);
   const totalOwed = financed + totalInterestAmount;
   const monthlyDue = totalOwed > 0 ? totalOwed / monthsNum : 0;
@@ -163,7 +197,7 @@ const CreateInstallmentModal: React.FC<CreateInstallmentModalProps> = ({
       setStep('terms');
     } else if (step === 'terms') {
       if (dpNum < 0) { setError('Downpayment cannot be negative.'); return; }
-      if (dpNum >= cartSubtotal) { setError('Downpayment covers the full amount. Use a standard sale instead.'); return; }
+      if (dpNum >= cartTotal) { setError('Downpayment covers the full amount. Use a standard sale instead.'); return; }
       if (monthsNum < 1) { setError('Months to pay must be at least 1.'); return; }
       if (interestRateNum < 0) { setError('Interest rate cannot be negative.'); return; }
       setStep('confirm');
@@ -186,13 +220,30 @@ const CreateInstallmentModal: React.FC<CreateInstallmentModalProps> = ({
     const result = await onConfirm({
       p_terminal_id: selectedTerminalId,
       p_customer_id: selectedCustomer.customer_id,
-      p_cart_items: cart.map(i => ({ product_id: i.product.id, quantity: i.quantity })),
+      p_cart_items: cartCalculations.calculatedLines.map(line => ({
+        product_id: line.product.id,
+        quantity: line.qty,
+        promo_id: line.promoId
+      })),
       p_downpayment_amount: dpNum,
       p_downpayment_method: downpaymentMethod,
       p_months_to_pay: monthsNum,
-      p_interest_rate: interestRateNum, // NEW
-      p_occurred_at: null,
-      p_cart_full: cart.map(i => ({ ...i.product, qty: i.quantity, lineTotal: i.product.display_price * i.quantity, unitPrice: i.product.display_price }))
+      p_interest_rate: interestRateNum,
+      p_occurred_at: occurredAt || null,
+      p_cart_full: cartCalculations.calculatedLines.map(line => ({
+        ...line.product,
+        qty: line.qty,
+        lineTotal: line.lineGross + line.lineTax,
+        unitPrice: line.product.display_price,
+        promoDiscount: line.promoDiscount,
+        promoId: line.promoId,
+        vatExemptLineTotal: line.vatExemptLineTotal,
+      })),
+      p_subtotal: cartCalculations.subtotal,
+      p_tax: cartCalculations.tax,
+      p_total_promo_discount: cartCalculations.totalPromoDiscount,
+      p_total: cartCalculations.total,
+      p_customer_name: selectedCustomer.customer_name,
     } as any);
     if (!result.success) setError(result.message);
   };
@@ -273,6 +324,20 @@ const CreateInstallmentModal: React.FC<CreateInstallmentModalProps> = ({
               cart={cart}
               updateQuantity={updateQuantity}
               cartSubtotal={cartSubtotal}
+              appliedCoupons={appliedCoupons}
+              onApplyCoupon={(code) => {
+                const status = validateCouponCode(code, promotions, appliedCoupons);
+                if (status === 'valid') {
+                  setAppliedCoupons(prev => [...prev, code.trim().toUpperCase()]);
+                }
+                return status;
+              }}
+              onRemoveCoupon={(code) => {
+                setAppliedCoupons(prev => prev.filter(c => c !== code));
+              }}
+              totalPromoDiscount={cartCalculations.totalPromoDiscount}
+              cartTotal={cartTotal}
+              calculatedLines={cartCalculations.calculatedLines}
             />
           )}
 
@@ -290,6 +355,8 @@ const CreateInstallmentModal: React.FC<CreateInstallmentModalProps> = ({
               setOccurredAt={setOccurredAt}
               paymentMethods={PAYMENT_METHODS}
               cartSubtotal={cartSubtotal}
+              cartTotal={cartTotal}
+              totalPromoDiscount={cartCalculations.totalPromoDiscount}
               dpNum={dpNum}
               financed={financed}
               totalInterestAmount={totalInterestAmount}
@@ -305,6 +372,8 @@ const CreateInstallmentModal: React.FC<CreateInstallmentModalProps> = ({
               selectedCustomer={selectedCustomer}
               cart={cart}
               cartSubtotal={cartSubtotal}
+              cartTotal={cartTotal}
+              totalPromoDiscount={cartCalculations.totalPromoDiscount}
               dpNum={dpNum}
               downpaymentMethod={downpaymentMethod}
               financed={financed}
@@ -313,6 +382,7 @@ const CreateInstallmentModal: React.FC<CreateInstallmentModalProps> = ({
               totalOwed={totalOwed}
               monthsNum={monthsNum}
               monthlyDue={monthlyDue}
+              calculatedLines={cartCalculations.calculatedLines}
             />
           )}
         </div>
