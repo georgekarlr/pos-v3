@@ -8,7 +8,7 @@ export const OfflineSection: React.FC = () => {
         The application listens to network connection state changes. When offline:
       </p>
       <ul className="list-disc list-inside space-y-1 ml-2">
-        <li>The system displays a prominent amber "Offline" alert banner.</li>
+        <li>A global "Working Offline" status banner is displayed at the top of all pages (except the POS register, which has its own sync banner).</li>
         <li>The catalog displays locally cached products stored in the browser's IndexedDB.</li>
         <li>Checkout operations save sale JSON payloads to a local sync queue in IndexedDB instead of failing.</li>
       </ul>

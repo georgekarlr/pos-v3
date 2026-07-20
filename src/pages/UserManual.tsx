@@ -451,11 +451,11 @@ const chapters: ManualChapter[] = [
     rawHtml: `
       <h2>13. Offline Cache &amp; Syncing</h2>
       <h3>1. Offline State Execution</h3>
-      <p>The application listens to network connection state changes. When offline, an amber "Offline" alert banner is shown. The catalog displays locally cached products stored in the browser's IndexedDB. Checkout operations save sale JSON payloads to a local sync queue in IndexedDB instead of failing.</p>
+      <p>The application listens to network connection state changes. When offline, a global "Working Offline" status banner is displayed at the top of all pages (except the POS register, which features its own context-specific offline/sync bar). The catalog displays locally cached products stored in the browser's IndexedDB. Checkout operations save sale JSON payloads to a local sync queue in IndexedDB instead of failing.</p>
       <h3>2. Promotions Offline Cache</h3>
       <p>Active promotions (and their coupon codes) are cached in IndexedDB when loaded online. While offline, the system enforces promotion validity locally (matching coupon codes, start/end dates, active flag, product eligibility) using the same rules as the server-side database function. Discounts are calculated and displayed on the cart and receipt without requiring a network connection once a valid code is entered.</p>
       <h3>3. Sales Sync Queue</h3>
-      <p>Click View Offline Sales in the alert banner to open the Offline Sales queue and review all transactions waiting to upload.</p>
+      <p>Click View Offline Sales in the POS offline sync banner to open the Offline Sales queue and review all transactions waiting to upload.</p>
       <h3>4. Background Upload Sync</h3>
       <p>Once internet connectivity is restored, the system displays a blue "Syncing N offline sales..." spinner alert. A background scheduler processes queued orders, sending each one to the server using the pos2_create_sale database function. Once uploaded, items are cleared from IndexedDB.</p>
     `

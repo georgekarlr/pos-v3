@@ -1,7 +1,7 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
-import { Mail, Lock, AlertCircle, Eye, EyeOff, Sparkles, HelpCircle, CheckCircle } from 'lucide-react'
+import { Mail, Lock, AlertCircle, Eye, EyeOff, Sparkles, HelpCircle, CheckCircle, WifiOff } from 'lucide-react'
 
 const SignupForm: React.FC = () => {
   const [email, setEmail] = useState('')
@@ -14,6 +14,20 @@ const SignupForm: React.FC = () => {
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const { signUp, signInWithGoogle, user } = useAuth()
+  const [isOnline, setIsOnline] = useState(navigator.onLine)
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true)
+    const handleOffline = () => setIsOnline(false)
+
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+
+    return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+    }
+  }, [])
 
   if (user) {
     return <Navigate to="/dashboard" replace />
@@ -130,6 +144,21 @@ const SignupForm: React.FC = () => {
         <div className="block md:hidden absolute top-0 left-0 right-0 h-48 bg-gradient-to-b from-blue-50/50 to-transparent pointer-events-none -z-10" />
 
         <div className="mx-auto w-full max-w-md space-y-8 relative">
+          {!isOnline && (
+            <div className="flex items-center justify-between gap-4 p-4 rounded-xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 shadow-sm backdrop-blur-sm transition-all duration-300">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-amber-500/20 text-amber-600 animate-pulse">
+                  <WifiOff className="h-5 w-5" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-amber-900 text-sm">Working Offline</h4>
+                  <p className="text-amber-800/80 text-xs mt-0.5">
+                    Authentication requires an internet connection. Please reconnect to sign up.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
           {/* Mobile logo */}
           <div className="md:hidden flex items-center justify-center space-x-2.5 mb-2">
             <img src="/icon.svg" alt="CPOS Pro" className="h-10 w-10" />
