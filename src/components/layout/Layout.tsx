@@ -13,7 +13,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isOnline, setIsOnline] = useState(navigator.onLine)
   const location = useLocation()
-  
+
   const isPOSPage = location.pathname === '/pos'
 
   useEffect(() => {
@@ -28,7 +28,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       window.removeEventListener('offline', handleOffline)
     }
   }, [])
-  
+
   // Get settings, ignore expiry check so we can check it explicitly
   const settings = getCachedBusinessSettings(true)
   const expired = isSubscriptionExpired(settings)
@@ -56,7 +56,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <h1 className="text-2xl font-bold tracking-tight mb-2">
             Subscription Expired
           </h1>
-          
+
           <p className="text-slate-300 text-sm mb-6 leading-relaxed">
             Your access to the POS register and back-office management has been suspended. Please renew your subscription to resume operations.
           </p>
@@ -75,7 +75,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           )}
 
           <a
-            href="https://ceintelly.org"
+            href="https://ceintelly.com"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center justify-center gap-2 w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900 group mb-3"
@@ -99,12 +99,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     <div className="min-h-screen bg-gray-50">
       {/* Sidebar */}
       <Sidebar isOpen={sidebarOpen} onClose={closeSidebar} />
-      
+
       {/* Main content - full width */}
       <div className="flex flex-col min-h-screen">
         {/* Header */}
         <Header onMenuClick={toggleSidebar} />
-        
+
         {/* Page content */}
         <main className="flex-1 relative overflow-y-auto focus:outline-none">
           <div className="py-6">

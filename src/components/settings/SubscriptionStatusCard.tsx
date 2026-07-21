@@ -101,7 +101,7 @@ export const SubscriptionStatusCard: React.FC<Props> = ({ settings }) => {
                 </div>
               </div>
               <a
-                href="https://ceintelly.org"
+                href="https://ceintelly.com"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-semibold text-sm rounded-lg shadow-sm hover:shadow transition-colors"
@@ -120,7 +120,7 @@ export const SubscriptionStatusCard: React.FC<Props> = ({ settings }) => {
                 </div>
               </div>
               <a
-                href="https://ceintelly.org"
+                href="https://ceintelly.com"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm rounded-lg shadow-sm hover:shadow transition-colors"
