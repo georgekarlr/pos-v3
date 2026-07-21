@@ -23,6 +23,7 @@ import {
   Award
 } from 'lucide-react';
 import {PosService} from "../services/posService.ts";
+import { getTerminalId } from '../utils/terminalStorage';
 
 const CustomersAndDebts: React.FC = () => {
   const { persona } = useAuth();
@@ -57,9 +58,9 @@ const CustomersAndDebts: React.FC = () => {
         console.error('Failed to load terminals:', termError)
       } else {
         if (data && data.length > 0) {
-          const savedId = localStorage.getItem('selected_pos_terminal_id')
-          if (savedId && data.some((t: any) => t.id === Number(savedId))) {
-            setTerminalId(Number(savedId))
+          const savedId = getTerminalId()
+          if (savedId && data.some((t: any) => t.id === savedId)) {
+            setTerminalId(savedId)
           } else if (data.length === 1) {
             setTerminalId(data[0].id)
           }

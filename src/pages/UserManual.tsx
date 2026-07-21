@@ -393,7 +393,7 @@ const chapters: ManualChapter[] = [
   },
   {
     id: 'compliance',
-    title: '11. BIR Compliance (X, Z-Reading, Journals & Books of Accounts)',
+    title: '11. BIR Compliance (X, Z-Reading, Journals, Books & System Audit Trail)',
     component: <ComplianceSection />,
     rawHtml: `
       <h2>11. BIR Compliance (X, Z-Reading, Journals &amp; Books of Accounts)</h2>
@@ -414,6 +414,16 @@ const chapters: ManualChapter[] = [
         <li><strong>Z-Reading Log (BIR Cumulative Sales Book):</strong> Chronological record of all daily terminal Z-Readings containing the gross sales, VATable base, VAT amount, VAT-Exempt sales, Zero-Rated sales, discounts applied, and starting/ending invoice ranges along with the cumulative Grand Totals.</li>
         <li><strong>SC/PWD Discount Book:</strong> Chronological log of all transactions with senior citizen or PWD discounts applied, tracking the customer name, ID card number, gross sales before deduction, VAT-exempt base, 20% discount amount, and net sales.</li>
         <li><strong>Voids &amp; Adjustments Audit Log:</strong> Chronological history of all transaction voids and refunds, recording action dates, original invoice totals, refunded/voided amounts, reasons, and the authorizing admin account name to audit security adjustments.</li>
+      </ul>
+      <h3>5. System Audit Trail</h3>
+      <p><strong>Route:</strong> <code>/reports-compliance/system-audit-trail</code></p>
+      <p>A database-level security log that captures every raw INSERT, UPDATE, and DELETE executed against core tables. Unlike the E-Journal, the System Audit Trail exposes the actual data mutations at the row level:</p>
+      <ul>
+        <li><strong>Columns:</strong> Timestamp, Table Name, Action (INSERT / UPDATE / DELETE), Row ID, and the DB Operator.</li>
+        <li><strong>Before/After Diff:</strong> Click any row to expand an inline field-level diff with changed fields highlighted.</li>
+        <li><strong>Filters:</strong> Narrow results by Table Name, Action type, and date range.</li>
+        <li><strong>CSV Export:</strong> Download the current filtered page as a comma-separated file.</li>
+        <li><strong>Admin Only:</strong> Enforced by pos_is_admin() server-side security check.</li>
       </ul>
     `
   },

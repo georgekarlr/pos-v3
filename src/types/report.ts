@@ -153,6 +153,29 @@ export interface GetEJournalParams {
   end_date?: string | null
 }
 
+// ─── System Audit Trail ────────────────────────────────────────────────────────
+
+export interface SystemAuditTrailRow {
+  log_id: number
+  created_at: string
+  table_name: string
+  action: string
+  row_id: number | null
+  old_values: Record<string, any> | null
+  new_values: Record<string, any> | null
+  operator: string
+}
+
+export interface GetSystemAuditTrailParams {
+  requesting_account_id: number
+  limit: number
+  offset: number
+  table_filter?: string | null
+  action_filter?: string | null
+  start_date?: string | null
+  end_date?: string | null
+}
+
 // ─── BIR Books of Accounts (RMO No. 10-2005) ───────────────────────────────────
 
 export interface BIRSalesBookRow {

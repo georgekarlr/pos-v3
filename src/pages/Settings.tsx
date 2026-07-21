@@ -39,6 +39,7 @@ import {
   TerminalFormState,
 } from '../components/settings/TerminalModals'
 import { FormatDateTime } from '../utils/formatDateTime'
+import { getTerminalId, saveTerminalId, clearTerminalId } from '../utils/terminalStorage'
 
 // ---------------------------------------------------------------------------
 // Printer helpers
@@ -177,8 +178,8 @@ const Settings: React.FC = () => {
   useEffect(() => {
     loadBusinessSettings()
     loadTerminals()
-    const savedId = localStorage.getItem('selected_pos_terminal_id')
-    if (savedId) setSelectedTerminalId(Number(savedId))
+    const savedId = getTerminalId()
+    if (savedId) setSelectedTerminalId(savedId)
   }, [])
 
   // ---------------------------------------------------------------------------
@@ -569,9 +570,9 @@ const Settings: React.FC = () => {
                       const id = e.target.value ? Number(e.target.value) : null
                       setSelectedTerminalId(id)
                       if (id) {
-                        localStorage.setItem('selected_pos_terminal_id', id.toString())
+                        saveTerminalId(id)
                       } else {
-                        localStorage.removeItem('selected_pos_terminal_id')
+                        clearTerminalId()
                       }
                     }}
                     className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"

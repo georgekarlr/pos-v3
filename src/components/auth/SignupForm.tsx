@@ -128,12 +128,12 @@ const SignupForm: React.FC = () => {
         <div className="relative z-10 text-xs text-slate-500 flex justify-between items-center border-t border-white/5 pt-4">
           <span>&copy; {new Date().getFullYear()} CPOS Pro</span>
           <a
-            href="https://ceintelly.org"
+            href="https://ceintelly.com"
             target="_blank"
             rel="noopener noreferrer"
             className="hover:text-slate-300 hover:underline transition-all"
           >
-            ceintelly.org
+            ceintelly.com
           </a>
         </div>
       </div>
@@ -344,12 +344,12 @@ const SignupForm: React.FC = () => {
                 <span>Account &amp; subscription management</span>
               </span>
               <a
-                href="https://ceintelly.org"
+                href="https://ceintelly.com"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="font-semibold text-blue-600 hover:text-blue-500 hover:underline transition-colors flex items-center space-x-0.5"
               >
-                <span>Manage on ceintelly.org</span>
+                <span>Manage on ceintelly.com</span>
                 <span>&rarr;</span>
               </a>
             </div>

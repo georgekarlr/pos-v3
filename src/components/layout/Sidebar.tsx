@@ -60,6 +60,7 @@ const adminNavigation: NavigationItem[] = [
       { name: 'Z-Reading', href: '/reports-compliance/z-reading' },
       { name: 'E-Journal', href: '/reports-compliance/e-journal' },
       { name: 'BIR Books of Accounts', href: '/reports-compliance/bir-books' },
+      { name: 'System Audit Trail', href: '/reports-compliance/system-audit-trail' },
     ]
   },
   { name: 'User Manual', href: '/user-manual', icon: ClipboardList },
