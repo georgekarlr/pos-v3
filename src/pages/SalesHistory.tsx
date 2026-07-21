@@ -14,6 +14,7 @@ import VoidSaleModal from '../components/sales/VoidSaleModal'
 import ManualSaleModal from '../components/sales/ManualSaleModal'
 import { useAuth } from '../contexts/AuthContext'
 import {FormatDateTime} from "../utils/formatDateTime.ts";
+import { getTerminalId } from '../utils/terminalStorage'
 
 const PAGE_SIZE = 20
 
@@ -124,7 +125,7 @@ const SalesHistory: React.FC = () => {
   }
 
   const requestingAccountId = persona?.id ?? null
-  const terminalId = Number(localStorage.getItem('selected_pos_terminal_id')) || null
+  const terminalId = getTerminalId()
 
   return (
     <div className="min-h-screen bg-gray-50">

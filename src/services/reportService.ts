@@ -18,6 +18,8 @@ import {
   SCPWDBookRow,
   VoidsAndRefundsRow,
   GetBIRBooksParams,
+  SystemAuditTrailRow,
+  GetSystemAuditTrailParams,
 } from '../types/report'
 
 export const ReportService = {
@@ -154,5 +156,24 @@ export const ReportService = {
     })
     if (error) { console.error('Error fetching Voids & Refunds Log:', error); throw new Error(error.message) }
     return (data || []) as VoidsAndRefundsRow[]
+  },
+
+  /**
+   * Fetch paginated System Audit Trail security logs. Admin-only.
+   */
+  async getSystemAuditTrail(params: GetSystemAuditTrailParams): Promise<SystemAuditTrailRow[]> {
+    const { requesting_account_id, limit, offset, table_filter, action_filter, start_date, end_date } = params
+    const { data, error } = await supabase.rpc('pos2_get_system_audit_trail', {
+      p_requesting_account_id: requesting_account_id,
+      p_limit: limit,
+      p_offset: offset,
+      p_table_filter: table_filter ?? null,
+      p_action_filter: action_filter ?? null,
+      p_start_date: start_date ?? null,
+      p_end_date: end_date ?? null,
+    })
+    console.log('data audit', data);
+    if (error) { console.error('Error fetching System Audit Trail:', error); throw new Error(error.message) }
+    return (data || []) as SystemAuditTrailRow[]
   },
 }

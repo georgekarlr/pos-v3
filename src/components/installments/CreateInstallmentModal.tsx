@@ -11,6 +11,7 @@ import { CreateInstallmentSaleParams } from '../../types/installment';
 import { PosService } from "../../services/posService.ts";
 import { getCachedBusinessSettings } from '../../utils/settingsCache';
 import { calculateCartTotals, validateCouponCode } from '../../utils/cartCalculator';
+import { getTerminalId } from '../../utils/terminalStorage';
 import { PromotionService } from '../../services/promotionService';
 import { Promotion } from '../../types/promotion';
 
@@ -91,9 +92,9 @@ const CreateInstallmentModal: React.FC<CreateInstallmentModalProps> = ({
         console.error('Failed to load terminals:', termError)
       } else {
         if (data && data.length > 0) {
-          const savedId = localStorage.getItem('selected_pos_terminal_id')
-          if (savedId && data.some((t: any) => t.id === Number(savedId))) {
-            setSelectedTerminalId(Number(savedId))
+          const savedId = getTerminalId()
+          if (savedId && data.some((t: any) => t.id === savedId)) {
+            setSelectedTerminalId(savedId)
           } else if (data.length === 1) {
             setSelectedTerminalId(data[0].id)
           }

@@ -25,6 +25,7 @@ import InstallmentReceiptModal from '../components/pos/InstallmentReceiptModal';
 import { ReceiptData } from '../components/pos/Receipt';
 import { getCachedBusinessSettings } from '../utils/settingsCache';
 import {FormatDateTime} from "../utils/formatDateTime.ts";
+import { getTerminalId } from '../utils/terminalStorage';
 
 const Installments: React.FC = () => {
   const { persona } = useAuth();
@@ -89,9 +90,9 @@ const Installments: React.FC = () => {
         console.error('Failed to load terminals:', termError)
       } else {
         if (data && data.length > 0) {
-          const savedId = localStorage.getItem('selected_pos_terminal_id')
-          if (savedId && data.some((t: any) => t.id === Number(savedId))) {
-            setSelectedTerminalId(Number(savedId))
+          const savedId = getTerminalId()
+          if (savedId && data.some((t: any) => t.id === savedId)) {
+            setSelectedTerminalId(savedId)
           } else if (data.length === 1) {
             setSelectedTerminalId(data[0].id)
           }

@@ -27,6 +27,7 @@ import XReading from './pages/XReading'
 import ZReading from './pages/ZReading'
 import EJournal from './pages/EJournal'
 import BIRBooks from './pages/BIRBooks'
+import SystemAuditTrail from './pages/SystemAuditTrail'
 import Settings from './pages/Settings'
 import UserManual from './pages/UserManual'
 import Promotions from './pages/Promotions'
@@ -203,6 +204,16 @@ function App() {
                 <PersonaProtectedRoute>
                   <Layout>
                     <BIRBooks />
+                  </Layout>
+                </PersonaProtectedRoute>
+              </ProtectedRoute>
+            } />
+
+            <Route path="/reports-compliance/system-audit-trail" element={
+              <ProtectedRoute>
+                <PersonaProtectedRoute>
+                  <Layout>
+                    <SystemAuditTrail />
                   </Layout>
                 </PersonaProtectedRoute>
               </ProtectedRoute>

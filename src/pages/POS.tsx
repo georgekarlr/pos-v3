@@ -28,6 +28,7 @@ import OfflineSalesModal from '../components/pos/OfflineSalesModal'
 import PettyCashModal from '../components/pos/PettyCashModal'
 import { getCachedBusinessSettings } from '../utils/settingsCache'
 import { FormatDateTime } from '../utils/formatDateTime'
+import { getTerminalId } from '../utils/terminalStorage'
 
 const POS: React.FC = () => {
   const { persona } = useAuth()
@@ -108,9 +109,9 @@ const POS: React.FC = () => {
       } else {
         setTerminals(data || [])
         if (data && data.length > 0) {
-          const savedId = localStorage.getItem('selected_pos_terminal_id')
-          if (savedId && data.some((t: any) => t.id === Number(savedId))) {
-            setSelectedTerminalId(Number(savedId))
+          const savedId = getTerminalId()
+          if (savedId && data.some((t: any) => t.id === savedId)) {
+            setSelectedTerminalId(savedId)
           } else if (data.length === 1) {
             setSelectedTerminalId(data[0].id)
           }

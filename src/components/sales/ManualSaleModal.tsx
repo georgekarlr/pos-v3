@@ -10,6 +10,7 @@ import { FormatDateTime } from '../../utils/formatDateTime'
 import { useManualSale } from '../../hooks/useManualSale'
 import { Ticket, X } from 'lucide-react'
 import type { CouponStatus } from '../../utils/cartCalculator'
+import { getTerminalId } from '../../utils/terminalStorage'
 
 const COUPON_STATUS_CONFIG: Record<
   CouponStatus,
@@ -194,7 +195,7 @@ const ManualSaleModal: React.FC<ManualSaleModalProps> = ({ open, onClose, onSucc
 
     const params: RecordManualSaleParams = {
       p_account_id: accountId,
-      p_terminal_id: Number(localStorage.getItem('selected_pos_terminal_id')) || null,
+      p_terminal_id: getTerminalId(),
       p_customer_id: selectedCustomer?.customer_id || null,
       p_manual_or_number: manualOrNumber,
       p_cart_items: calculatedLines.map(line => ({
