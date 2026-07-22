@@ -163,7 +163,7 @@ export interface SystemAuditTrailRow {
   row_id: number | null
   old_values: Record<string, any> | null
   new_values: Record<string, any> | null
-  operator: string
+  operator_name: string
 }
 
 export interface GetSystemAuditTrailParams {

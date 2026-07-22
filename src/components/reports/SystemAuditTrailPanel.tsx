@@ -118,10 +118,7 @@ const AuditRow: React.FC<{ row: SystemAuditTrailRow }> = ({ row }) => {
         <td className="px-5 py-2.5 whitespace-nowrap">
           <ActionBadge action={row.action} />
         </td>
-        <td className="px-5 py-2.5 whitespace-nowrap text-gray-500 font-mono text-xs">
-          {row.row_id ?? '—'}
-        </td>
-        <td className="px-5 py-2.5 whitespace-nowrap text-gray-600 text-xs">{row.operator}</td>
+        <td className="px-5 py-2.5 whitespace-nowrap text-gray-600 text-xs">{row.operator_name}</td>
         <td className="px-5 py-2.5 text-center">
           {hasDetail ? (
             expanded ? (
@@ -213,20 +210,20 @@ const SystemAuditTrailPanel: React.FC = () => {
     load(0)
   }, [load])
 
-  // Client-side text filter on table_name + operator
+  // Client-side text filter on table_name + operator_name
   const filtered = search.trim()
     ? rows.filter(
       (r) =>
         r.table_name.toLowerCase().includes(search.toLowerCase()) ||
         r.action.toLowerCase().includes(search.toLowerCase()) ||
-        r.operator.toLowerCase().includes(search.toLowerCase()) ||
+        r.operator_name.toLowerCase().includes(search.toLowerCase()) ||
         String(r.row_id ?? '').includes(search)
     )
     : rows
 
   // CSV export of current page
   const handleExportCSV = () => {
-    const header = 'log_id,created_at,table_name,action,row_id,operator,old_values,new_values\n'
+    const header = 'log_id,created_at,table_name,action,row_id,operator_name,old_values,new_values\n'
     const body = filtered
       .map((r) =>
         [
@@ -235,7 +232,7 @@ const SystemAuditTrailPanel: React.FC = () => {
           r.table_name,
           r.action,
           r.row_id ?? '',
-          r.operator,
+          r.operator_name,
           JSON.stringify(r.old_values ?? ''),
           JSON.stringify(r.new_values ?? ''),
         ]
@@ -384,7 +381,6 @@ const SystemAuditTrailPanel: React.FC = () => {
                     <th className="px-5 py-3 font-medium">Timestamp</th>
                     <th className="px-5 py-3 font-medium">Module</th>
                     <th className="px-5 py-3 font-medium">Action</th>
-                    <th className="px-5 py-3 font-medium">Row ID</th>
                     <th className="px-5 py-3 font-medium">Operator</th>
                     <th className="px-5 py-3 font-medium text-center">Diff</th>
                   </tr>
