@@ -1,9 +1,10 @@
-import React, { createContext, useContext, useEffect, useState } from 'react'
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { AuthContextType, PersonaData, User, Session } from '../types/auth'
 import { usePersonaStorage } from '../hooks/usePersonaStorage'
 import { PersonaService } from '../services/personaService'
 import { SettingsService } from '../services/settingsService'
+import { OfflineSetupService, SetupProgressState } from '../services/offlineSetupService'
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
@@ -24,6 +25,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Persona authentication state
   const [personaLoading, setPersonaLoading] = useState(false)
   const { persona, loading: personaStorageLoading, savePersona, clearPersona } = usePersonaStorage(user?.email || null)
+
+  // Workspace offline setup state
+  const [isSettingUp, setIsSettingUp] = useState(false)
+  const [setupProgress, setSetupProgress] = useState<SetupProgressState | null>(null)
+  const hasInitializedSetupRef = useRef<boolean>(false)
 
   useEffect(() => {
     // Get initial session
@@ -59,6 +65,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     fetchSettings()
   }, [session])
 
+  // Trigger offline data setup when user and persona are both authenticated
+  useEffect(() => {
+    if (user && persona && !hasInitializedSetupRef.current && !personaStorageLoading) {
+      hasInitializedSetupRef.current = true
+      setIsSettingUp(true)
+
+      OfflineSetupService.runSetup((progressState) => {
+        setSetupProgress(progressState)
+        if (progressState.isComplete) {
+          setIsSettingUp(false)
+        }
+      }).catch((err) => {
+        console.error('Offline setup execution error:', err)
+        setIsSettingUp(false)
+      })
+    }
+  }, [user, persona, personaStorageLoading])
+
   // Account authentication methods
   const signUp = async (email: string, password: string) => {
     const { error } = await supabase.auth.signUp({
@@ -88,6 +112,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     // Clear persona data on logout
+    hasInitializedSetupRef.current = false
+    setIsSettingUp(false)
+    setSetupProgress(null)
     clearPersona()
     await supabase.auth.signOut()
   }
@@ -146,6 +173,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }
 
   const switchPersona = () => {
+    hasInitializedSetupRef.current = false
+    setIsSettingUp(false)
+    setSetupProgress(null)
     clearPersona()
   }
 
@@ -162,6 +192,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Persona authentication
     persona,
     personaLoading: personaLoading || personaStorageLoading,
+    isSettingUp,
+    setupProgress,
     validateAdminPersona,
     validateStaffPersona,
     setPersona,

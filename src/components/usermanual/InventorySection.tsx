@@ -50,12 +50,6 @@ export const InventorySection: React.FC = () => {
           </tbody>
         </table>
       </div>
-
-      <h3 className="text-base font-semibold text-gray-800 mt-4">4. Activity Movement Logs</h3>
-      <ul className="list-disc list-inside space-y-1.5 ml-2">
-        <li><strong>All Activity List:</strong> A centralized chronological record displaying movement type (Sale, Manual Adjustment, Batch Intake, Write-off), unit changes, timestamps, and the logged-in staff persona.</li>
-        <li><strong>Product History Drawer:</strong> Open any inventory page card to reveal a sidebar history trail detailing historical adjustments specific only to that item.</li>
-      </ul>
     </div>
   )
 }

@@ -1,19 +1,18 @@
 import React from 'react';
 import { Product } from '../../types/product';
-import { Package, History, Plus, Minus, Eye } from 'lucide-react';
+import { Package, Plus, Minus, Eye } from 'lucide-react';
 import StockStatusBadge from './StockStatusBadge'; // Make sure the path is correct
 
 interface ProductCardProps {
     product: Product;
     isAdmin: boolean;
     onAdjust: (product: Product) => void;
-    onViewHistory: (product: Product) => void;
     onViewDetails?: (product: Product) => void;
     onWriteOffBatch?: (product: Product, batchId: number) => void;
     onAdjustBatch?: (product: Product, batchId: number, currentQuantity: number) => void;
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({ product, isAdmin, onAdjust, onViewHistory, onViewDetails, onWriteOffBatch, onAdjustBatch }) => {
+const ProductCard: React.FC<ProductCardProps> = ({ product, isAdmin, onAdjust, onViewDetails, onWriteOffBatch, onAdjustBatch }) => {
     const formatCurrency = (amount: number) =>
         new Intl.NumberFormat('en-US', { style: 'currency', currency: 'PHP' }).format(amount);
 
@@ -155,14 +154,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, isAdmin, onAdjust, o
                                 <Eye className="h-5 w-5" />
                             </button>
                         )}
-                        <button
-                            onClick={() => onViewHistory(product)}
-                            title="View stock history"
-                            className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold border border-gray-300 rounded-lg text-gray-800 bg-white hover:bg-gray-100 transition-colors"
-                        >
-                            <History className="h-4 w-4" />
-                            <span className="hidden sm:inline">History</span>
-                        </button>
                     </div>
 
                     {isAdmin && (

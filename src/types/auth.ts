@@ -36,6 +36,8 @@ export interface AuthContextType {
   // Persona authentication
   persona: PersonaData | null
   personaLoading: boolean
+  isSettingUp?: boolean
+  setupProgress?: any
   validateAdminPersona: (password: string) => Promise<{ success: boolean; message: string }>
   validateStaffPersona: (loginName: string, password: string) => Promise<{ success: boolean; message: string }>
   setPersona: (persona: PersonaData) => void

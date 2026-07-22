@@ -89,7 +89,17 @@ const chapters: ManualChapter[] = [
       <p>For store managers and system developers. Full access to inventory, pricing, terminals, analytics reports, staff setup, and BIR settings. Required verification via the Admin PIN/Password.</p>
       <h4>👥 Staff Member Persona</h4>
       <p>For cashiers and shift staff. Operational focus on checkout transactions, sales tracking, customers registry, and X-Readings. Requires matching login name and staff credentials configured by Admin.</p>
-      <h3>3. Session Actions</h3>
+      <h3>3. Automatic Workspace Setup & Offline Data Sync</h3>
+      <p>Upon successful login and persona authentication, an interactive <strong>"Setting Up Your Workspace"</strong> transition screen appears. The application automatically fetches and caches essential store resources into IndexedDB and local storage:</p>
+      <ul>
+        <li><strong>Business Settings & Tax Rules:</strong> Store profile, accreditation numbers, and tax configuration.</li>
+        <li><strong>Product Catalog:</strong> Full product catalog, prices, categories, and bundle options.</li>
+        <li><strong>POS Terminals & Config:</strong> Active terminals list and terminal preferences.</li>
+        <li><strong>Promotions & Coupons:</strong> Active promotional rules and coupon validation data.</li>
+        <li><strong>Customer Registry:</strong> Customer profiles and debt records.</li>
+      </ul>
+      <p><em>This automatic setup ensures that POS checkout and Settings operate seamlessly online or offline.</em></p>
+      <h3>4. Session Actions</h3>
       <ul>
         <li><strong>Switch Persona:</strong> In the global header, clicking the 🔄 (RefreshCw) icon returns you to the role selection gate. Use this when cashiers switch shifts without requiring a full logout from the user email.</li>
         <li><strong>Sign Out:</strong> Click the ↪ (LogOut) icon to terminate the account session and return to the primary login window.</li>
