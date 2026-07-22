@@ -439,7 +439,7 @@ const chapters: ManualChapter[] = [
         <li><strong>Scanner Selection Tab:</strong> Choose between Hardware Scanner (keyboard emulation) and Camera Scanner (using browser camera scanning overlay).</li>
         <li><strong>Business Profile (Admin Only):</strong> Configure Business Name, Address, TIN, MIN, and PTU authority. Toggle VAT Registered.</li>
         <li><strong>Register Terminals (Admin Only):</strong> Create and edit terminals. Select a terminal to assign the current browser device to that register instance.</li>
-        <li><strong>Receipt Printer Tab:</strong> Set up connection configs: Serial (Baud Rate), USB (using WebUSB; requires Chrome or Edge), and Bluetooth (BLE Service/Characteristic UUIDs). Click Save & Connect to pair, and Test Print.</li>
+        <li><strong>Receipt Printer Tab:</strong> Set up connection configs: USB (using WebUSB; requires Chrome/Edge) and Android Bluetooth (BLE). Click "Scan &amp; Pair Bluetooth Printer" or "Select &amp; Pair USB Printer" to open the device chooser, select your printer, pair, and connect.</li>
         <li><strong>Subscription & Billing Status:</strong> Displays active account tier, billing type (VAT-registered or Non-VAT), subscription status (Active, Trial, Expired), and the expiry or renewal timestamp. The latest subscription details and expiration date are automatically retrieved from the online database and cached locally on user login. Features an external link to Ceintelly to extend billing or change plans.</li>
       </ul>
       <h3>2. Subscription Expiry Enforcement</h3>

@@ -32,6 +32,18 @@ export const BLE_ESCPOS_SERVICE_UUIDS: string[] = [
   '49535343-fe7d-4ae5-8fa9-9fafd205e455',
   // Alternate generic printer service
   '000018f1-0000-1000-8000-00805f9b34fb',
+  // Feasycom / Goojprt / ZiJiang
+  '0000af00-0000-1000-8000-00805f9b34fb',
+  // ZiJiang POS-5802 / POS-80
+  '0000e700-0000-1000-8000-00805f9b34fb',
+  // Common Chinese BLE thermal printer service
+  '0000ff00-0000-1000-8000-00805f9b34fb',
+  // Common POS printer service
+  '0000fff0-0000-1000-8000-00805f9b34fb',
+  // SPP Serial Port Profile
+  '00001101-0000-1000-8000-00805f9b34fb',
+  // Flybuy thermal printer
+  '0000feea-0000-1000-8000-00805f9b34fb',
 ]
 
 /**
@@ -48,6 +60,16 @@ const WRITE_CHARACTERISTIC_UUIDS: string[] = [
   '49535343-8841-43f4-a8d4-ecbe34729bb3',
   // Alternate write
   '00002af0-0000-1000-8000-00805f9b34fb',
+  // Feasycom / Goojprt write
+  '0000af01-0000-1000-8000-00805f9b34fb',
+  // ZiJiang POS-5802 write
+  '0000e701-0000-1000-8000-00805f9b34fb',
+  // Chinese BLE write
+  '0000ff02-0000-1000-8000-00805f9b34fb',
+  // POS printer write
+  '0000fff2-0000-1000-8000-00805f9b34fb',
+  // Alt POS printer write
+  '0000fff1-0000-1000-8000-00805f9b34fb',
 ]
 
 /** Maximum bytes per BLE write operation (conservative for broad compatibility) */
@@ -135,7 +157,7 @@ export class AndroidBtTransport implements PrinterTransport {
   // -------------------------------------------------------------------------
   // connect
   // -------------------------------------------------------------------------
-  async connect(_opts?: { requestDevice?: boolean }): Promise<void> {
+  async connect(opts?: { requestDevice?: boolean }): Promise<void> {
     const bt = this.bt
     if (!bt) {
       throw new Error(
@@ -150,19 +172,43 @@ export class AndroidBtTransport implements PrinterTransport {
         ? [this.cfg.serviceUuid, ...BLE_ESCPOS_SERVICE_UUIDS.filter((u) => u !== this.cfg.serviceUuid)]
         : [...BLE_ESCPOS_SERVICE_UUIDS]
 
-    // Request device — browser shows the BLE device picker
-    let device: BluetoothDevice
-    try {
-      device = await bt.requestDevice({
-        filters: serviceUuids.map((uuid) => ({ services: [uuid] })),
-        // Also accept any printer-class device (optional broadened filter)
-        optionalServices: serviceUuids,
-      })
-    } catch (e: any) {
-      if (e?.name === 'NotFoundError' || e?.message?.includes('cancelled')) {
-        throw new Error('Bluetooth device selection was cancelled.')
+    let device: BluetoothDevice | undefined
+
+    // Check previously granted devices first if requestDevice is false
+    if (!opts?.requestDevice && typeof (bt as any).getDevices === 'function') {
+      try {
+        const pairedDevices: BluetoothDevice[] = await (bt as any).getDevices()
+        if (this.cfg.deviceId) {
+          device = pairedDevices.find((d) => d.id === this.cfg.deviceId)
+        }
+        if (!device && pairedDevices.length > 0) {
+          device = pairedDevices[0]
+        }
+      } catch {
+        // Fallback to requestDevice
       }
-      throw new Error('Failed to request Bluetooth device: ' + (e?.message || e))
+    }
+
+    // Request device — browser shows the BLE device picker modal
+    if (!device) {
+      try {
+        if (this.cfg.serviceUuid) {
+          device = await bt.requestDevice({
+            filters: [{ services: [this.cfg.serviceUuid] }],
+            optionalServices: serviceUuids,
+          })
+        } else {
+          device = await bt.requestDevice({
+            acceptAllDevices: true,
+            optionalServices: serviceUuids,
+          })
+        }
+      } catch (e: any) {
+        if (e?.name === 'NotFoundError' || e?.message?.includes('cancelled')) {
+          throw new Error('Bluetooth device selection was cancelled.')
+        }
+        throw new Error('Failed to request Bluetooth device: ' + (e?.message || e))
+      }
     }
 
     this.device = device
