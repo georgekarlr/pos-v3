@@ -159,12 +159,6 @@ const generateZReadingText = (
   text += `${align('Date Issued:', providerDateIssued)}\n`;
   text += `${align('Valid Until:', providerValidUntil)}\n`;
   text += `${align('PTU No:', ptuNo)}\n`;
-  text += `${line}\n`;
-  text += `${center('THIS RECEIPT SHALL BE VALID')}\n`;
-  text += `${center('FOR 5 YEARS FROM THE DATE OF')}\n`;
-  text += `${center('THE PERMIT TO USE.')}\n`;
-  text += `${line}`;
-
   return text;
 };
 

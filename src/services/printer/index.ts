@@ -122,10 +122,6 @@ export function buildEscposFromReceipt(data: ReceiptData): Uint8Array {
   if (data.softwareProviderAddress) pushText(`Provider Address: ${data.softwareProviderAddress}\n`)
   if (data.softwareProviderTin) pushText(`Provider TIN: ${data.softwareProviderTin}\n`)
   if (data.softwareProviderAccreditationNo) pushText(`Accreditation No: ${data.softwareProviderAccreditationNo}\n`)
-  if (data.ptuIssuedBy || data.softwareProviderName) {
-    parts.push(enc.align('center'))
-    pushText('THIS RECEIPT SHALL BE VALID FOR 5 YEARS\nFROM THE DATE OF THE PERMIT TO USE.\n')
-  }
   parts.push(enc.newline(3))
   parts.push(enc.cut())
   return joinBytes(parts)
@@ -282,9 +278,9 @@ export function layoutReceiptLines(data: ReceiptData, design?: ReceiptDesign): s
 
     if (data.vatableAmount != null || data.vatAmount != null || data.vatExemptAmount != null || data.zeroRatedAmount != null) {
       vatableAmt = data.vatableAmount ?? 0
-      vatAmt     = data.vatAmount ?? 0
-      vatExempt  = data.vatExemptAmount ?? 0
-      zeroRated  = data.zeroRatedAmount ?? 0
+      vatAmt = data.vatAmount ?? 0
+      vatExempt = data.vatExemptAmount ?? 0
+      zeroRated = data.zeroRatedAmount ?? 0
     } else {
       vatableAmt = 0; vatAmt = 0; vatExempt = 0; zeroRated = 0
       for (const l of data.lines) {
