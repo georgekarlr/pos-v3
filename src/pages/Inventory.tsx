@@ -8,8 +8,7 @@ import AdjustQuantityDialog from '../components/inventory/AdjustQuantityDialog'
 import AdjustBatchModal from '../components/inventory/AdjustBatchModal'
 import WriteOffBatchModal from '../components/inventory/WriteOffBatchModal'
 import ProductDetailsModal from '../components/inventory/ProductDetailsModal'
-import ActivityModal from '../components/inventory/ActivityModal'
-import { RefreshCw, Boxes, History } from 'lucide-react'
+import { RefreshCw, Boxes } from 'lucide-react'
 
 const Inventory: React.FC = () => {
     const { persona } = useAuth()
@@ -25,10 +24,7 @@ const Inventory: React.FC = () => {
     const [writeOffBatchInfo, setWriteOffBatchInfo] = useState<{product: Product, batchId: number} | null>(null)
     const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
-    // Activity modal state
-    const [showActivityModal, setShowActivityModal] = useState(false)
-    const [activityMode, setActivityMode] = useState<'all' | 'product'>('all')
-    const [activityProduct, setActivityProduct] = useState<Product | null>(null)
+
 
     // Filters state
     const [searchName, setSearchName] = useState('')
@@ -120,8 +116,8 @@ const Inventory: React.FC = () => {
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div>
                             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Inventory</h1>
-                            <p className="mt-1 text-sm text-gray-500">
-                                {isAdmin ? 'Adjust product quantities and review inventory history.' : 'View product quantities and history.'}
+                             <p className="mt-1 text-sm text-gray-500">
+                                {isAdmin ? 'Adjust product quantities.' : 'View product quantities.'}
                             </p>
                         </div>
 
@@ -132,15 +128,6 @@ const Inventory: React.FC = () => {
                             >
                                 <RefreshCw className="h-4 w-4" />
                                 <span className="hidden sm:inline">Refresh</span>
-                            </button>
-
-                            <button
-                                onClick={() => { setActivityMode('all'); setActivityProduct(null); setShowActivityModal(true) }}
-                                className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium"
-                            >
-                                <History className="h-4 w-4" />
-                                <span className="hidden sm:inline">View Stock Adjustments</span>
-                                <span className="sm:hidden">Adjustments</span>
                             </button>
                         </div>
                     </div>
@@ -276,7 +263,6 @@ const Inventory: React.FC = () => {
                                     product={p}
                                     isAdmin={!!isAdmin}
                                     onAdjust={(prod) => setAdjustProduct(prod)}
-                                    onViewHistory={(prod) => { setActivityMode('product'); setActivityProduct(prod); setShowActivityModal(true) }}
                                     onWriteOffBatch={(prod, batchId) => {
                                         setWriteOffBatchInfo({ product: prod, batchId })
                                     }}
@@ -346,13 +332,6 @@ const Inventory: React.FC = () => {
                         onClose={() => setViewProduct(null)}
                     />
                 )}
-
-                <ActivityModal
-                    open={showActivityModal}
-                    onClose={() => setShowActivityModal(false)}
-                    mode={activityMode}
-                    product={activityProduct}
-                />
             </div>
         </div>
     )
