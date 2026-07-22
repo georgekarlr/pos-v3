@@ -80,6 +80,7 @@ export interface ReceiptData {
     vatExemptAmount?: number    // VAT-exempt sales
     zeroRatedAmount?: number    // Zero-rated sales
     // Footer fields
+    ptuNumber?: string
     ptuIssuedBy?: string
     softwareProviderName?: string
     softwareProviderAddress?: string
@@ -98,7 +99,7 @@ export const ReceiptHeader: React.FC<{ data: ReceiptData }> = ({ data }) => {
                     {data.businessName || 'POS Receipt'}
                 </div>
                 {data.businessAddress1 && (
-                    <div className="text-[11px] leading-tight text-gray-600 mt-0.5">
+                    <div className="text-[11px] leading-tight text-gray-600 mt-0.5 whitespace-pre-line">
                         {data.businessAddress1}
                     </div>
                 )}
@@ -362,6 +363,9 @@ export const ReceiptFooter: React.FC<{ data: ReceiptData }> = ({ data }) => {
             </div>
             <div className="my-2 border-t border-dashed" />
             <div className="px-4 pb-4 text-[10px] text-gray-500 space-y-0.5 leading-tight">
+                {data.ptuNumber && (
+                    <div>PTU No: {data.ptuNumber}</div>
+                )}
                 {data.ptuIssuedBy && (
                     <div>PTU Issued by RDO: {data.ptuIssuedBy}</div>
                 )}

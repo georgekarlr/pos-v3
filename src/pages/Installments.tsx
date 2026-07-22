@@ -158,6 +158,7 @@ const Installments: React.FC = () => {
       let tin: string | undefined;
       let isVatRegistered: boolean | undefined;
       let min: string | undefined;
+      let ptuNumber: string | undefined;
       let ptuIssuedBy: string | undefined;
       let softwareProviderName: string | undefined;
       let softwareProviderAddress: string | undefined;
@@ -172,6 +173,7 @@ const Installments: React.FC = () => {
           tin = settings.tin || undefined;
           isVatRegistered = settings.is_vat_registered !== undefined ? Boolean(settings.is_vat_registered) : undefined;
           min = settings.min || undefined;
+          ptuNumber = settings.ptu_number || undefined;
           ptuIssuedBy = settings.ptu_issued_by || undefined;
           softwareProviderName = settings.software_provider_name || undefined;
           softwareProviderAddress = settings.software_provider_address || undefined;
@@ -202,6 +204,7 @@ const Installments: React.FC = () => {
         totalPaid: amount,
         change: 0,
         isInstallment: true,
+        ptuNumber,
         ptuIssuedBy,
         softwareProviderName,
         softwareProviderAddress,
@@ -286,6 +289,7 @@ const Installments: React.FC = () => {
       let tin: string | undefined;
       let isVatRegistered: boolean | undefined;
       let min: string | undefined;
+      let ptuNumber: string | undefined;
       let ptuIssuedBy: string | undefined;
       let softwareProviderName: string | undefined;
       let softwareProviderAddress: string | undefined;
@@ -300,6 +304,7 @@ const Installments: React.FC = () => {
           tin = settings.tin || undefined;
           isVatRegistered = settings.is_vat_registered !== undefined ? Boolean(settings.is_vat_registered) : undefined;
           min = settings.min || undefined;
+          ptuNumber = settings.ptu_number || undefined;
           ptuIssuedBy = settings.ptu_issued_by || undefined;
           softwareProviderName = settings.software_provider_name || undefined;
           softwareProviderAddress = settings.software_provider_address || undefined;
@@ -327,6 +332,7 @@ const Installments: React.FC = () => {
         totalPaid: amount,
         change: 0,
         isInstallment: true,
+        ptuNumber,
         ptuIssuedBy,
         softwareProviderName,
         softwareProviderAddress,
@@ -378,6 +384,7 @@ const Installments: React.FC = () => {
       let tin: string | undefined;
       let isVatRegistered: boolean | undefined;
       let min: string | undefined;
+      let ptuNumber: string | undefined;
       let ptuIssuedBy: string | undefined;
       let softwareProviderName: string | undefined;
       let softwareProviderAddress: string | undefined;
@@ -392,6 +399,7 @@ const Installments: React.FC = () => {
           tin = settings.tin || undefined;
           isVatRegistered = settings.is_vat_registered !== undefined ? Boolean(settings.is_vat_registered) : undefined;
           min = settings.min || undefined;
+          ptuNumber = settings.ptu_number || undefined;
           ptuIssuedBy = settings.ptu_issued_by || undefined;
           softwareProviderName = settings.software_provider_name || undefined;
           softwareProviderAddress = settings.software_provider_address || undefined;
@@ -421,6 +429,7 @@ const Installments: React.FC = () => {
         totalPaid: params.p_downpayment_amount,
         change: 0,
         isInstallment: true,
+        ptuNumber,
         ptuIssuedBy,
         softwareProviderName,
         softwareProviderAddress,

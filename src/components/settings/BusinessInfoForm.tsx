@@ -78,6 +78,18 @@ export const BusinessInfoForm: React.FC<Props> = ({ settings, isAdmin, onChange 
           </div>
 
           <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">PTU Number</label>
+            <input
+              type="text"
+              disabled={!isAdmin}
+              value={settings.ptu_number || ''}
+              onChange={(e) => set({ ptu_number: e.target.value })}
+              placeholder="e.g. 12-34567890-12345-6"
+              className={inputClass}
+            />
+          </div>
+
+          <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">PTU Issued By</label>
             <input
               type="text"

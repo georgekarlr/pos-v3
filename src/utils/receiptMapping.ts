@@ -53,6 +53,7 @@ export function mapSaleDetailsToReceipt(details: SaleDetailsResponse): ReceiptDa
     let tin: string | undefined = undefined;
     let isVatRegistered: boolean | undefined = undefined;
     let min: string | undefined = undefined;
+    let ptuNumber: string | undefined = undefined;
     let ptuIssuedBy: string | undefined = undefined;
     let softwareProviderName: string | undefined = undefined;
     let softwareProviderAddress: string | undefined = undefined;
@@ -67,6 +68,7 @@ export function mapSaleDetailsToReceipt(details: SaleDetailsResponse): ReceiptDa
             tin = settings.tin || undefined;
             isVatRegistered = settings.is_vat_registered !== undefined ? Boolean(settings.is_vat_registered) : undefined;
             min = settings.min || undefined;
+            ptuNumber = settings.ptu_number || undefined;
             ptuIssuedBy = settings.ptu_issued_by || undefined;
             softwareProviderName = settings.software_provider_name || undefined;
             softwareProviderAddress = settings.software_provider_address || undefined;
@@ -100,6 +102,7 @@ export function mapSaleDetailsToReceipt(details: SaleDetailsResponse): ReceiptDa
         change,
         notes: order.notes ?? undefined,
         totalTendered: totalTendered,
+        ptuNumber,
         ptuIssuedBy,
         softwareProviderName,
         softwareProviderAddress,
