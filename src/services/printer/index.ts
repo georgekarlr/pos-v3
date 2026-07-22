@@ -117,6 +117,7 @@ export function buildEscposFromReceipt(data: ReceiptData): Uint8Array {
   // BIR / Provider footer
   parts.push(enc.align('left'))
   parts.push(enc.setFont('B')) // Ensure small font for provider info
+  if (data.ptuNumber) pushText(`PTU No: ${data.ptuNumber}\n`)
   if (data.ptuIssuedBy) pushText(`PTU Issued by RDO: ${data.ptuIssuedBy}\n`)
   if (data.softwareProviderName) pushText(`Software Provider: ${data.softwareProviderName}\n`)
   if (data.softwareProviderAddress) pushText(`Provider Address: ${data.softwareProviderAddress}\n`)
