@@ -377,11 +377,7 @@ export const ReceiptFooter: React.FC<{ data: ReceiptData }> = ({ data }) => {
                 {data.softwareProviderAccreditationNo && (
                     <div>Accreditation No: {data.softwareProviderAccreditationNo}</div>
                 )}
-                {(data.ptuIssuedBy || data.softwareProviderName) && (
-                    <div className="mt-1 text-center font-semibold text-[9px] text-gray-400 uppercase tracking-wide">
-                        THIS RECEIPT SHALL BE VALID FOR 5 YEARS FROM THE DATE OF THE PERMIT TO USE.
-                    </div>
-                )}
+
             </div>
         </>
     )
@@ -464,13 +460,13 @@ export const InstallmentPaymentReceipt: React.FC<{ data: ReceiptData; className?
 // Narrow, thermal-like receipt using Tailwind
 const Receipt: React.FC<{ data: ReceiptData; className?: string }>
     = ({ data, className }) => {
-    if (data.isInstallment) {
-        if (data.installmentPayment) {
-            return <InstallmentPaymentReceipt data={data} className={className} />
+        if (data.isInstallment) {
+            if (data.installmentPayment) {
+                return <InstallmentPaymentReceipt data={data} className={className} />
+            }
+            return <InstallmentContractReceipt data={data} className={className} />
         }
-        return <InstallmentContractReceipt data={data} className={className} />
+        return <POSReceipt data={data} className={className} />
     }
-    return <POSReceipt data={data} className={className} />
-}
 
 export default Receipt
