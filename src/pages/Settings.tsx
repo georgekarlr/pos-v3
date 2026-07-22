@@ -378,12 +378,13 @@ const Settings: React.FC = () => {
   const handleConnect = useCallback(async () => {
     setPrinterMessage(null)
     try {
-      await connectPrinter()
+      const targetConfig: PrinterConfig = printerTab === 'android-bt' ? btForm : usbForm
+      await connectPrinter(targetConfig)
       setPrinterMessage('Connected ✓')
     } catch (e: any) {
       setPrinterMessage('Connect failed: ' + (e?.message || e))
     }
-  }, [connectPrinter])
+  }, [printerTab, btForm, usbForm, connectPrinter])
 
   const handleDisconnect = useCallback(async () => {
     setPrinterMessage(null)

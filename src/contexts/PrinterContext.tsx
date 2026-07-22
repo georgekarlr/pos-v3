@@ -61,8 +61,8 @@ interface PrinterContextType {
   checkStatus: () => Promise<void>
   /** Fetch available printer names from the transport */
   getPrinters: () => Promise<void>
-  /** Connect to the configured printer */
-  connect: () => Promise<void>
+  /** Connect to the configured printer (or scan & pair with override config) */
+  connect: (overrideConfig?: PrinterConfig) => Promise<void>
   /** Disconnect from the printer */
   disconnect: () => Promise<void>
   /** Send a receipt to the printer (must be connected) */
@@ -184,26 +184,27 @@ export const PrinterProvider: React.FC<{ children: ReactNode }> = ({ children })
   // -------------------------------------------------------------------------
   // connect
   // -------------------------------------------------------------------------
-  const connect = useCallback(async () => {
-    if (!config) throw new Error('No printer config saved. Configure a printer first.')
+  const connect = useCallback(async (overrideConfig?: PrinterConfig) => {
+    const activeConfig = overrideConfig ?? config ?? { type: 'android-bt' }
     if (isConnected) return // already connected
 
     setBusy(true)
     setStatus('connecting')
     setStatusMessage('Connecting…')
     try {
-      const transport = createTransport(config)
+      const transport = createTransport(activeConfig)
       await transport.connect({ requestDevice: true })
       transportRef.current = transport
 
-      // If it's WebUSB, retrieve details of the device user actually paired
-      if (config.type === 'webusb' && 'getConfig' in transport) {
-        const updatedConfig = (transport as any).getConfig() as PrinterConfig
-        savePrinterConfig(updatedConfig)
-        setConfigState(updatedConfig)
+      // Retrieve full runtime config (device name, device ID) after pairing
+      let updatedConfig: PrinterConfig = activeConfig
+      if ('getConfig' in transport && typeof (transport as any).getConfig === 'function') {
+        updatedConfig = (transport as any).getConfig() as PrinterConfig
       }
+      savePrinterConfig(updatedConfig)
+      setConfigState(updatedConfig)
 
-      // Fetch printer name from status after connect
+      // Fetch printer status detail after connect
       const detail = await transport.checkStatus()
       applyStatusDetail(detail)
       setIsConnected(true)
@@ -216,9 +217,13 @@ export const PrinterProvider: React.FC<{ children: ReactNode }> = ({ children })
         // Non-fatal
       }
 
-      // Extract selected printer name from message if possible
+      // Extract selected printer name from message or config if possible
       const nameMatch = detail.message?.match(/Connected to "(.+)"/)
-      if (nameMatch) setSelectedPrinter(nameMatch[1])
+      if (nameMatch) {
+        setSelectedPrinter(nameMatch[1])
+      } else if (updatedConfig.deviceName) {
+        setSelectedPrinter(updatedConfig.deviceName)
+      }
     } catch (err: any) {
       setStatus('error')
       setStatusMessage(err?.message ?? 'Connection failed')

@@ -35,6 +35,7 @@ export const SettingsSection: React.FC = () => {
           <p className="text-xs text-gray-600 mt-1">
             Configure receipt printing for your platform:
             - **WebUSB (Direct USB):** Connects directly to local USB receipt printers from Chromium-based browsers (Chrome, Edge, Opera) without any bridge software. Pair it via the native browser selector.
+            - **Android Bluetooth (BLE):** Scan and pair BLE receipt printers directly from Android Chrome or desktop Chrome/Edge without extra drivers. Clicking "Scan &amp; Pair Bluetooth Printer" opens the browser's Bluetooth scanner dialog to select, pair, and connect your printer.
             Toggle **Auto-Print on Checkout** to automatically send receipts to the configured printer after every completed sale.
           </p>
         </div>
