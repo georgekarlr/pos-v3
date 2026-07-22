@@ -5,6 +5,7 @@ export interface BusinessSettings {
   address: string | null;
   tin: string | null;
   min: string | null;
+  ptu_number: string | null;
   ptu_issued_by: string | null;
   software_provider_name: string | null;
   software_provider_address: string | null;
@@ -37,6 +38,7 @@ export interface UpsertBusinessSettingsParams {
   p_address?: string | null;
   p_tin?: string | null;
   p_min?: string | null;
+  p_ptu_number?: string | null;
   p_ptu_issued_by?: string | null;
 }
 

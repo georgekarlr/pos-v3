@@ -8,7 +8,6 @@ import { XReadingResult } from '../../types/report'
 import ReportCard from './ReportCard'
 import LoadingSpinner from '../LoadingSpinner'
 import { FormatDateTime } from '../../utils/formatDateTime'
-import { ReceiptHeader, ReceiptFooter, ReceiptData } from '../pos/Receipt'
 
 const todayISO = FormatDateTime.formatLocalTimestampForDatabase(new Date()).slice(0, 10)
 
@@ -18,14 +17,61 @@ const generateXReadingText = (
 ) => {
   const line = '='.repeat(40);
   const center = (text: string) => {
-    if (text.length >= 40) return text.slice(0, 40);
-    const left = Math.floor((40 - text.length) / 2);
-    const right = 40 - text.length - left;
-    return ' '.repeat(left) + text + ' '.repeat(right);
+    if (!text) return '';
+    if (text.length <= 40) {
+      const left = Math.floor((40 - text.length) / 2);
+      const right = 40 - text.length - left;
+      return ' '.repeat(left) + text + ' '.repeat(right);
+    }
+    const words = text.split(' ');
+    const lines: string[] = [];
+    let current = '';
+    for (const w of words) {
+      if ((current + (current ? ' ' : '') + w).length <= 40) {
+        current += (current ? ' ' : '') + w;
+      } else {
+        if (current) lines.push(current);
+        current = w.length > 40 ? w.slice(0, 40) : w;
+      }
+    }
+    if (current) lines.push(current);
+    return lines
+      .map(l => {
+        const left = Math.floor((40 - l.length) / 2);
+        const right = 40 - l.length - left;
+        return ' '.repeat(left) + l + ' '.repeat(right);
+      })
+      .join('\n');
   };
   const align = (left: string, right: string) => {
-    const spaces = Math.max(1, 40 - left.length - right.length);
-    return left + ' '.repeat(spaces) + right;
+    const totalLen = left.length + right.length;
+    if (totalLen <= 39) {
+      const spaces = 40 - left.length - right.length;
+      return left + ' '.repeat(spaces) + right;
+    }
+    const maxRightLen = Math.max(10, 40 - left.length - 1);
+    const words = right.split(' ');
+    const rightLines: string[] = [];
+    let current = '';
+    for (const w of words) {
+      if ((current + (current ? ' ' : '') + w).length <= maxRightLen) {
+        current += (current ? ' ' : '') + w;
+      } else {
+        if (current) rightLines.push(current);
+        current = w.length > maxRightLen ? w.slice(0, maxRightLen) : w;
+      }
+    }
+    if (current) rightLines.push(current);
+
+    if (rightLines.length === 0) return left;
+
+    const firstSpaces = 40 - left.length - rightLines[0].length;
+    let res = left + ' '.repeat(Math.max(1, firstSpaces)) + rightLines[0];
+    for (let i = 1; i < rightLines.length; i++) {
+      const lineSpaces = 40 - rightLines[i].length;
+      res += '\n' + ' '.repeat(Math.max(0, lineSpaces)) + rightLines[i];
+    }
+    return res;
   };
   const fmtVal = (n: number) => {
     const val = new Intl.NumberFormat('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
@@ -65,7 +111,8 @@ const generateXReadingText = (
   const bMIN = businessSettings?.min || report.Terminal?.MIN || '2401234567890123';
 
   // PTU details
-  const ptuNo = (report.Terminal as any)?.PTU || businessSettings?.ptu_issued_by || '[Subscriber\'s PTU Number]';
+  const ptuNo = (report.Terminal as any)?.PTU || businessSettings?.ptu_number || businessSettings?.ptu_issued_by || '[Subscriber\'s PTU Number]';
+  console.log('ptu', ptuNo);
 
   // software provider details
   const providerName = businessSettings?.software_provider_name || '[Your SaaS Company Name]';
@@ -161,45 +208,13 @@ interface XReadingDisplayProps {
   businessSettings: BusinessSettings | null
 }
 
-/** Builds a minimal ReceiptData shape for the shared header/footer components */
-const buildReceiptDataForXReading = (
-  report: XReadingResult,
-  businessSettings: BusinessSettings | null,
-): ReceiptData => ({
-  dateISO: report.GeneratedAt,
-  businessName: businessSettings?.business_name || (report as any).Business?.Name || '',
-  businessAddress1: businessSettings?.address || (report as any).Business?.Address || '',
-  tin: businessSettings?.tin || (report as any).Business?.TIN || '',
-  isVatRegistered: businessSettings?.is_vat_registered ?? true,
-  min: businessSettings?.min || report.Terminal?.MIN || '',
-  cashier: report.Terminal?.CashierName || '',
-  ptuIssuedBy: businessSettings?.ptu_issued_by || '',
-  softwareProviderName: businessSettings?.software_provider_name || '',
-  softwareProviderAddress: businessSettings?.software_provider_address || '',
-  softwareProviderTin: businessSettings?.software_provider_tin || '',
-  softwareProviderAccreditationNo: businessSettings?.software_provider_accreditation_no || '',
-  // Required numeric fields (not shown in reading reports)
-  lines: [],
-  subtotal: 0,
-  tax: 0,
-  total: 0,
-  payments: [],
-  totalPaid: 0,
-  change: 0,
-})
-
 /** Pure presentational component – renders an X-Reading as a BIR-style receipt */
 export const XReadingDisplay: React.FC<XReadingDisplayProps> = ({ report, businessSettings }) => {
-  const receiptData = buildReceiptDataForXReading(report, businessSettings)
   return (
-    <div id="x-reading-printout" className="receipt-paper bg-white text-gray-900 mx-auto border border-gray-200 rounded-lg shadow-inner" style={{ width: 320, fontSize: '9px' }}>
-      <ReceiptHeader data={receiptData} />
-      <div className="my-2 border-t border-dashed" />
-      <div className="font-mono text-xs whitespace-pre px-4 pb-2 leading-relaxed select-all">
+    <div id="x-reading-printout" className="receipt-paper bg-white text-gray-900 mx-auto border border-gray-200 rounded-lg shadow-inner py-3 max-w-full overflow-x-auto" style={{ width: 320 }}>
+      <div className="font-mono text-[11px] leading-tight whitespace-pre px-3 py-1 select-all" style={{ width: 'fit-content', minWidth: '100%' }}>
         {generateXReadingText(report, businessSettings)}
       </div>
-      <div className="my-2 border-t border-dashed" />
-      <ReceiptFooter data={receiptData} />
     </div>
   )
 }

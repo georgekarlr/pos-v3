@@ -17,7 +17,7 @@ export const ComplianceSection: React.FC = () => {
       <ul className="list-disc list-inside space-y-1 ml-2">
         <li>Displays gross sales, net sales, voids, refunds, senior citizen discounts, tax values, and payment collections breakdown (Cash, Card, GCash, etc.).</li>
         <li><strong>Non-persistent:</strong> No values are committed to database state on creation. Can be printed multiple times throughout shifts.</li>
-        <li><strong>Physical Printout:</strong> Includes the software provider details and PTU compliance footer, matching Z-reading formats.</li>
+        <li><strong>Receipt Preview &amp; Printout:</strong> Displays a clean, single-header BIR receipt preview matching thermal print outputs with exact business name, address, TIN, MIN, and software provider compliance details.</li>
       </ul>
 
       <h3 className="text-base font-semibold text-gray-800 mt-4">2. Z-Reading</h3>
@@ -31,6 +31,7 @@ export const ComplianceSection: React.FC = () => {
         <li>Compiles active sales transactions and writes them into a permanent ledger lock.</li>
         <li>Increments the Z-Counter and resets the daily transaction subtotal counts back to zero.</li>
         <li><strong>Database Lock:</strong> A permanent, non-reversible transaction. Updates cumulative grand totals in the database. Logs the event with PTU (Permit to Use) numbers.</li>
+        <li><strong>Receipt Preview:</strong> On-screen preview renders the complete thermal layout directly without header duplication or address overlaps.</li>
       </ul>
 
       <h3 className="text-base font-semibold text-gray-800 mt-4">3. Electronic Journal (E-Journal)</h3>

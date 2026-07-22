@@ -77,6 +77,7 @@ const defaultBusinessSettings: BusinessSettings = {
   address: '',
   tin: '',
   min: '',
+  ptu_number: '',
   ptu_issued_by: '',
   software_provider_name: null,
   software_provider_address: null,
@@ -235,6 +236,7 @@ const Settings: React.FC = () => {
         p_address: businessSettings.address || null,
         p_tin: businessSettings.tin || null,
         p_min: businessSettings.min || null,
+        p_ptu_number: businessSettings.ptu_number || null,
         p_ptu_issued_by: businessSettings.ptu_issued_by || null,
       }
 
