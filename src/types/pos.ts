@@ -67,11 +67,12 @@ export interface CreatePosSaleParams {
   // Loyalty Program
   p_loyalty_points_earned?: number;
   p_loyalty_points_redeemed?: number;
-  // Offline Sync
+  // Offline Sync & Idempotency
   p_occurred_at?: string | null;
   p_is_offline_sync?: boolean;
   p_offline_invoice_number?: string | null;
   p_offline_grand_total?: number | null;
+  p_idempotency_key?: string | null;
 }
 
 export interface RecordManualSaleParams {

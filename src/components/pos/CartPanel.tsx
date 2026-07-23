@@ -11,6 +11,7 @@ export interface CartLine {
     promoDiscount?: number;
     lineGross?: number;
     lineTax?: number;
+    displayLineTotal?: number;  // correct per-line display amount (from cartCalculator)
 }
 
 interface CartPanelProps {
@@ -63,16 +64,23 @@ const CartPanel: React.FC<CartPanelProps> = ({
                 ) : (
                     <ul className="divide-y divide-gray-200">
                         {lines.map((line) => {
-                            const { product, qty, promoDiscount = 0, lineGross, lineTax } = line;
+                            const { product, qty, promoDiscount = 0, lineGross, lineTax, displayLineTotal } = line;
                             const hasDiscount = promoDiscount > 0;
                             const unitDisplayPrice = product.display_price;
-                            const unitDiscountedPrice = hasDiscount && lineGross !== undefined && lineTax !== undefined
-                                ? (lineGross + lineTax) / qty
-                                : unitDisplayPrice;
 
-                            const lineTotalVal = lineGross !== undefined && lineTax !== undefined
-                                ? (lineGross + lineTax)
-                                : (product.base_price * qty * (1 + product.tax_rate / 100));
+                            // Use displayLineTotal when available — it correctly reflects:
+                            //   SC/PWD wins   → original shelf price (discount is a separate line)
+                            //   Promo wins    → promo-adjusted VAT-inclusive total
+                            //   Promo + SC exempt retained → promo-adjusted base (no VAT)
+                            const lineTotalVal = displayLineTotal !== undefined
+                                ? displayLineTotal
+                                : lineGross !== undefined && lineTax !== undefined
+                                    ? (lineGross + lineTax)
+                                    : (product.base_price * qty * (1 + product.tax_rate / 100));
+
+                            const unitDiscountedPrice = hasDiscount
+                                ? lineTotalVal / qty
+                                : unitDisplayPrice;
 
                             return (
                                 <li key={product.id} className="p-6 flex flex-col gap-3">

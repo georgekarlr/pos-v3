@@ -14,6 +14,7 @@ import { ComplianceSection } from '../components/usermanual/ComplianceSection'
 import { SettingsSection } from '../components/usermanual/SettingsSection'
 import { OfflineSection } from '../components/usermanual/OfflineSection'
 import { ArchitectureSection } from '../components/usermanual/ArchitectureSection'
+import { TaxScenariosSection } from '../components/usermanual/TaxScenariosSection'
 
 interface ManualChapter {
   id: string
@@ -477,7 +478,7 @@ const chapters: ManualChapter[] = [
       <h3>3. Sales Sync Queue</h3>
       <p>Click View Offline Sales in the POS offline sync banner to open the Offline Sales queue and review all transactions waiting to upload.</p>
       <h3>4. Background Upload Sync</h3>
-      <p>Once internet connectivity is restored, the system displays a blue "Syncing N offline sales..." spinner alert. A background scheduler processes queued orders, sending each one to the server using the pos2_create_sale database function. Once uploaded, items are cleared from IndexedDB.</p>
+      <p>Once internet connectivity is restored, the system displays a blue "Syncing N offline sales..." spinner alert. A background scheduler processes queued orders, sending each one to the server using the pos2_create_sale database function. Each transaction includes a unique UUID idempotency key (p_idempotency_key) to prevent duplicate orders if network timeouts or retries occur. Once uploaded, items are cleared from IndexedDB.</p>
     `
   },
   {
@@ -496,6 +497,33 @@ const chapters: ManualChapter[] = [
         <li><strong>POS Checkout button disabled:</strong> A terminal MUST be selected in Settings. The system requires an active PTU profile to serialize invoice IDs correctly.</li>
         <li><strong>Sales Sync failures:</strong> If the connection cuts out mid-sync, the queue remains safely stored in IndexedDB. Reloading or reconnecting resumes syncing safely.</li>
       </ul>
+    `
+  },
+  {
+    id: 'tax-scenarios',
+    title: '15. Master Matrix — All Transaction Scenarios',
+    component: <TaxScenariosSection />,
+    rawHtml: `
+      <h2>15. Master Matrix — All Transaction Scenarios</h2>
+      <p>This chapter details the exact math, BIR tax rules, receipt outputs, and database behavior for every possible retail situation. All examples use three reference products: Steak (VATable, SC-eligible, base ₱1,000 / shelf ₱1,120), Wine (VATable, SC-ineligible, base ₱500 / shelf ₱560), and Rice (Zero-Rated/Exempt, base ₱100 / shelf ₱100).</p>
+
+      <h3>Scenario 1 — Standard Regular Sale (VAT, No Discounts)</h3>
+      <p>Cart: 1× Steak + 1× Wine. Shelf prices summed directly. VAT of ₱180 is embedded in the shelf total. Total Due = ₱1,680.00. VATable Sales = ₱1,500, VAT = ₱180.</p>
+
+      <h3>Scenario 2 — Non-VAT Business Sale</h3>
+      <p>When billing_type = 'NON-VAT', VAT is forced to ₱0 and base prices are used directly. Total Due = ₱1,500.00. No VAT breakdown is printed on the receipt.</p>
+
+      <h3>Scenario 3 — SC/PWD Sale (No Promo)</h3>
+      <p>Senior Citizen ID presented. Eligible items (Steak): 12% VAT removed, then 20% SC discount applied on base price. Ineligible items (Wine): normal VAT retained. Steak Net = ₱800 (VAT-Exempt). Wine = ₱560. Total Due = ₱1,360.00. Receipt prints both the VAT Exemption line and the SC/PWD Discount line separately.</p>
+
+      <h3>Scenario 4 — Promotional Sale Only (No SC/PWD)</h3>
+      <p>10% promo applied to both items. Steak promo display = ₱1,008, saving ₱112. Wine promo display = ₱504, saving ₱56. Total promo saving = ₱168. Total Due = ₱1,512.00. VATable Sales = ₱1,350, VAT = ₱162.</p>
+
+      <h3>Scenario 5 — SC/PWD + Promo (Per-Item Best-Price Selection)</h3>
+      <p>For each SC-eligible item, the system evaluates Option A (Promo) vs Option B (20% SC + VAT Exempt) and picks the lower price for the customer. No double discounting. Steak: SC wins (₱800 vs ₱1,008). Wine (ineligible): Promo applied at ₱504. Total Due = ₱1,304.00.</p>
+
+      <h3>Scenario 6 — Promo Wins vs SC, VAT Exemption Still Retained</h3>
+      <p>50% Flash Sale vs 20% SC on Steak. Option A (50% promo): base ₱500. Option B (20% SC): base ₱800. Promo wins. Critical BIR Rule: because an SC ID was presented, the 12% VAT is still removed — it is NEVER added back. Customer pays ₱500.00 VAT-Exempt. Receipt shows both the VAT Exemption line (−₱120) and the Promo Discount line (−₱500).</p>
     `
   }
 ]

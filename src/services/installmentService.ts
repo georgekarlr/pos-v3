@@ -95,8 +95,12 @@ export class InstallmentService {
         p_downpayment_amount: params.p_downpayment_amount,
         p_downpayment_method: params.p_downpayment_method,
         p_months_to_pay: params.p_months_to_pay,
-        p_interest_rate: params.p_interest_rate, // NEW: Interest Rate
+        p_interest_rate: params.p_interest_rate,
+        p_sc_pwd_discount: params.p_sc_pwd_discount ?? 0,
+        p_sc_pwd_id_number: params.p_sc_pwd_id_number ?? null,
+        p_sc_pwd_name: params.p_sc_pwd_name ?? null,
         p_occurred_at: params.p_occurred_at ?? null,
+        p_idempotency_key: params.p_idempotency_key ?? null,
       });
 
       if (error) {

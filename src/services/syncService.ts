@@ -38,7 +38,8 @@ export const SyncService = {
             p_occurred_at: sale.createdAt,
             p_is_offline_sync: true,
             p_offline_invoice_number: sale.offlineInvoiceNumber || null,
-            p_offline_grand_total: sale.offlineGrandTotal || null
+            p_offline_grand_total: sale.offlineGrandTotal || null,
+            p_idempotency_key: sale.idempotencyKey || null
           });
 
           if (error || !data) {
