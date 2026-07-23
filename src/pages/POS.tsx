@@ -377,6 +377,7 @@ const POS: React.FC = () => {
         is_sc_pwd_eligible: l.product.is_sc_pwd_eligible,
         line_gross: l.lineGross,
         line_tax: l.lineTax,
+        display_line_total: l.displayLineTotal,  // correct per-line display amount for offline receipt
         vat_exempt_line_total: l.vatExemptLineTotal,
         promo_discount_inclusive: l.promoDiscount,
       }));
@@ -404,6 +405,8 @@ const POS: React.FC = () => {
         // Loyalty
         p_loyalty_points_earned: loyaltyPointsEarned,
         p_loyalty_points_redeemed: 0,
+        // Idempotency
+        p_idempotency_key: (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : null
       })
 
 
@@ -419,14 +422,18 @@ const POS: React.FC = () => {
           name: l.product.name,
           qty: l.qty,
           unitType: l.product.unit_type,
-          unitPrice: l.product.display_price,         // VAT-inclusive display price (original shelf price)
-          // Post-promo VAT-exclusive unit price: matches base_price_at_purchase stored in DB.
-          // BIR order: promo applied first → VAT stripped → 20% SC/PWD applied on this amount.
+          // unitPrice: per-unit display price.
+          //   SC/PWD wins   → original shelf price (discount shown as separate receipt line)
+          //   Promo wins    → promo-adjusted VAT-inclusive per unit
+          //   Promo wins (SC exempt retained) → promo-adjusted base per unit (no VAT)
+          //   Normal item   → original shelf price or promo-adjusted VAT-inclusive
+          unitPrice: l.qty > 0 ? l.displayLineTotal / l.qty : l.product.display_price,
+          // baseUnitPrice: VAT-exclusive per-unit price stored in DB as base_price_at_purchase.
           baseUnitPrice: l.qty > 0 ? l.lineGross / l.qty : l.product.base_price,
-          lineTotal: l.lineGross + l.lineTax,         // promo-adjusted VAT-inclusive line total
-          taxType: l.product.tax_type,                // 'VATable' | 'VAT-Exempt' | 'Zero-Rated'
+          lineTotal: l.displayLineTotal,   // display total per line (matches receipt subtotal)
+          taxType: l.product.tax_type,     // 'VATable' | 'VAT-Exempt' | 'Zero-Rated'
           isScPwdEligible: l.product.is_sc_pwd_eligible,
-          vatExemptLineTotal: l.vatExemptLineTotal,   // post-promo VAT-exclusive total for VAT-Exempt bucket
+          vatExemptLineTotal: l.vatExemptLineTotal,
         }));
         const totalPaidLocal = totalPaidFromUI;
         const change = Math.max(0, totalPaidLocal - total);

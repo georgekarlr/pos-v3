@@ -86,7 +86,8 @@ export class PosService {
           loyaltyPointsRedeemed: params.p_loyalty_points_redeemed ?? 0,
           createdAt: params.p_occurred_at || FormatDateTime.formatLocalTimestampForDatabase(new Date()),
           offlineInvoiceNumber: invoiceNumber,
-          offlineGrandTotal: offlineGrandTotal
+          offlineGrandTotal: offlineGrandTotal,
+          idempotencyKey: params.p_idempotency_key ?? null
         });
 
         const result: CreateSaleResult & { is_offline: boolean } = {
@@ -124,11 +125,12 @@ export class PosService {
         // Loyalty Program
         p_loyalty_points_earned: params.p_loyalty_points_earned ?? 0,   // NEW
         p_loyalty_points_redeemed: params.p_loyalty_points_redeemed ?? 0, // NEW
-        // Offline Sync
+        // Offline Sync & Idempotency
         p_is_offline_sync: params.p_is_offline_sync ?? false,
         p_occurred_at: params.p_occurred_at ?? null,
         p_offline_invoice_number: params.p_offline_invoice_number ?? null,
-        p_offline_grand_total: params.p_offline_grand_total ?? null
+        p_offline_grand_total: params.p_offline_grand_total ?? null,
+        p_idempotency_key: params.p_idempotency_key ?? null
       });
 
       console.log('data', data)

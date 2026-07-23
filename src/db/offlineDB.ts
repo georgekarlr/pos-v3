@@ -21,10 +21,11 @@ export interface OfflineSale {
   // Loyalty Program
   loyaltyPointsEarned?: number;
   loyaltyPointsRedeemed?: number;
-  // Offline Sync
+  // Offline Sync & Idempotency
   createdAt: string;
   offlineInvoiceNumber?: string;
   offlineGrandTotal?: number;
+  idempotencyKey?: string | null;
 }
 
 
@@ -79,6 +80,9 @@ export class IndexedDBService {
   }
 
   async saveSale(sale: OfflineSale): Promise<number> {
+    if (!sale.idempotencyKey && typeof crypto !== 'undefined' && crypto.randomUUID) {
+      sale.idempotencyKey = crypto.randomUUID();
+    }
     const db = await this.getDB();
     return new Promise((resolve, reject) => {
       const transaction = db.transaction(this.salesStore, 'readwrite');

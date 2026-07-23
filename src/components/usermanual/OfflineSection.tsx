@@ -26,6 +26,7 @@ export const OfflineSection: React.FC = () => {
       <ul className="list-disc list-inside space-y-1 ml-2">
         <li>The system displays a blue "Syncing N offline sales..." spinner alert.</li>
         <li>A background scheduler processes queued orders, sending each one to the server using the `pos2_create_sale` database function.</li>
+        <li><strong>Idempotency Protection:</strong> Each offline transaction is assigned a unique UUID `p_idempotency_key`. If connection retries occur during sync, server-side idempotency validation prevents duplicate orders from being processed.</li>
         <li>Once uploaded successfully, items are cleared from the local IndexedDB table.</li>
       </ul>
     </div>

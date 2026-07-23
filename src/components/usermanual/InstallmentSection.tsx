@@ -32,8 +32,8 @@ export const InstallmentSection: React.FC = () => {
       <ol className="list-decimal list-inside space-y-1 ml-2 text-xs">
         <li><strong>Customer:</strong> Search and select from the registered customer list.</li>
         <li><strong>Products:</strong> Add catalog items, specify quantities, and optionally enter applied coupon codes to benefit from promotions (discounts are calculated in real-time).</li>
-        <li><strong>Terms:</strong> Configure the downpayment amount, payment method (Cash, GCash, Card, etc.), contract duration (months), and flat interest rate (%). <span className="text-indigo-600 font-semibold">(Requires an active terminal drawer if downpayment is greater than 0)</span>. Live preview will automatically display Gross Subtotal, Promo Savings, Net Order Value, and monthly installment estimates.</li>
-        <li><strong>Confirm:</strong> Review the customer details, purchased items, applied discounts, calculated monthly due and interest rate before generating the contract.</li>
+        <li><strong>Terms:</strong> Configure the downpayment amount, payment method (Cash, GCash, Card, etc.), contract duration (months), and flat interest rate (%). <span className="text-indigo-600 font-semibold">(Requires an active terminal drawer if downpayment is greater than 0)</span>. Supports BIR-compliant SC/PWD discounts (20% + VAT exemption) and promo non-stacking rules. Live preview will automatically display Gross Subtotal, Promo Savings, Net Order Value, and monthly installment estimates.</li>
+        <li><strong>Confirm:</strong> Review the customer details, purchased items, applied discounts, calculated monthly due and interest rate before generating the contract. Every contract creation request includes a unique UUID <code>p_idempotency_key</code> to prevent duplicate contract generation during retries.</li>
       </ol>
 
       <h3 className="text-base font-semibold text-gray-800 mt-4">3. Contract Schedule Logs</h3>

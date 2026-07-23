@@ -371,7 +371,11 @@ const Installments: React.FC = () => {
   }) => {
     if (!persona?.id) return { success: false, message: 'No active persona.' };
     setCreateLoading(true);
-    const result = await createSale({ ...params, p_account_id: persona.id });
+    const result = await createSale({
+      ...params,
+      p_account_id: persona.id,
+      p_idempotency_key: (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : null
+    });
     setCreateLoading(false);
 
     if (result.data && result.data.success) {

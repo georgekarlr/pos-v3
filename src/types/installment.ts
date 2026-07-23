@@ -84,8 +84,13 @@ export interface CreateInstallmentSaleParams {
   p_downpayment_amount: number;
   p_downpayment_method: string;
   p_months_to_pay: number;
-  p_interest_rate: number;       // NEW: Interest Rate Param
+  p_interest_rate: number;       // Interest Rate Param
+  // BIR Compliance & SC/PWD
+  p_sc_pwd_discount?: number;
+  p_sc_pwd_id_number?: string | null;
+  p_sc_pwd_name?: string | null;
   p_occurred_at?: string | null;
+  p_idempotency_key?: string | null; // Idempotency Key
 }
 
 export interface CreateInstallmentSaleResult {
