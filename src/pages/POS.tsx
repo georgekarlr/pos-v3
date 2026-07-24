@@ -17,7 +17,7 @@ import ActionModeBar from '../components/pos/ActionModeBar'
 import ViewModeSwitcher from '../components/pos/ViewModeSwitcher'
 import ReceiptModal from '../components/pos/ReceiptModal'
 import PaymentModal from '../components/pos/PaymentModal'
-import {ReceiptData, ReceiptLine} from '../components/pos/Receipt'
+import { ReceiptData, ReceiptLine } from '../components/pos/Receipt'
 import { OfflineDB } from '../db/offlineDB'
 import { PosService } from '../services/posService'
 import { useHardwareScanner } from '../hooks/useHardwareScanner'
@@ -279,7 +279,7 @@ const POS: React.FC = () => {
 
   const billingType = useMemo(() => {
     const settings = getCachedBusinessSettings();
-    return settings?.billing_type || 'NON-VAT';
+    return (settings?.billing_type || 'NON-VAT') as 'VAT' | 'NON-VAT';
   }, []);
 
   const cartCalculations = useMemo(() => {
@@ -336,7 +336,7 @@ const POS: React.FC = () => {
   }
 
   const handleAddPayment = () => {
-    setPayments(prev => [...prev, { amount: '', method: 'Cash', transaction_ref: '', tendered: '' }])
+    setPayments(prev => [...prev, { amount: 0, method: 'Cash', transaction_ref: '', tendered: '' }])
   }
 
   const handleUpdatePayment = (index: number, patch: Partial<PaymentInput>) => {
@@ -630,7 +630,7 @@ const POS: React.FC = () => {
                 />
               </div>
               <button
-                onClick={loadProducts}
+                onClick={() => loadProducts()}
                 className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium"
               >
                 <RefreshCw className="h-4 w-4" />
