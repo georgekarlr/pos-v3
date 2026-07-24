@@ -59,7 +59,7 @@ export const ComplianceSection: React.FC = () => {
         <li><strong>Before/After Diff:</strong> Click any row that has recorded data to expand an inline field-level diff. Changed fields are highlighted in amber, removed values in red, and added values in green.</li>
         <li><strong>Filters:</strong> Narrow results by Table Name (dropdown of known tables), Action type, and a start/end date range.</li>
         <li><strong>Text Search:</strong> Client-side search over the current page's Table, Action, Row ID, and Operator columns.</li>
-        <li><strong>CSV Export:</strong> Download the current filtered page as a comma-separated file for offline analysis or archiving.</li>
+        <li><strong>CSV Export:</strong> Download the current filtered page as a comma-separated file with official receipt-style store header lines merged across all columns for offline analysis or archiving.</li>
         <li><strong>Admin Only:</strong> Access is restricted by the <code className="bg-gray-100 px-1 rounded">pos_is_admin()</code> server-side security check. Any non-admin call raises a permission error.</li>
       </ul>
     </div>

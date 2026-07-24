@@ -6,6 +6,7 @@ import { SystemAuditTrailRow } from '../../types/report'
 import ReportCard from './ReportCard'
 import LoadingSpinner from '../LoadingSpinner'
 import { FormatDateTime } from '../../utils/formatDateTime'
+import { exportToCSV } from '../../utils/csvExporter'
 
 const PAGE_SIZE = 25
 
@@ -223,31 +224,23 @@ const SystemAuditTrailPanel: React.FC = () => {
 
   // CSV export of current page
   const handleExportCSV = () => {
-    const header = 'log_id,created_at,table_name,action,row_id,operator_name,old_values,new_values\n'
-    const body = filtered
-      .map((r) =>
-        [
-          r.log_id,
-          r.created_at,
-          r.table_name,
-          r.action,
-          r.row_id ?? '',
-          r.operator_name,
-          JSON.stringify(r.old_values ?? ''),
-          JSON.stringify(r.new_values ?? ''),
-        ]
-          .map((v) => `"${String(v).replace(/"/g, '""')}"`)
-          .join(',')
-      )
-      .join('\n')
-
-    const blob = new Blob([header + body], { type: 'text/csv;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.download = `system-audit-trail-${startDate}-to-${endDate}.csv`
-    a.href = url
-    a.click()
-    URL.revokeObjectURL(url)
+    exportToCSV({
+      filename: `system-audit-trail-${startDate}-to-${endDate}`,
+      title: 'System Audit Trail Log',
+      headers: ['Log ID', 'Timestamp', 'Table Name', 'Action', 'Row ID', 'Operator Name', 'Old Values', 'New Values'],
+      rows: filtered.map(r => [
+        r.log_id,
+        r.created_at,
+        r.table_name,
+        r.action,
+        r.row_id ?? '',
+        r.operator_name,
+        JSON.stringify(r.old_values ?? ''),
+        JSON.stringify(r.new_values ?? '')
+      ]),
+      startDate,
+      endDate
+    })
   }
 
   return (

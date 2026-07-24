@@ -420,7 +420,7 @@ const chapters: ManualChapter[] = [
       <p>A complete audit log of all system actions: logs transactions, refunds, logins, settings modifications, voided sales, and stock adjustments. Search and filter by keywords, terminal IDs, or cashier names. Each sale event details the items sold, payments applied, taxes, discounts, and any VAT exemption amounts removed for BIR auditing compliance.</p>
       <h3>4. BIR Books of Accounts (RMO No. 10-2005)</h3>
       <p><strong>Route:</strong> <code>/reports-compliance/bir-books</code></p>
-      <p>Official tax logbooks required to be kept on-premises for BIR audits and tax mapping visits. Admins can select any date range to dynamically pull and verify official registers, with instant <strong>CSV Export</strong> and <strong>Print-Friendly</strong> page formatting:</p>
+      <p>Official tax logbooks required to be kept on-premises for BIR audits and tax mapping visits. Admins can select any date range to dynamically pull and verify official registers, with instant <strong>CSV Export</strong> (including official receipt-style store header with merged cells across the full column width) and <strong>Print-Friendly</strong> page formatting:</p>
       <ul>
         <li><strong>Z-Reading Log (BIR Cumulative Sales Book):</strong> Chronological record of all daily terminal Z-Readings containing the gross sales, VATable base, VAT amount, VAT-Exempt sales, Zero-Rated sales, discounts applied, and starting/ending invoice ranges along with the cumulative Grand Totals.</li>
         <li><strong>SC/PWD Discount Book:</strong> Chronological log of all transactions with senior citizen or PWD discounts applied, tracking the customer name, ID card number, gross sales before deduction, VAT-exempt base, 20% discount amount, and net sales.</li>
@@ -433,7 +433,7 @@ const chapters: ManualChapter[] = [
         <li><strong>Columns:</strong> Timestamp, Table Name, Action (INSERT / UPDATE / DELETE), Row ID, and the DB Operator.</li>
         <li><strong>Before/After Diff:</strong> Click any row to expand an inline field-level diff with changed fields highlighted.</li>
         <li><strong>Filters:</strong> Narrow results by Table Name, Action type, and date range.</li>
-        <li><strong>CSV Export:</strong> Download the current filtered page as a comma-separated file.</li>
+        <li><strong>CSV Export:</strong> Download the current filtered page as a comma-separated file complete with receipt-style business headers and full-width column-spanning header rows.</li>
         <li><strong>Admin Only:</strong> Enforced by pos_is_admin() server-side security check.</li>
       </ul>
     `

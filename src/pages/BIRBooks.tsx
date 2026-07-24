@@ -4,6 +4,7 @@ import { ReportService } from '../services/reportService'
 import { BIRSalesBookRow, SCPWDBookRow, VoidsAndRefundsRow } from '../types/report'
 import LoadingSpinner from '../components/LoadingSpinner'
 import { FormatDateTime } from '../utils/formatDateTime'
+import { exportToCSV } from '../utils/csvExporter'
 import {
   BookOpen,
   Users,
@@ -121,13 +122,15 @@ const BIRBooks: React.FC = () => {
   }, [voidsRefundsData])
 
   // Export to CSV helper
-  const exportToCSV = () => {
+  const handleExportCSV = () => {
     let headers: string[] = []
-    let rows: string[][] = []
+    let rows: (string | number)[][] = []
     let filename = `BIR_Compliance_Report`
+    let title = 'BIR Compliance Logbook'
 
     if (activeTab === 'z-reading') {
       filename = `BIR_Sales_Book_${startDate}_to_${endDate}`
+      title = 'BIR Cumulative Sales Book (Z-Reading Log)'
       headers = [
         'Z-Reading Date',
         'Terminal Name',
@@ -149,17 +152,18 @@ const BIRBooks: React.FC = () => {
         r.min_number,
         r.starting_invoice || 'N/A',
         r.ending_invoice || 'N/A',
-        String(r.gross_sales),
-        String(r.vatable_sales),
-        String(r.vat_amount),
-        String(r.vat_exempt_sales),
-        String(r.zero_rated_sales),
-        String(r.total_discounts),
-        String(r.previous_grand_total),
-        String(r.ending_grand_total)
+        r.gross_sales,
+        r.vatable_sales,
+        r.vat_amount,
+        r.vat_exempt_sales,
+        r.zero_rated_sales,
+        r.total_discounts,
+        r.previous_grand_total,
+        r.ending_grand_total
       ])
     } else if (activeTab === 'sc-pwd') {
       filename = `BIR_SC_PWD_Discount_Book_${startDate}_to_${endDate}`
+      title = 'BIR SC/PWD Discount Book'
       headers = [
         'Transaction Date',
         'Invoice Number',
@@ -175,13 +179,14 @@ const BIRBooks: React.FC = () => {
         r.invoice_number || 'N/A',
         r.sc_pwd_name || 'N/A',
         r.sc_pwd_id || 'N/A',
-        String(r.gross_sales ?? 0),
-        String(r.vat_exempt_sales ?? 0),
-        String(r.discount_amount ?? 0),
-        String(r.net_sales ?? 0)
+        r.gross_sales ?? 0,
+        r.vat_exempt_sales ?? 0,
+        r.discount_amount ?? 0,
+        r.net_sales ?? 0
       ])
     } else if (activeTab === 'voids-refunds') {
       filename = `BIR_Voids_and_Refunds_Log_${startDate}_to_${endDate}`
+      title = 'BIR Voids and Refunds Log'
       headers = [
         'Action Date',
         'Adjustment Type',
@@ -195,33 +200,21 @@ const BIRBooks: React.FC = () => {
         r.action_date || '',
         r.adjustment_type || '',
         r.invoice_number || 'N/A',
-        String(r.original_total ?? 0),
-        String(r.adjusted_amount ?? 0),
+        r.original_total ?? 0,
+        r.adjusted_amount ?? 0,
         r.reason || 'N/A',
         r.authorized_by || 'N/A'
       ])
     }
 
-    // Convert arrays to CSV format, handling quotes/commas correctly
-    const csvContent = [
-      headers.join(','),
-      ...rows.map(row =>
-        row.map(cell => {
-          const clean = String(cell ?? '').replace(/"/g, '""')
-          return clean.includes(',') || clean.includes('\n') || clean.includes('"') ? `"${clean}"` : clean
-        }).join(',')
-      )
-    ].join('\n')
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-    const link = document.createElement('a')
-    const url = URL.createObjectURL(blob)
-    link.setAttribute('href', url)
-    link.setAttribute('download', `${filename}.csv`)
-    link.style.visibility = 'hidden'
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
+    exportToCSV({
+      filename,
+      title,
+      headers,
+      rows,
+      startDate,
+      endDate
+    })
   }
 
   // Print helper
@@ -277,7 +270,7 @@ const BIRBooks: React.FC = () => {
 
         <div className="flex items-center gap-2">
           <button
-            onClick={exportToCSV}
+            onClick={handleExportCSV}
             disabled={loading}
             className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm"
           >
