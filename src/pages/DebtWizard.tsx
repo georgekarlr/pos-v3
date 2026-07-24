@@ -175,7 +175,7 @@ const DebtWizard: React.FC = () => {
       if (data.is_offline) {
         setSuccess('Debt saved offline. It will be synchronized once you are back online.');
       } else {
-        setSuccess(`Debt recorded successfully! New balance: ${data.data?.new_balance.toFixed(2)}`);
+        setSuccess(`Debt recorded successfully! New balance: ${(data.data?.new_balance ?? 0).toFixed(2)}`);
       }
       setLoading(false);
     }
