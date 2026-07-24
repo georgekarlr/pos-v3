@@ -382,7 +382,7 @@ const chapters: ManualChapter[] = [
         <li><strong>Customer:</strong> Search and select from the registered customer profiles.</li>
         <li><strong>Products:</strong> Add catalog products and specify item quantities.</li>
         <li><strong>Terms:</strong> Configure the downpayment amount, payment method (Cash, GCash, Card, etc.), contract duration (months), and flat interest rate (%).</li>
-        <li><strong>Confirm:</strong> Review the calculated monthly due and total interest (computed in real-time) before creating the contract.</li>
+        <li><strong>Confirm:</strong> Review the calculated monthly due and total interest (computed in real-time) before creating the contract. Upon creation, an installment contract receipt is generated containing itemized products, contract terms, downpayment, and a BIR-compliant VAT Breakdown section.</li>
       </ol>
       <h3>3. Contract Schedule Logs</h3>
       <p>Selecting a contract from the list reveals its schedule breakdown: Month number, Due Date, Amount Due, Amount Paid, and Payment Status (Pending, Partial, Paid, Late, or Defaulted).</p>
