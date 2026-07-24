@@ -49,6 +49,68 @@ export class CustomerService {
     }
 
     /**
+     * Fetches customer list with optional pagination and search filtering.
+     * Caches customer data to IndexedDB for offline support when online.
+     */
+    static async getCustomers(params?: {
+        limit?: number;
+        offset?: number;
+        searchTerm?: string;
+    }): Promise<ServiceResponse<Customer[]>> {
+        const limit = params?.limit ?? 1000;
+        const offset = params?.offset ?? 0;
+        const searchTerm = params?.searchTerm?.trim();
+
+        try {
+            if (!navigator.onLine) {
+                let localCustomers = await OfflineDB.getCustomers();
+                if (searchTerm) {
+                    const q = searchTerm.toLowerCase();
+                    localCustomers = localCustomers.filter(c =>
+                        (c.full_name && c.full_name.toLowerCase().includes(q)) ||
+                        (c.phone_number && c.phone_number.toLowerCase().includes(q))
+                    );
+                }
+                const sliced = localCustomers.slice(offset, offset + limit);
+                return { data: sliced as Customer[], error: null };
+            }
+
+            const { data, error } = await supabase.rpc('pos2_get_customers_simple', {
+                p_limit: limit,
+                p_offset: offset,
+                p_search_term: searchTerm || null
+            });
+
+            if (error) {
+                console.error('Error fetching customers:', error);
+                return { data: null, error: error.message };
+            }
+
+            const fetchedCustomers: Customer[] = (data || []).map((row: any) => ({
+                id: Number(row.customer_id ?? row.id),
+                full_name: row.full_name,
+                phone_number: row.phone_number,
+                email: row.email ?? null,
+                address: row.address ?? null,
+                total_loyalty_points: row.total_loyalty_points ?? 0,
+                created_at: row.created_at
+            }));
+
+            // Cache to IndexedDB if it was a full fetch or initial setup sync
+            if (!searchTerm) {
+                OfflineDB.saveCustomers(fetchedCustomers).catch(err => {
+                    console.error('Error caching customers to IndexedDB:', err);
+                });
+            }
+
+            return { data: fetchedCustomers, error: null };
+        } catch (err: any) {
+            console.error('Unexpected error fetching customers:', err);
+            return { data: null, error: err.message || 'An unexpected error occurred.' };
+        }
+    }
+
+    /**
      * Fetches a single customer by their ID.
      */
     static async getCustomerById(

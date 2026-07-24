@@ -1,7 +1,5 @@
 import { useState, useCallback } from 'react';
-import { supabase } from '../lib/supabase';
 import { CustomerService } from '../services/customerService';
-import { OfflineDB } from '../db/offlineDB';
 import {
     Customer,
     CreateCustomerParams,
@@ -25,46 +23,15 @@ export const useCustomers = () => {
         setError(null);
 
         try {
-            if (!navigator.onLine) {
-                // Offline: serve from IndexedDB cache
-                let localCustomers = await OfflineDB.getCustomers();
-                
-                if (searchQuery.trim() !== '') {
-                    const q = searchQuery.toLowerCase();
-                    localCustomers = localCustomers.filter(c => 
-                        c.full_name.toLowerCase().includes(q) || 
-                        c.phone_number.toLowerCase().includes(q)
-                    );
-                }
-                
-                setCustomers(localCustomers);
-                return;
-            }
-
-            let query = supabase
-                .from('pos2_customers')
-                .select('*')
-                .order('full_name', { ascending: true });
-
-            if (searchQuery.trim() !== '') {
-                query = query.or(`full_name.ilike.%${searchQuery}%,phone_number.ilike.%${searchQuery}%`);
-            }
-
-            const { data, error: fetchError } = await query;
+            const { data, error: fetchError } = await CustomerService.getCustomers({
+                searchTerm: searchQuery
+            });
 
             if (fetchError) {
-                throw fetchError;
+                throw new Error(fetchError);
             }
 
-            const fetchedCustomers = data as Customer[] || [];
-            setCustomers(fetchedCustomers);
-
-            // Update local cache if this was a full fetch (no search query)
-            if (searchQuery.trim() === '') {
-                OfflineDB.saveCustomers(fetchedCustomers).catch(err => {
-                    console.error('Error caching customers to IndexedDB:', err);
-                });
-            }
+            setCustomers(data || []);
         } catch (err: any) {
             console.error('Error fetching customers:', err);
             setError(err.message || 'Failed to load customers.');

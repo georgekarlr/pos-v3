@@ -416,6 +416,12 @@ export const InstallmentContractReceipt: React.FC<{ data: ReceiptData; className
             <ReceiptLineItems data={data} />
             <div className="my-2 border-t border-dashed" />
             <ReceiptSummary data={data} />
+            {data.isVatRegistered && (
+                <>
+                    <div className="my-2 border-t-2 border-dashed" />
+                    <VATBreakdown data={data} />
+                </>
+            )}
             {data.installmentContract && (
                 <>
                     <div className="my-2 border-t border-dashed" />
