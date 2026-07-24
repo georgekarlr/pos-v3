@@ -150,6 +150,7 @@ const Installments: React.FC = () => {
     setShowPayModal(false);
 
     if (result.data && result.data.success) {
+      if (!result.data.data) return;
       showToast('success', 'Payment processed successfully!');
       
       // Prepare business settings for receipt
@@ -281,6 +282,7 @@ const Installments: React.FC = () => {
     setShowRecoveryModal(false);
 
     if (result.data && result.data.success) {
+      if (!result.data.data) return;
       showToast('success', 'Installment bad debt recovery processed successfully!');
 
       // Prepare business settings for receipt
