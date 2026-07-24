@@ -137,7 +137,7 @@ const ProductStep: React.FC<ProductStepProps> = ({
               onRemoveCoupon={onRemoveCoupon}
               inputId="installment-coupon-code-input"
             />
-            
+
             <div className="space-y-1 text-xs text-gray-600 border-t border-gray-100 pt-3">
               <div className="flex justify-between">
                 <span>Gross Subtotal</span>

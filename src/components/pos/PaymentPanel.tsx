@@ -94,7 +94,7 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
         const tendered = Number(tenderedValue) || 0
         onUpdatePayment(index, {
             tendered: tenderedValue,
-            amount: tendered > 0 ? tendered.toFixed(2) : ''
+            amount: tendered > 0 ? tendered : 0
         })
     }
 
@@ -183,7 +183,7 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
                         <label className="block text-xs font-medium text-gray-600">
                             Search Customer <span className="text-gray-400">(optional — required for loyalty)</span>
                         </label>
-                        <CustomerSearch 
+                        <CustomerSearch
                             selectedCustomerId={customerId}
                             onSelectCustomer={(c) => onCustomerIdChange(c ? c.id : null)}
                         />
@@ -254,7 +254,7 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({
                                         <input
                                             id={`payment-amount-${idx}`} type="number" min="0" step="0.01" placeholder="0.00"
                                             value={p.amount || ''}
-                                            onChange={e => onUpdatePayment(idx, { amount: e.target.value })}
+                                            onChange={e => onUpdatePayment(idx, { amount: parseFloat(e.target.value) || 0 })}
                                             className="w-full rounded-md border-gray-300 shadow-sm text-sm focus:border-blue-500 focus:ring-blue-500"
                                         />
                                     </div>

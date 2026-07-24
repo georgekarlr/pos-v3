@@ -168,21 +168,19 @@ export const ManageDebtForm: React.FC<ManageDebtFormProps> = ({
                     setActionType(type);
                     setAmount('');
                   }}
-                  className={`relative py-3 px-3 rounded-xl border text-left transition-all duration-200 flex flex-col justify-between h-20 ${
-                    actionType === type
+                  className={`relative py-3 px-3 rounded-xl border text-left transition-all duration-200 flex flex-col justify-between h-20 ${actionType === type
                       ? 'bg-indigo-600 text-white border-indigo-600 shadow-md ring-2 ring-indigo-500/20'
                       : isDisabled
-                      ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed opacity-50'
-                      : 'bg-white text-slate-700 border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/30'
-                  }`}
+                        ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed opacity-50'
+                        : 'bg-white text-slate-700 border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/30'
+                    }`}
                 >
                   <span className="text-xs font-bold leading-snug">{info.label}</span>
                   <div className="flex items-center justify-between w-full mt-1">
                     {info.isAdminOnly && (
                       <span
-                        className={`text-[9px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1 ${
-                          actionType === type ? 'bg-indigo-700 text-white' : 'bg-slate-200 text-slate-700'
-                        }`}
+                        className={`text-[9px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1 ${actionType === type ? 'bg-indigo-700 text-white' : 'bg-slate-200 text-slate-700'
+                          }`}
                       >
                         <ShieldCheck size={10} />
                         Admin Only
@@ -276,13 +274,12 @@ export const ManageDebtForm: React.FC<ManageDebtFormProps> = ({
             <button
               type="submit"
               disabled={submitting || !!validationError}
-              className={`w-full py-2.5 rounded-xl font-bold text-sm text-white flex justify-center items-center gap-2 shadow-sm transition-all duration-200 ${
-                validationError
+              className={`w-full py-2.5 rounded-xl font-bold text-sm text-white flex justify-center items-center gap-2 shadow-sm transition-all duration-200 ${validationError
                   ? 'bg-slate-300 cursor-not-allowed shadow-none'
                   : actionType === 'WRITE_OFF'
-                  ? 'bg-rose-600 hover:bg-rose-700'
-                  : 'bg-indigo-600 hover:bg-indigo-700'
-              }`}
+                    ? 'bg-rose-600 hover:bg-rose-700'
+                    : 'bg-indigo-600 hover:bg-indigo-700'
+                }`}
             >
               {submitting ? (
                 <Loader2 size={16} className="animate-spin" />

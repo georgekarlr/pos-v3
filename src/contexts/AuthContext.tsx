@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useRef } from 'react'
 import { supabase } from '../lib/supabase'
-import { AuthContextType, PersonaData, User, Session } from '../types/auth'
+import { AuthContextType, PersonaData, PersonaType, User, Session } from '../types/auth'
 import { usePersonaStorage } from '../hooks/usePersonaStorage'
 import { PersonaService } from '../services/personaService'
 import { SettingsService } from '../services/settingsService'
@@ -34,17 +34,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-      setUser(session?.user ?? null)
+      setSession(session as Session | null)
+      setUser((session?.user ?? null) as User | null)
       setLoading(false)
     })
 
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      setSession(session)
-      setUser(session?.user ?? null)
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session as Session | null)
+      setUser((session?.user ?? null) as User | null)
       setLoading(false)
     })
 
@@ -128,7 +128,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('Persona data:', result)
       if (result.success && user?.email) {
         const personaData: PersonaData = {
-          type: result.data?.user_type,
+          type: result.data?.user_type as PersonaType,
           email: user.email,
           id: result.data?.id,
           loginName: result.data?.name,
@@ -152,7 +152,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('Persona data:', result)
       if (result.success && user?.email) {
         const personaData: PersonaData = {
-          type: result.data?.user_type,
+          type: result.data?.user_type as PersonaType,
           email: user.email,
           id: result.data?.id,
           loginName: result.data?.name || loginName,

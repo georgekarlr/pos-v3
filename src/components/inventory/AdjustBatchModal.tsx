@@ -90,7 +90,7 @@ const AdjustBatchModal: React.FC<AdjustBatchModalProps> = ({ product, batchId, c
                     <div className="p-4 bg-blue-50 border border-blue-100 rounded-lg">
                         <div className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-1">Product</div>
                         <div className="text-base font-bold text-gray-900 mb-3">{product.name}</div>
-                        
+
                         <div className="space-y-2">
                             <div className="flex items-center justify-between text-sm">
                                 <span className="text-gray-600">Current Batch Stock:</span>

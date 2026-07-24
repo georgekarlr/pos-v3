@@ -127,7 +127,7 @@ const PettyCashModal: React.FC<PettyCashModalProps> = ({
       />
 
       <div className={`relative bg-white w-full sm:w-auto sm:max-w-md rounded-t-2xl sm:rounded-2xl shadow-2xl transition-all duration-300 overflow-hidden ${show ? 'opacity-100 translate-y-0 sm:scale-100' : 'opacity-0 translate-y-8 sm:scale-95'}`}>
-        
+
         {/* Header */}
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
           <div>
@@ -184,11 +184,10 @@ const PettyCashModal: React.FC<PettyCashModalProps> = ({
                       setActionType('CASH_IN')
                       setError(null)
                     }}
-                    className={`flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-sm font-semibold transition-all ${
-                      actionType === 'CASH_IN'
+                    className={`flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-sm font-semibold transition-all ${actionType === 'CASH_IN'
                         ? 'bg-white text-emerald-700 shadow-sm'
                         : 'text-gray-600 hover:text-gray-900'
-                    }`}
+                      }`}
                   >
                     <ArrowDownLeft className={`h-4 w-4 ${actionType === 'CASH_IN' ? 'text-emerald-500' : 'text-gray-400'}`} />
                     Cash In (Float)
@@ -199,11 +198,10 @@ const PettyCashModal: React.FC<PettyCashModalProps> = ({
                       setActionType('CASH_OUT')
                       setError(null)
                     }}
-                    className={`flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-sm font-semibold transition-all ${
-                      actionType === 'CASH_OUT'
+                    className={`flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-sm font-semibold transition-all ${actionType === 'CASH_OUT'
                         ? 'bg-white text-rose-700 shadow-sm'
                         : 'text-gray-600 hover:text-gray-900'
-                    }`}
+                      }`}
                   >
                     <ArrowUpRight className={`h-4 w-4 ${actionType === 'CASH_OUT' ? 'text-rose-500' : 'text-gray-400'}`} />
                     Cash Out (Expense)
@@ -212,14 +210,13 @@ const PettyCashModal: React.FC<PettyCashModalProps> = ({
               </div>
 
               {/* Dynamic Alert Banner based on selection */}
-              <div className={`p-3 rounded-lg border text-xs flex items-center justify-between ${
-                actionType === 'CASH_IN' 
-                  ? 'bg-emerald-50/50 border-emerald-100 text-emerald-800' 
+              <div className={`p-3 rounded-lg border text-xs flex items-center justify-between ${actionType === 'CASH_IN'
+                  ? 'bg-emerald-50/50 border-emerald-100 text-emerald-800'
                   : 'bg-rose-50/50 border-rose-100 text-rose-800'
-              }`}>
+                }`}>
                 <span>
-                  {actionType === 'CASH_IN' 
-                    ? 'Adds starting float or additional capital to the drawer.' 
+                  {actionType === 'CASH_IN'
+                    ? 'Adds starting float or additional capital to the drawer.'
                     : 'Records cash pulled from the drawer for store expenses.'}
                 </span>
                 <span className="font-bold font-mono">
@@ -246,11 +243,10 @@ const PettyCashModal: React.FC<PettyCashModalProps> = ({
                     placeholder="0.00"
                     disabled={loading}
                     required
-                    className={`block w-full pl-7 pr-3 py-2.5 sm:text-sm border rounded-lg focus:outline-none focus:ring-2 ${
-                      actionType === 'CASH_IN'
+                    className={`block w-full pl-7 pr-3 py-2.5 sm:text-sm border rounded-lg focus:outline-none focus:ring-2 ${actionType === 'CASH_IN'
                         ? 'border-gray-300 focus:ring-emerald-500 focus:border-emerald-500'
                         : 'border-gray-300 focus:ring-rose-500 focus:border-rose-500'
-                    }`}
+                      }`}
                   />
                 </div>
               </div>
@@ -268,11 +264,10 @@ const PettyCashModal: React.FC<PettyCashModalProps> = ({
                   placeholder={actionType === 'CASH_IN' ? 'e.g., Starting Drawer Float' : 'e.g., Paid water delivery guy'}
                   disabled={loading}
                   required
-                  className={`block w-full px-3 py-2 sm:text-sm border rounded-lg focus:outline-none focus:ring-2 border-gray-300 ${
-                    actionType === 'CASH_IN'
+                  className={`block w-full px-3 py-2 sm:text-sm border rounded-lg focus:outline-none focus:ring-2 border-gray-300 ${actionType === 'CASH_IN'
                       ? 'focus:ring-emerald-500 focus:border-emerald-500'
                       : 'focus:ring-rose-500 focus:border-rose-500'
-                  }`}
+                    }`}
                 />
               </div>
 
@@ -288,13 +283,12 @@ const PettyCashModal: React.FC<PettyCashModalProps> = ({
                       type="button"
                       onClick={() => handleSuggestionClick(item)}
                       disabled={loading}
-                      className={`text-xs px-2.5 py-1 rounded-full border transition-all ${
-                        reason === item
+                      className={`text-xs px-2.5 py-1 rounded-full border transition-all ${reason === item
                           ? actionType === 'CASH_IN'
                             ? 'bg-emerald-50 border-emerald-300 text-emerald-800 font-medium'
                             : 'bg-rose-50 border-rose-300 text-rose-800 font-medium'
                           : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
-                      }`}
+                        }`}
                     >
                       {item}
                     </button>
@@ -315,11 +309,10 @@ const PettyCashModal: React.FC<PettyCashModalProps> = ({
                 <button
                   type="submit"
                   disabled={loading || !isOnline}
-                  className={`flex-1 py-2.5 text-sm font-semibold text-white rounded-lg transition-colors flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-50 ${
-                    actionType === 'CASH_IN'
+                  className={`flex-1 py-2.5 text-sm font-semibold text-white rounded-lg transition-colors flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-50 ${actionType === 'CASH_IN'
                       ? 'bg-emerald-600 hover:bg-emerald-700'
                       : 'bg-rose-600 hover:bg-rose-700'
-                  }`}
+                    }`}
                 >
                   {loading ? (
                     <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

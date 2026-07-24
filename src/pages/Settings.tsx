@@ -23,7 +23,7 @@ import { usePrinter } from '../contexts/PrinterContext'
 import { useAuth } from '../contexts/AuthContext'
 import { SettingsService } from '../services/settingsService'
 import { BusinessSettings, Terminal } from '../types/settings'
-import { WebUsbConfig, AndroidBtConfig } from '../services/printer/types'
+import { WebUsbConfig, AndroidBtConfig, PrinterConfig } from '../services/printer/types'
 import { DEFAULT_WEBUSB_CONFIG } from '../services/printer/config/webusb-defaults'
 import { DEFAULT_ANDROID_BT_CONFIG } from '../services/printer/config/android-bt-defaults'
 import type { ReceiptData } from '../components/pos/Receipt'
@@ -152,7 +152,7 @@ const Settings: React.FC = () => {
       printerConfig?.type === 'webusb'
         ? 'webusb'
         : printerConfig?.type === 'android-bt'
-        ? 'android-bt' : 'android-bt'
+          ? 'android-bt' : 'android-bt'
   )
 
   const [usbForm, setUsbForm] = useState<WebUsbConfig>(
@@ -761,17 +761,16 @@ const Settings: React.FC = () => {
                 <span className="text-sm font-semibold text-gray-800">Select Platform</span>
                 <div className="inline-flex rounded-md shadow-sm border bg-white p-0.5">
                   {([{ id: 'webusb' as const, label: '🔌 USB' },
-                    { id: 'android-bt' as const, label: '📶 Bluetooth' },
+                  { id: 'android-bt' as const, label: '📶 Bluetooth' },
                   ]).map(({ id, label }) => (
                     <button
                       key={id}
                       type="button"
                       onClick={() => handleTabChange(id)}
-                      className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all ${
-                        printerTab === id
-                          ? 'bg-blue-600 text-white shadow-sm'
-                          : 'bg-transparent text-gray-700 hover:text-gray-900'
-                      }`}
+                      className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all ${printerTab === id
+                        ? 'bg-blue-600 text-white shadow-sm'
+                        : 'bg-transparent text-gray-700 hover:text-gray-900'
+                        }`}
                     >
                       {label}
                     </button>
@@ -789,13 +788,12 @@ const Settings: React.FC = () => {
                     <Printer className="h-4 w-4 text-gray-500" />
                     <h3 className="text-sm font-semibold text-gray-800">Receipt Printer</h3>
                   </div>
-                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
-                    printerStatus === 'connected' ? 'bg-green-100 text-green-800' :
+                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${printerStatus === 'connected' ? 'bg-green-100 text-green-800' :
                     printerStatus === 'connecting' ? 'bg-yellow-100 text-yellow-800' :
-                    printerStatus === 'error' ? 'bg-red-100 text-red-700' :
-                    printerStatus === 'disconnected' ? 'bg-gray-100 text-gray-600' :
-                    'bg-gray-100 text-gray-500'
-                  }`}>
+                      printerStatus === 'error' ? 'bg-red-100 text-red-700' :
+                        printerStatus === 'disconnected' ? 'bg-gray-100 text-gray-600' :
+                          'bg-gray-100 text-gray-500'
+                    }`}>
                     {printerStatus === 'connected' ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
                     {printerStatus.charAt(0).toUpperCase() + printerStatus.slice(1)}
                   </span>
@@ -849,11 +847,10 @@ const Settings: React.FC = () => {
                       {printers.map((p) => (
                         <span
                           key={p}
-                          className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium border ${
-                            selectedPrinter === p
-                              ? 'bg-blue-50 border-blue-300 text-blue-800'
-                              : 'bg-gray-50 border-gray-200 text-gray-700'
-                          }`}
+                          className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium border ${selectedPrinter === p
+                            ? 'bg-blue-50 border-blue-300 text-blue-800'
+                            : 'bg-gray-50 border-gray-200 text-gray-700'
+                            }`}
                         >
                           {p}
                         </span>

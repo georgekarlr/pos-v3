@@ -124,7 +124,7 @@ const PersonaSelection: React.FC = () => {
             Signed in as: {user?.email}
           </p>
         </div>
-        
+
         <div className="bg-white py-8 px-6 shadow-lg rounded-xl border border-gray-100">
           {!selectedPersona ? (
             <div className="space-y-4">
@@ -138,7 +138,7 @@ const PersonaSelection: React.FC = () => {
                   <div className="text-sm text-gray-500">Full system access</div>
                 </div>
               </button>
-              
+
               <button
                 onClick={() => handlePersonaSelect('staff')}
                 className="w-full flex items-center justify-center space-x-3 py-4 px-6 border-2 border-gray-200 rounded-lg hover:border-green-300 hover:bg-green-50 transition-all group"
@@ -229,11 +229,10 @@ const PersonaSelection: React.FC = () => {
               <button
                 type="submit"
                 disabled={personaLoading}
-                className={`w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white transition-colors ${
-                  selectedPersona === 'admin'
+                className={`w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white transition-colors ${selectedPersona === 'admin'
                     ? 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500'
                     : 'bg-green-600 hover:bg-green-700 focus:ring-green-500'
-                } focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed`}
+                  } focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed`}
               >
                 {personaLoading ? (
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>

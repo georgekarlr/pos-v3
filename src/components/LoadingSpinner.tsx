@@ -5,9 +5,9 @@ interface LoadingSpinnerProps {
 }
 
 const sizeMap = {
-  small:  'h-6 w-6',
+  small: 'h-6 w-6',
   medium: 'h-10 w-10',
-  large:  'h-16 w-16',
+  large: 'h-16 w-16',
 };
 
 const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ size }) => {

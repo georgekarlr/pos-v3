@@ -25,9 +25,8 @@ const ViewModeSwitcher: React.FC<ViewModeSwitcherProps> = ({ value, onChange, cl
                         onClick={() => onChange(key)}
                         role="tab"
                         aria-selected={selected}
-                        className={`px-4 sm:px-5 py-2.5 text-base font-medium flex items-center gap-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
-                            selected ? 'bg-gray-100 text-gray-900' : 'bg-white text-gray-700 hover:bg-gray-50'
-                        } ${idx !== 0 ? 'border-l border-gray-200' : ''}`}
+                        className={`px-4 sm:px-5 py-2.5 text-base font-medium flex items-center gap-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${selected ? 'bg-gray-100 text-gray-900' : 'bg-white text-gray-700 hover:bg-gray-50'
+                            } ${idx !== 0 ? 'border-l border-gray-200' : ''}`}
                         title={`View: ${label}`}
                     >
                         <Icon className={`h-5 w-5 ${selected ? 'text-gray-900' : 'text-gray-600'}`} />

@@ -37,15 +37,14 @@ const PromotionStatusBadge: React.FC<PromotionStatusBadgeProps> = ({ status }) =
       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${config.className}`}
     >
       <span
-        className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
-          status === 'active'
+        className={`w-1.5 h-1.5 rounded-full mr-1.5 ${status === 'active'
             ? 'bg-emerald-500'
             : status === 'upcoming'
-            ? 'bg-blue-500'
-            : status === 'expired'
-            ? 'bg-gray-400'
-            : 'bg-red-500'
-        }`}
+              ? 'bg-blue-500'
+              : status === 'expired'
+                ? 'bg-gray-400'
+                : 'bg-red-500'
+          }`}
       />
       {config.label}
     </span>

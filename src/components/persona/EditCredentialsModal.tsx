@@ -60,7 +60,7 @@ export const EditCredentialsModal: React.FC<EditCredentialsModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-gray-500 bg-opacity-75 backdrop-blur-sm">
       <div className="relative w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100 animate-in fade-in zoom-in duration-200">
-        
+
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
           <div className="flex items-center space-x-3">
@@ -71,8 +71,8 @@ export const EditCredentialsModal: React.FC<EditCredentialsModalProps> = ({
               Edit {account.user_type === 'admin' ? 'Admin' : 'Staff'} Credentials
             </h3>
           </div>
-          <button 
-            onClick={onClose} 
+          <button
+            onClick={onClose}
             className="p-1.5 rounded-lg text-gray-400 hover:text-gray-500 hover:bg-gray-50 transition-colors"
           >
             <X className="h-5 w-5" />
