@@ -112,34 +112,6 @@ export class PersonaService {
     }
   }
 
-  static async deleteStaffAccount(name: string): Promise<PersonaValidationResult> {
-    try {
-      const { data, error } = await supabase.rpc('pos_delete_staff_account', {
-        p_name: name
-      })
-
-      if (error) {
-        console.error('Delete staff error:', error)
-        return {
-          success: false,
-          message: 'Failed to delete staff account'
-        }
-      }
-
-      const result = data?.[0]
-      return {
-        success: result?.success || false,
-        message: result?.message || 'Unknown error occurred'
-      }
-    } catch (error) {
-      console.error('Delete staff error:', error)
-      return {
-        success: false,
-        message: 'Network error occurred'
-      }
-    }
-  }
-
   static async updateAdminPassword(oldPassword: string, newPassword: string): Promise<PersonaValidationResult> {
     try {
       const { data, error } = await supabase.rpc('pos_update_admin_password_with_old', {

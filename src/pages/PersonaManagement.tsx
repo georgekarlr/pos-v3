@@ -5,7 +5,6 @@ import { Users, Shield, AlertCircle, CheckCircle, UserPlus } from 'lucide-react'
 import { AccountRow } from '../components/persona/AccountRow'
 import { CreateStaffModal } from '../components/persona/CreateStaffModal'
 import { EditCredentialsModal } from '../components/persona/EditCredentialsModal'
-import { DeleteStaffModal } from '../components/persona/DeleteStaffModal'
 
 const PersonaManagement: React.FC = () => {
   const { persona, setPersona } = useAuth()
@@ -21,10 +20,6 @@ const PersonaManagement: React.FC = () => {
   // Edit Credentials Modal State
   const [editingAccount, setEditingAccount] = useState<StaffAccount | null>(null)
   const [editLoading, setEditLoading] = useState(false)
-
-  // Delete Staff Modal State
-  const [deletingAccount, setDeletingAccount] = useState<StaffAccount | null>(null)
-  const [deleteLoading, setDeleteLoading] = useState(false)
 
   // Redirect/deny if not admin
   if (persona?.type !== 'admin') {
@@ -109,7 +104,7 @@ const PersonaManagement: React.FC = () => {
 
       if (result.success) {
         setSuccess(`Credentials updated successfully.`)
-        
+
         // If editing self, update the current logged-in persona information
         if (persona.id === targetAccountId) {
           setPersona({
@@ -131,27 +126,6 @@ const PersonaManagement: React.FC = () => {
     }
   }
 
-  const handleDeleteStaff = async () => {
-    if (!deletingAccount) return
-
-    setDeleteLoading(true)
-    setError('')
-    setSuccess('')
-    try {
-      const result = await PersonaService.deleteStaffAccount(deletingAccount.role_name)
-      if (result.success) {
-        setSuccess(`Staff account "${deletingAccount.person_name || deletingAccount.role_name}" deleted successfully.`)
-        setDeletingAccount(null)
-        await loadAccounts()
-      } else {
-        setError(result.message)
-      }
-    } catch (err) {
-      setError('Failed to delete staff account')
-    } finally {
-      setDeleteLoading(false)
-    }
-  }
 
   const clearMessages = () => {
     setError('')
@@ -239,7 +213,6 @@ const PersonaManagement: React.FC = () => {
                   account={account}
                   currentPersonaId={persona?.id}
                   onEdit={setEditingAccount}
-                  onDelete={setDeletingAccount}
                 />
               ))}
             </div>
@@ -265,14 +238,7 @@ const PersonaManagement: React.FC = () => {
         />
       )}
 
-      {deletingAccount && (
-        <DeleteStaffModal
-          account={deletingAccount}
-          onClose={() => setDeletingAccount(null)}
-          onConfirm={handleDeleteStaff}
-          loading={deleteLoading}
-        />
-      )}
+
     </div>
   )
 }
