@@ -158,7 +158,7 @@ const CreateInstallmentModal: React.FC<CreateInstallmentModalProps> = ({
   // Composable cart totals calculations
   const billingType = React.useMemo(() => {
     const settings = getCachedBusinessSettings();
-    return settings?.billing_type || 'NON-VAT';
+    return (settings?.billing_type || 'NON-VAT') as 'VAT' | 'NON-VAT';
   }, []);
 
   const cartLines = React.useMemo(() => {
@@ -249,7 +249,7 @@ const CreateInstallmentModal: React.FC<CreateInstallmentModalProps> = ({
       p_tax: cartCalculations.tax,
       p_total_promo_discount: cartCalculations.totalPromoDiscount,
       p_total: cartCalculations.total,
-      p_customer_name: selectedCustomer.customer_name,
+      p_customer_name: selectedCustomer.full_name,
     } as any);
     if (!result.success) setError(result.message);
   };
