@@ -260,33 +260,6 @@ const Promotions: React.FC = () => {
           )}
         </div>
 
-        {/* Summary Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-          {(['active', 'upcoming', 'expired', 'deactivated'] as PromoStatus[]).map((s) => {
-            const count = promotions.filter((p) => p.current_status === s).length;
-            const colors: Record<PromoStatus, string> = {
-              active: 'text-emerald-700 bg-emerald-50 border-emerald-200',
-              upcoming: 'text-blue-700 bg-blue-50 border-blue-200',
-              expired: 'text-gray-600 bg-gray-50 border-gray-200',
-              deactivated: 'text-red-700 bg-red-50 border-red-200',
-            };
-            return (
-              <button
-                key={s}
-                onClick={() => setStatusFilter(statusFilter === s ? 'all' : s)}
-                className={`flex flex-col items-center p-3 rounded-xl border text-center transition-all duration-150 cursor-pointer hover:shadow-sm ${
-                  statusFilter === s
-                    ? colors[s] + ' ring-2 ring-offset-1 ring-current'
-                    : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
-                }`}
-              >
-                <span className="text-2xl font-bold">{count}</span>
-                <span className="text-xs font-medium capitalize mt-0.5">{s}</span>
-              </button>
-            );
-          })}
-        </div>
-
         {/* Content */}
         {loading ? (
           <div className="flex items-center justify-center py-20">
