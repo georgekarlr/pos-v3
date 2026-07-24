@@ -91,7 +91,7 @@ const WriteOffBatchModal: React.FC<WriteOffBatchModalProps> = ({ product, batchI
                         <p className="text-sm text-gray-700 mb-3">
                             You are about to write off the entire quantity of this batch from <strong>{product.name}</strong>. This action cannot be undone.
                         </p>
-                        
+
                         <div className="space-y-1 text-sm">
                             <div className="flex justify-between">
                                 <span className="text-gray-500">Current Batch Quantity:</span>

@@ -33,9 +33,9 @@ const ProductTile: React.FC<ProductTileProps> = ({ product, orderQty, action, on
         transition-all duration-200 ease-in-out
         ${isSelected ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200'}
         ${isDisabled
-                ? 'cursor-not-allowed bg-gray-50 opacity-60'
-                : 'hover:border-blue-400 hover:shadow-md hover:-translate-y-1'
-            }
+                    ? 'cursor-not-allowed bg-gray-50 opacity-60'
+                    : 'hover:border-blue-400 hover:shadow-md hover:-translate-y-1'
+                }
       `}
             aria-label={`${product.name}. Current action: ${action}`}
         >
@@ -53,8 +53,8 @@ const ProductTile: React.FC<ProductTileProps> = ({ product, orderQty, action, on
                     <h3 className="font-semibold text-gray-800 line-clamp-2">{product.name}</h3>
                     {product.barcode && (
                         <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
-              {product.barcode}
-            </span>
+                            {product.barcode}
+                        </span>
                     )}
                 </div>
 
@@ -68,8 +68,8 @@ const ProductTile: React.FC<ProductTileProps> = ({ product, orderQty, action, on
                                 / {product.unit_type
                                     ? PRODUCT_UNIT_LABELS[product.unit_type] || product.unit_type
                                     : product.selling_method === 'unit'
-                                    ? 'unit'
-                                    : 'measure'}
+                                        ? 'unit'
+                                        : 'measure'}
                             </span>
                         </p>
                     </div>

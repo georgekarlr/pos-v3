@@ -21,19 +21,16 @@ interface SummaryStatProps {
     danger?: boolean;
 }
 const SummaryStat: React.FC<SummaryStatProps> = ({ label, value, highlight, danger }) => (
-    <div className={`flex flex-col gap-0.5 px-4 py-3 rounded-xl border ${
-        danger
+    <div className={`flex flex-col gap-0.5 px-4 py-3 rounded-xl border ${danger
             ? 'bg-red-50 border-red-200'
             : highlight
-            ? 'bg-indigo-50 border-indigo-200'
-            : 'bg-gray-50 border-gray-200'
-    }`}>
-        <span className={`text-[10px] font-bold uppercase tracking-widest ${
-            danger ? 'text-red-500' : highlight ? 'text-indigo-500' : 'text-gray-400'
-        }`}>{label}</span>
-        <span className={`font-mono text-xl font-extrabold leading-tight ${
-            danger ? 'text-red-700' : highlight ? 'text-indigo-700' : 'text-gray-800'
-        }`}>{value}</span>
+                ? 'bg-indigo-50 border-indigo-200'
+                : 'bg-gray-50 border-gray-200'
+        }`}>
+        <span className={`text-[10px] font-bold uppercase tracking-widest ${danger ? 'text-red-500' : highlight ? 'text-indigo-500' : 'text-gray-400'
+            }`}>{label}</span>
+        <span className={`font-mono text-xl font-extrabold leading-tight ${danger ? 'text-red-700' : highlight ? 'text-indigo-700' : 'text-gray-800'
+            }`}>{value}</span>
     </div>
 );
 
@@ -188,17 +185,15 @@ const CustomerFinancialSummaryModal: React.FC<CustomerFinancialSummaryModalProps
                         ) : summary ? (
                             <>
                                 {/* Grand Total */}
-                                <div className={`flex items-center justify-between p-4 rounded-2xl border-2 ${
-                                    summary.total_outstanding_amount > 0
+                                <div className={`flex items-center justify-between p-4 rounded-2xl border-2 ${summary.total_outstanding_amount > 0
                                         ? 'bg-red-50 border-red-200'
                                         : 'bg-green-50 border-green-200'
-                                }`}>
+                                    }`}>
                                     <div className="flex items-center gap-3">
-                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                                            summary.total_outstanding_amount > 0
+                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${summary.total_outstanding_amount > 0
                                                 ? 'bg-red-100'
                                                 : 'bg-green-100'
-                                        }`}>
+                                            }`}>
                                             {summary.total_outstanding_amount > 0
                                                 ? <AlertCircle size={20} className="text-red-600" />
                                                 : <CheckCircle2 size={20} className="text-green-600" />
@@ -208,11 +203,10 @@ const CustomerFinancialSummaryModal: React.FC<CustomerFinancialSummaryModalProps
                                             <p className="text-xs font-bold uppercase tracking-wider text-gray-500">
                                                 Total Outstanding
                                             </p>
-                                            <p className={`font-mono text-2xl font-extrabold leading-tight ${
-                                                summary.total_outstanding_amount > 0
+                                            <p className={`font-mono text-2xl font-extrabold leading-tight ${summary.total_outstanding_amount > 0
                                                     ? 'text-red-700'
                                                     : 'text-green-700'
-                                            }`}>
+                                                }`}>
                                                 &#8369;{summary.total_outstanding_amount.toFixed(2)}
                                             </p>
                                         </div>

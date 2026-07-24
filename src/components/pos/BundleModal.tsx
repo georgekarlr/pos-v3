@@ -15,15 +15,15 @@ interface BundleModalProps {
 }
 
 const BundleModal: React.FC<BundleModalProps> = ({
-                                                     open,
-                                                     initialQuantity = 1,
-                                                     title = "Bundle Quantity", // Default title
-                                                     description = "Enter how many to add to the order.", // Default description
-                                                     confirmText = "Add", // Default confirm button text
-                                                     onConfirm,
-                                                     onClose,
-                                                     isDecimal = false,
-                                                 }) => {
+    open,
+    initialQuantity = 1,
+    title = "Bundle Quantity", // Default title
+    description = "Enter how many to add to the order.", // Default description
+    confirmText = "Add", // Default confirm button text
+    onConfirm,
+    onClose,
+    isDecimal = false,
+}) => {
     const [qty, setQty] = useState<number>(initialQuantity)
     // NEW: State to control the visibility for animations
     const [show, setShow] = useState(false)
@@ -75,17 +75,15 @@ const BundleModal: React.FC<BundleModalProps> = ({
         >
             {/* Backdrop with transition */}
             <div
-                className={`absolute inset-0 bg-gray-900/60 transition-opacity duration-300 ${
-                    show ? 'opacity-100' : 'opacity-0'
-                }`}
+                className={`absolute inset-0 bg-gray-900/60 transition-opacity duration-300 ${show ? 'opacity-100' : 'opacity-0'
+                    }`}
                 onClick={onClose}
             />
 
             {/* Modal with transition */}
             <div
-                className={`relative bg-white rounded-lg shadow-xl w-full max-w-sm transition-all duration-300 ${
-                    show ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
-                }`}
+                className={`relative bg-white rounded-lg shadow-xl w-full max-w-sm transition-all duration-300 ${show ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
+                    }`}
             >
                 {/* NEW: Dedicated close button in the corner */}
                 <button

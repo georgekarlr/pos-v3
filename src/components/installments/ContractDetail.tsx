@@ -123,25 +123,23 @@ const ContractDetail: React.FC<ContractDetailProps> = ({
             ₱{contract.monthly_due.toLocaleString('en-PH', { minimumFractionDigits: 2 })}
           </p>
         </div>
-        <div className={`rounded-xl p-4 border ${
-          isCompleted 
-            ? 'bg-green-50 border-green-200 text-green-700' 
+        <div className={`rounded-xl p-4 border ${isCompleted
+            ? 'bg-green-50 border-green-200 text-green-700'
             : isDefaulted
               ? 'bg-rose-50 border-rose-200 text-rose-700'
               : 'bg-indigo-50 border-indigo-200 text-indigo-700'
-        }`}>
-          <p className={`text-xs uppercase tracking-wide font-semibold mb-1 ${
-            isCompleted 
-              ? 'text-green-600' 
+          }`}>
+          <p className={`text-xs uppercase tracking-wide font-semibold mb-1 ${isCompleted
+              ? 'text-green-600'
               : isDefaulted
                 ? 'text-rose-600'
                 : 'text-indigo-600'
-          }`}>
+            }`}>
             {isCompleted ? 'Fully Paid' : isDefaulted ? 'Defaulted Balance' : 'Active Balance'}
           </p>
           <p className="text-lg font-bold font-mono">
-            {isCompleted 
-              ? '✓ Complete' 
+            {isCompleted
+              ? '✓ Complete'
               : `₱${remainingBalance.toLocaleString('en-PH', { minimumFractionDigits: 2 })}`}
           </p>
         </div>
@@ -154,7 +152,7 @@ const ContractDetail: React.FC<ContractDetailProps> = ({
             <TrendingDown size={16} className="text-indigo-500" />
             <h3 className="font-semibold text-gray-800 text-sm">Payment Schedule</h3>
           </div>
-          
+
           <div className="flex flex-wrap items-center gap-2">
             {/* Standard payment: only for Active contracts */}
             {contract.contract_status === 'active' && (

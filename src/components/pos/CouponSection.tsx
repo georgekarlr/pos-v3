@@ -130,11 +130,10 @@ export const CouponSection: React.FC<CouponSectionProps> = ({
             onKeyDown={handleKeyDown}
             placeholder="Enter coupon code…"
             maxLength={50}
-            className={`flex-1 px-3 py-2 border rounded-lg text-sm font-mono uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-colors ${
-              couponStatus !== 'idle'
+            className={`flex-1 px-3 py-2 border rounded-lg text-sm font-mono uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-colors ${couponStatus !== 'idle'
                 ? statusCfg.border + ' ' + statusCfg.bg
                 : 'border-gray-300 bg-white'
-            }`}
+              }`}
           />
           <button
             onClick={handleApply}

@@ -124,9 +124,8 @@ const AdjustQuantityDialog: React.FC<AdjustQuantityDialogProps> = ({ product, on
                         <div className="mt-1 flex items-center justify-between text-sm font-medium">
                             <span className="text-gray-600">New Stock:</span>
                             <div className="flex items-center gap-2">
-                <span className={`font-mono transition-colors ${
-                    adjustmentValue > 0 ? 'text-green-600' : adjustmentValue < 0 ? 'text-red-600' : 'text-gray-800'
-                }`}>{newQuantity}</span>
+                                <span className={`font-mono transition-colors ${adjustmentValue > 0 ? 'text-green-600' : adjustmentValue < 0 ? 'text-red-600' : 'text-gray-800'
+                                    }`}>{newQuantity}</span>
                                 <ArrowRight className="h-4 w-4 text-gray-400" />
                             </div>
                         </div>
@@ -138,11 +137,10 @@ const AdjustQuantityDialog: React.FC<AdjustQuantityDialogProps> = ({ product, on
                             <button
                                 type="button"
                                 onClick={() => setMode('add')}
-                                className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-bold rounded-lg transition-all ${
-                                    mode === 'add'
+                                className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-bold rounded-lg transition-all ${mode === 'add'
                                         ? 'bg-white text-blue-600 shadow-sm'
                                         : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50'
-                                }`}
+                                    }`}
                             >
                                 <Plus className="h-4 w-4" />
                                 Add Stock
@@ -150,11 +148,10 @@ const AdjustQuantityDialog: React.FC<AdjustQuantityDialogProps> = ({ product, on
                             <button
                                 type="button"
                                 onClick={() => setMode('deduct')}
-                                className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-bold rounded-lg transition-all ${
-                                    mode === 'deduct'
+                                className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-bold rounded-lg transition-all ${mode === 'deduct'
                                         ? 'bg-white text-red-600 shadow-sm'
                                         : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50'
-                                }`}
+                                    }`}
                             >
                                 <Minus className="h-4 w-4" />
                                 Deduct Stock
@@ -178,11 +175,9 @@ const AdjustQuantityDialog: React.FC<AdjustQuantityDialogProps> = ({ product, on
                                 setValue(val)
                             }}
                             placeholder={mode === 'add' ? "Quantity to add" : "Quantity to deduct"}
-                            className={`w-full border rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:ring-2 ${
-                                mode === 'add' ? 'focus:ring-blue-500' : 'focus:ring-red-500'
-                            } ${
-                                isPerishableDeduction ? 'border-amber-300 bg-amber-50' : 'border-gray-300'
-                            }`}
+                            className={`w-full border rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:ring-2 ${mode === 'add' ? 'focus:ring-blue-500' : 'focus:ring-red-500'
+                                } ${isPerishableDeduction ? 'border-amber-300 bg-amber-50' : 'border-gray-300'
+                                }`}
                             disabled={status === 'submitting' || status === 'success'}
                         />
                         {isPerishableDeduction && (
@@ -230,9 +225,8 @@ const AdjustQuantityDialog: React.FC<AdjustQuantityDialogProps> = ({ product, on
                         <button
                             type="submit"
                             disabled={status === 'submitting' || status === 'success' || isPerishableDeduction}
-                            className={`px-4 py-2 rounded-lg text-white font-semibold disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center transition-colors ${
-                                mode === 'add' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-red-600 hover:bg-red-700'
-                            }`}
+                            className={`px-4 py-2 rounded-lg text-white font-semibold disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center transition-colors ${mode === 'add' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-red-600 hover:bg-red-700'
+                                }`}
                         >
                             {status === 'submitting' && 'Saving...'}
                             {status === 'success' && <CheckCircle2 className="h-5 w-5" />}

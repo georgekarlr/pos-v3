@@ -96,12 +96,12 @@ const PromotionList: React.FC<PromotionListProps> = ({
             {/* Card header strip — colour-coded by status */}
             <div
               className={`h-1.5 w-full ${promo.current_status === 'active'
-                  ? 'bg-emerald-500'
-                  : promo.current_status === 'upcoming'
-                    ? 'bg-blue-500'
-                    : promo.current_status === 'expired'
-                      ? 'bg-gray-300'
-                      : 'bg-red-400'
+                ? 'bg-emerald-500'
+                : promo.current_status === 'upcoming'
+                  ? 'bg-blue-500'
+                  : promo.current_status === 'expired'
+                    ? 'bg-gray-300'
+                    : 'bg-red-400'
                 }`}
             />
 
@@ -111,8 +111,8 @@ const PromotionList: React.FC<PromotionListProps> = ({
                 <div className="flex items-start gap-2.5">
                   <div
                     className={`flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center ${isPercentage
-                        ? 'bg-violet-100'
-                        : 'bg-amber-100'
+                      ? 'bg-violet-100'
+                      : 'bg-amber-100'
                       }`}
                   >
                     {isPercentage ? (

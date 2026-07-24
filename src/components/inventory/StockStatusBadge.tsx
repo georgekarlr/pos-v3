@@ -19,8 +19,8 @@ const StockStatusBadge: React.FC<StockStatusBadgeProps> = ({ quantity }) => {
 
     return (
         <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${badgeStyles}`}>
-      {statusText}
-    </span>
+            {statusText}
+        </span>
     );
 };
 

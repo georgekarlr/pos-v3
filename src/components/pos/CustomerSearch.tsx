@@ -65,10 +65,9 @@ const CustomerSearch: React.FC<CustomerSearchProps> = ({ selectedCustomerId, onS
 
     return (
         <div className="relative" ref={dropdownRef}>
-            <div 
-                className={`flex items-center gap-2 p-2.5 rounded-md border bg-white cursor-pointer transition-all ${
-                    isOpen ? 'border-blue-500 ring-2 ring-blue-100' : 'border-gray-300 hover:border-gray-400'
-                }`}
+            <div
+                className={`flex items-center gap-2 p-2.5 rounded-md border bg-white cursor-pointer transition-all ${isOpen ? 'border-blue-500 ring-2 ring-blue-100' : 'border-gray-300 hover:border-gray-400'
+                    }`}
                 onClick={() => setIsOpen(!isOpen)}
             >
                 <User className={`h-4 w-4 ${selectedCustomer ? 'text-blue-500' : 'text-gray-400'}`} />
@@ -83,7 +82,7 @@ const CustomerSearch: React.FC<CustomerSearchProps> = ({ selectedCustomerId, onS
                     )}
                 </div>
                 {selectedCustomer && (
-                    <button 
+                    <button
                         onClick={handleClear}
                         className="p-1 hover:bg-gray-100 rounded-full transition-colors"
                     >
@@ -116,9 +115,8 @@ const CustomerSearch: React.FC<CustomerSearchProps> = ({ selectedCustomerId, onS
                             customers.map((customer) => (
                                 <div
                                     key={customer.id}
-                                    className={`px-4 py-3 hover:bg-blue-50 cursor-pointer flex items-center justify-between group transition-colors ${
-                                        selectedCustomerId === customer.id ? 'bg-blue-50' : ''
-                                    }`}
+                                    className={`px-4 py-3 hover:bg-blue-50 cursor-pointer flex items-center justify-between group transition-colors ${selectedCustomerId === customer.id ? 'bg-blue-50' : ''
+                                        }`}
                                     onClick={() => handleSelect(customer)}
                                 >
                                     <div>

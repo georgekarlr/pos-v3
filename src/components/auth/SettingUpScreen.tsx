@@ -83,13 +83,12 @@ export const SettingUpScreen: React.FC<SettingUpScreenProps> = ({ progressState 
               return (
                 <div
                   key={idx}
-                  className={`flex items-center space-x-3 p-2.5 rounded-lg text-xs font-medium transition-all ${
-                    isDone
+                  className={`flex items-center space-x-3 p-2.5 rounded-lg text-xs font-medium transition-all ${isDone
                       ? 'text-slate-300 bg-slate-800/40'
                       : isCurrent
-                      ? 'text-blue-300 bg-blue-500/10 border border-blue-500/20'
-                      : 'text-slate-500 bg-transparent'
-                  }`}
+                        ? 'text-blue-300 bg-blue-500/10 border border-blue-500/20'
+                        : 'text-slate-500 bg-transparent'
+                    }`}
                 >
                   {isDone ? (
                     <CheckCircle2 className="h-4 w-4 text-emerald-400 flex-shrink-0" />

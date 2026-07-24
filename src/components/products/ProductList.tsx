@@ -106,13 +106,12 @@ const ProductList: React.FC<ProductListProps> = ({ products, onEdit, isAdmin }) 
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm">
                   <span
-                    className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      product.tax_type === 'VATable'
+                    className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${product.tax_type === 'VATable'
                         ? 'bg-blue-100 text-blue-800 border border-blue-200'
                         : product.tax_type === 'VAT-Exempt'
-                        ? 'bg-amber-100 text-amber-800 border border-amber-200'
-                        : 'bg-purple-100 text-purple-800 border border-purple-200'
-                    }`}
+                          ? 'bg-amber-100 text-amber-800 border border-amber-200'
+                          : 'bg-purple-100 text-purple-800 border border-purple-200'
+                      }`}
                   >
                     {product.tax_type || 'VATable'}
                   </span>
@@ -126,49 +125,45 @@ const ProductList: React.FC<ProductListProps> = ({ products, onEdit, isAdmin }) 
                     {product.unit_type
                       ? PRODUCT_UNIT_LABELS[product.unit_type] || product.unit_type
                       : product.selling_method === 'unit'
-                      ? 'units'
-                      : ''}
+                        ? 'units'
+                        : ''}
                   </div>
                   <div className="text-xs text-gray-500">
                     {product.selling_method === 'unit' ? 'Sold by unit' : 'Sold by weight/volume'}
                   </div>
                   {product.inventory_type && (
-                    <div className={`text-[10px] mt-1 font-bold uppercase ${
-                      product.inventory_type === 'perishable' ? 'text-orange-600' : 'text-blue-600'
-                    }`}>
+                    <div className={`text-[10px] mt-1 font-bold uppercase ${product.inventory_type === 'perishable' ? 'text-orange-600' : 'text-blue-600'
+                      }`}>
                       {product.inventory_type.replace('_', '-')}
                     </div>
                   )}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span
-                    className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      product.is_for_sale
+                    className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${product.is_for_sale
                         ? 'bg-blue-100 text-blue-800'
                         : 'bg-orange-100 text-orange-800'
-                    }`}
+                      }`}
                   >
                     {product.is_for_sale ? 'For Sale' : 'Not for Sale'}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span
-                    className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      product.is_active
+                    className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${product.is_active
                         ? 'bg-green-100 text-green-800'
                         : 'bg-gray-100 text-gray-800'
-                    }`}
+                      }`}
                   >
                     {product.is_active ? 'Active' : 'Inactive'}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span
-                    className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      product.is_sc_pwd_eligible
+                    className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${product.is_sc_pwd_eligible
                         ? 'bg-purple-100 text-purple-800 border border-purple-200'
                         : 'bg-gray-100 text-gray-800 border border-gray-200'
-                    }`}
+                      }`}
                   >
                     {product.is_sc_pwd_eligible ? 'Eligible' : 'Not Eligible'}
                   </span>
@@ -225,20 +220,18 @@ const ProductList: React.FC<ProductListProps> = ({ products, onEdit, isAdmin }) 
               </div>
               <div className="flex flex-col items-end gap-1 ml-2">
                 <span
-                  className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full flex-shrink-0 ${
-                    product.is_active
+                  className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full flex-shrink-0 ${product.is_active
                       ? 'bg-green-100 text-green-800'
                       : 'bg-gray-100 text-gray-800'
-                  }`}
+                    }`}
                 >
                   {product.is_active ? 'Active' : 'Inactive'}
                 </span>
                 <span
-                  className={`inline-flex px-2 py-1 text-[10px] font-bold uppercase rounded-full flex-shrink-0 ${
-                    product.is_for_sale
+                  className={`inline-flex px-2 py-1 text-[10px] font-bold uppercase rounded-full flex-shrink-0 ${product.is_for_sale
                       ? 'bg-blue-100 text-blue-800'
                       : 'bg-orange-100 text-orange-800 border border-orange-200'
-                  }`}
+                    }`}
                 >
                   {product.is_for_sale ? 'For Sale' : 'Not for Sale'}
                 </span>
@@ -263,13 +256,12 @@ const ProductList: React.FC<ProductListProps> = ({ products, onEdit, isAdmin }) 
                 <div className="flex items-center gap-1.5 mt-0.5">
                   <span className="font-medium text-gray-950">{product.tax_rate}%</span>
                   <span
-                    className={`inline-flex px-1.5 py-0.5 text-[10px] font-bold rounded-full ${
-                      product.tax_type === 'VATable'
+                    className={`inline-flex px-1.5 py-0.5 text-[10px] font-bold rounded-full ${product.tax_type === 'VATable'
                         ? 'bg-blue-100 text-blue-800 border border-blue-200'
                         : product.tax_type === 'VAT-Exempt'
-                        ? 'bg-amber-100 text-amber-800 border border-amber-200'
-                        : 'bg-purple-100 text-purple-800 border border-purple-200'
-                    }`}
+                          ? 'bg-amber-100 text-amber-800 border border-amber-200'
+                          : 'bg-purple-100 text-purple-800 border border-purple-200'
+                      }`}
                   >
                     {product.tax_type || 'VATable'}
                   </span>
@@ -278,11 +270,10 @@ const ProductList: React.FC<ProductListProps> = ({ products, onEdit, isAdmin }) 
               <div>
                 <p className="text-gray-500">SC/PWD Eligibility</p>
                 <span
-                  className={`inline-flex px-2 py-0.5 text-[10px] font-bold uppercase rounded-full mt-0.5 ${
-                    product.is_sc_pwd_eligible
+                  className={`inline-flex px-2 py-0.5 text-[10px] font-bold uppercase rounded-full mt-0.5 ${product.is_sc_pwd_eligible
                       ? 'bg-purple-100 text-purple-800 border border-purple-200'
                       : 'bg-gray-100 text-gray-800 border border-gray-200'
-                  }`}
+                    }`}
                 >
                   {product.is_sc_pwd_eligible ? 'Eligible' : 'Not Eligible'}
                 </span>
@@ -294,16 +285,15 @@ const ProductList: React.FC<ProductListProps> = ({ products, onEdit, isAdmin }) 
                   {product.unit_type
                     ? PRODUCT_UNIT_LABELS[product.unit_type] || product.unit_type
                     : product.selling_method === 'unit'
-                    ? 'units'
-                    : ''}
+                      ? 'units'
+                      : ''}
                   <span className="text-xs text-gray-500 ml-2">
                     ({product.selling_method === 'unit' ? 'Unit' : 'Measured'})
                   </span>
                 </p>
                 {product.inventory_type && (
-                  <p className={`text-[10px] font-bold uppercase mt-0.5 ${
-                    product.inventory_type === 'perishable' ? 'text-orange-600' : 'text-blue-600'
-                  }`}>
+                  <p className={`text-[10px] font-bold uppercase mt-0.5 ${product.inventory_type === 'perishable' ? 'text-orange-600' : 'text-blue-600'
+                    }`}>
                     {product.inventory_type.replace('_', '-')}
                   </p>
                 )}

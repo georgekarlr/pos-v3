@@ -24,10 +24,10 @@ interface ScannedItem {
 
 const CameraScanner: React.FC<CameraScannerProps> = ({ onScan, onMultipleScan, onClose, products, currentAction = 'add' }) => {
   const isSingleOnly = currentAction === 'bundle' || currentAction === 'clear';
-  
+
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   const [cameras, setCameras] = useState<CameraDevice[]>([]);
   const [activeCameraId, setActiveCameraId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -55,14 +55,14 @@ const CameraScanner: React.FC<CameraScannerProps> = ({ onScan, onMultipleScan, o
         const devices = await Html5Qrcode.getCameras();
         if (devices && devices.length > 0) {
           setCameras(devices.map(d => ({ id: d.id, label: d.label })));
-          
+
           // Prefer back camera by default
-          const backCamera = devices.find(device => 
-            device.label.toLowerCase().includes('back') || 
+          const backCamera = devices.find(device =>
+            device.label.toLowerCase().includes('back') ||
             device.label.toLowerCase().includes('rear') ||
             device.label.toLowerCase().includes('environment')
           );
-          
+
           const cameraId = backCamera ? backCamera.id : devices[0].id;
           setActiveCameraId(cameraId);
           await startCamera(cameraId);
@@ -90,12 +90,12 @@ const CameraScanner: React.FC<CameraScannerProps> = ({ onScan, onMultipleScan, o
     if (decodedText === lastScannedBarcode.current && now - lastScanTime.current < 2000) {
       return;
     }
-    
+
     lastScannedBarcode.current = decodedText;
     lastScanTime.current = now;
 
     const product = products.find(p => p.barcode === decodedText);
-    
+
     if (scanModeRef.current === 'single') {
       playScanSound();
       onScan(decodedText);
@@ -106,13 +106,13 @@ const CameraScanner: React.FC<CameraScannerProps> = ({ onScan, onMultipleScan, o
         setScannedItems(prev => {
           const current = prev[product.id] || { product, count: 0 };
           const nextCount = currentAction === 'add' ? current.count + 1 : Math.max(0, current.count - 1);
-          
+
           if (nextCount === 0 && currentAction === 'deduct') {
             const copy = { ...prev };
             delete copy[product.id];
             return copy;
           }
-          
+
           return {
             ...prev,
             [product.id]: { ...current, count: nextCount }
@@ -128,7 +128,7 @@ const CameraScanner: React.FC<CameraScannerProps> = ({ onScan, onMultipleScan, o
 
   const startCamera = async (cameraId: string) => {
     if (!scannerRef.current) return;
-    
+
     // Stop if already scanning
     if (scannerRef.current.isScanning) {
       await scannerRef.current.stop();
@@ -168,11 +168,11 @@ const CameraScanner: React.FC<CameraScannerProps> = ({ onScan, onMultipleScan, o
 
   const handleSwitchCamera = async () => {
     if (cameras.length < 2) return;
-    
+
     const currentIndex = cameras.findIndex(c => c.id === activeCameraId);
     const nextIndex = (currentIndex + 1) % cameras.length;
     const nextCamera = cameras[nextIndex];
-    
+
     setActiveCameraId(nextCamera.id);
     await startCamera(nextCamera.id);
   };
@@ -198,34 +198,33 @@ const CameraScanner: React.FC<CameraScannerProps> = ({ onScan, onMultipleScan, o
     <div className="fixed inset-0 z-[60] bg-black bg-opacity-75 flex flex-col items-center justify-center sm:p-4 overflow-hidden">
       <div className="relative bg-white sm:rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col h-full sm:h-auto sm:max-h-[90vh]">
         {/* Header */}
-        <div className={`${
-          currentAction === 'deduct' ? 'bg-red-600' : 
-          currentAction === 'bundle' ? 'bg-purple-600' :
-          currentAction === 'clear' ? 'bg-orange-600' :
-          'bg-blue-600'
-        } px-4 py-3 flex items-center justify-between flex-shrink-0`}>
+        <div className={`${currentAction === 'deduct' ? 'bg-red-600' :
+            currentAction === 'bundle' ? 'bg-purple-600' :
+              currentAction === 'clear' ? 'bg-orange-600' :
+                'bg-blue-600'
+          } px-4 py-3 flex items-center justify-between flex-shrink-0`}>
           <div className="flex items-center gap-2">
             <Camera className="h-5 w-5 text-white" />
             <h3 className="text-white font-semibold text-sm sm:text-base">
-              {currentAction === 'deduct' ? 'Deduct Items' : 
-               currentAction === 'bundle' ? 'Bundle Mode' :
-               currentAction === 'clear' ? 'Clear Items' :
-               'Scan Barcode'}
+              {currentAction === 'deduct' ? 'Deduct Items' :
+                currentAction === 'bundle' ? 'Bundle Mode' :
+                  currentAction === 'clear' ? 'Clear Items' :
+                    'Scan Barcode'}
             </h3>
           </div>
-          <button 
-            onClick={onClose} 
+          <button
+            onClick={onClose}
             className="text-white hover:bg-blue-700 p-1 rounded-full transition-colors"
             aria-label="Close"
           >
             <X className="h-6 w-6" />
           </button>
         </div>
-        
+
         {/* Scanner View */}
         <div className="bg-gray-900 relative flex-shrink-0">
           <div id="reader" className="w-full overflow-hidden sm:rounded-lg border-2 border-dashed border-gray-700 aspect-video sm:aspect-auto sm:min-h-[200px] bg-black"></div>
-          
+
           {error && (
             <div className="absolute inset-0 flex items-center justify-center p-6 text-center z-10">
               <div className="bg-red-50 p-4 rounded-lg border border-red-200 shadow-lg">
@@ -233,7 +232,7 @@ const CameraScanner: React.FC<CameraScannerProps> = ({ onScan, onMultipleScan, o
               </div>
             </div>
           )}
-          
+
           {/* Floating Controls */}
           <div className="absolute top-4 right-4 flex flex-col gap-3">
             {cameras.length > 1 && (
@@ -260,23 +259,21 @@ const CameraScanner: React.FC<CameraScannerProps> = ({ onScan, onMultipleScan, o
           <div className="px-4 py-2 bg-gray-100 flex gap-2 flex-shrink-0">
             <button
               onClick={() => setScanMode('single')}
-              className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
-                scanMode === 'single' ? 'bg-blue-600 text-white shadow-sm' : 'bg-white text-gray-600 hover:bg-gray-50'
-              }`}
+              className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-colors ${scanMode === 'single' ? 'bg-blue-600 text-white shadow-sm' : 'bg-white text-gray-600 hover:bg-gray-50'
+                }`}
             >
               <Hash className="h-4 w-4" /> Single
             </button>
             <button
               onClick={() => setScanMode('multiple')}
-              className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
-                scanMode === 'multiple' ? 'bg-blue-600 text-white shadow-sm' : 'bg-white text-gray-600 hover:bg-gray-50'
-              }`}
+              className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-colors ${scanMode === 'multiple' ? 'bg-blue-600 text-white shadow-sm' : 'bg-white text-gray-600 hover:bg-gray-50'
+                }`}
             >
               <List className="h-4 w-4" /> Multiple
             </button>
           </div>
         )}
-        
+
         {/* Content Area - Shows Scanned List or settings */}
         <div className="flex-1 overflow-y-auto bg-gray-50 min-h-[100px]">
           {scanMode === 'multiple' && (
@@ -305,12 +302,12 @@ const CameraScanner: React.FC<CameraScannerProps> = ({ onScan, onMultipleScan, o
           )}
 
           {scanMode === 'single' && (
-             <div className="p-4 flex flex-col gap-3">
-               {cameras.length > 0 && (
+            <div className="p-4 flex flex-col gap-3">
+              {cameras.length > 0 && (
                 <div className="flex flex-col gap-1">
                   <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Active Camera</label>
-                  <select 
-                    value={activeCameraId || ''} 
+                  <select
+                    value={activeCameraId || ''}
                     onChange={(e) => {
                       const id = e.target.value;
                       setActiveCameraId(id);
@@ -325,10 +322,10 @@ const CameraScanner: React.FC<CameraScannerProps> = ({ onScan, onMultipleScan, o
                 </div>
               )}
               <p className="text-xs text-gray-500">Align barcode in frame. Scanner will close after a successful scan.</p>
-             </div>
+            </div>
           )}
         </div>
-        
+
         {/* Footer */}
         <div className="p-4 bg-white border-t border-gray-100 flex-shrink-0 mb-safe sm:mb-0">
           <div className="flex items-center justify-between gap-4">
@@ -339,7 +336,7 @@ const CameraScanner: React.FC<CameraScannerProps> = ({ onScan, onMultipleScan, o
               <ImageIcon className="h-4 w-4" />
               Upload Image
             </button>
-            
+
             {scanMode === 'multiple' && (
               <button
                 onClick={() => {
@@ -356,19 +353,19 @@ const CameraScanner: React.FC<CameraScannerProps> = ({ onScan, onMultipleScan, o
           </div>
         </div>
       </div>
-      
+
       {/* Hidden File Input */}
-      <input 
-        type="file" 
-        ref={fileInputRef} 
-        onChange={handleFileUpload} 
-        accept="image/*" 
-        className="hidden" 
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileUpload}
+        accept="image/*"
+        className="hidden"
       />
 
       {/* Semi-transparent backdrop click also closes */}
-      <div 
-        className="absolute inset-0 -z-10" 
+      <div
+        className="absolute inset-0 -z-10"
         onClick={onClose}
       />
     </div>

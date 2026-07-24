@@ -7,7 +7,7 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
-  const { user, signOut, persona, switchPersona } = useAuth()
+  const { signOut, persona, switchPersona } = useAuth()
 
   const handleLogout = async () => {
     await signOut()

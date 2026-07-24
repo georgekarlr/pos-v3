@@ -34,7 +34,7 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ open, data, onClose, autoDe
       autoPrintFired.current = true
       handleDevicePrint()
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, autoDevicePrint, data, printerConfig])
 
   if (!open || !data) return null

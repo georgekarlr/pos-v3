@@ -97,13 +97,12 @@ const ContractList: React.FC<ContractListProps> = ({
                   </div>
                   <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
                     <div
-                      className={`h-full rounded-full transition-all ${
-                        contract.contract_status === 'completed'
+                      className={`h-full rounded-full transition-all ${contract.contract_status === 'completed'
                           ? 'bg-green-500'
                           : contract.contract_status === 'defaulted'
                             ? 'bg-red-500'
                             : 'bg-indigo-500'
-                      }`}
+                        }`}
                       style={{ width: `${progress}%` }}
                     />
                   </div>

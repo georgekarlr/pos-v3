@@ -17,7 +17,7 @@ export const AccountRow: React.FC<AccountRowProps> = ({
 }) => {
   const isAdmin = account.user_type === 'admin'
   const isSelf = currentPersonaId !== undefined && account.account_id === currentPersonaId
-  
+
   const formatDate = (dateStr: string) => {
     try {
       const d = new Date(dateStr)
@@ -30,11 +30,10 @@ export const AccountRow: React.FC<AccountRowProps> = ({
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-gray-200 rounded-xl bg-white hover:border-gray-300 transition-all shadow-sm space-y-4 sm:space-y-0">
       <div className="flex items-start space-x-4">
-        <div className={`h-12 w-12 rounded-full flex items-center justify-center flex-shrink-0 ${
-          isAdmin 
-            ? 'bg-blue-50 text-blue-600 border border-blue-100' 
+        <div className={`h-12 w-12 rounded-full flex items-center justify-center flex-shrink-0 ${isAdmin
+            ? 'bg-blue-50 text-blue-600 border border-blue-100'
             : 'bg-green-50 text-green-600 border border-green-100'
-        }`}>
+          }`}>
           {isAdmin ? (
             <Shield className="h-6 w-6" />
           ) : (
@@ -51,11 +50,10 @@ export const AccountRow: React.FC<AccountRowProps> = ({
                 You
               </span>
             )}
-            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
-              isAdmin 
-                ? 'bg-blue-50 text-blue-700 border-blue-200' 
+            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${isAdmin
+                ? 'bg-blue-50 text-blue-700 border-blue-200'
                 : 'bg-green-50 text-green-700 border-green-200'
-            }`}>
+              }`}>
               {isAdmin ? 'Administrator' : 'Staff Member'}
             </span>
           </div>
@@ -81,7 +79,7 @@ export const AccountRow: React.FC<AccountRowProps> = ({
           <Edit2 className="h-4 w-4" />
           <span>Edit</span>
         </button>
-        
+
         {!isAdmin && (
           <button
             onClick={() => onDelete(account)}
