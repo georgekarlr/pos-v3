@@ -10,7 +10,7 @@ export default defineConfig({
             registerType: 'autoUpdate',
             injectRegister: null,
             devOptions: {
-                enabled: true,
+                enabled: false,
             },
             manifest: {
                 name: 'CPOS Pro',
