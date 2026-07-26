@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   CreditCard,
   Plus,
@@ -8,6 +9,7 @@ import {
   Loader2,
   ArrowLeft,
   ChevronDown,
+  Monitor,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useInstallments } from '../hooks/useInstallments';
@@ -73,6 +75,7 @@ const Installments: React.FC = () => {
   const [recoveryLoading, setRecoveryLoading] = useState(false);
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [selectedTerminalId, setSelectedTerminalId] = useState<number | null>(null);
+  const [terminals, setTerminals] = useState<any[]>([]);
 
   const [receiptData, setReceiptData] = useState<ReceiptData | null>(null);
   const [showReceiptModal, setShowReceiptModal] = useState(false);
@@ -89,6 +92,7 @@ const Installments: React.FC = () => {
       if (termError) {
         console.error('Failed to load terminals:', termError)
       } else {
+        setTerminals(data || []);
         if (data && data.length > 0) {
           const savedId = getTerminalId()
           if (savedId && data.some((t: any) => t.id === savedId)) {
@@ -496,7 +500,7 @@ const Installments: React.FC = () => {
 
       {/* Page Header */}
       <div className="bg-white border-b border-gray-200 px-6 py-5">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
+        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center">
               <CreditCard size={20} className="text-white" />
@@ -506,15 +510,54 @@ const Installments: React.FC = () => {
               <p className="text-sm text-gray-500">Manage installment contracts and collect payments</p>
             </div>
           </div>
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-xl
-              hover:bg-indigo-700 active:scale-95 transition-all shadow-sm shadow-indigo-200"
-          >
-            <Plus size={18} />
-            New Installment Sale
-          </button>
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Active Terminal Display */}
+            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border shadow-sm text-sm ${
+              selectedTerminalId
+                ? 'bg-white border-gray-200'
+                : 'bg-amber-50 border-amber-300'
+            }`}>
+              <Monitor size={15} className={selectedTerminalId ? 'text-indigo-500' : 'text-amber-500'} />
+              <span className="text-gray-500 font-medium">Terminal:</span>
+              <span className={`font-semibold ${
+                selectedTerminalId ? 'text-gray-900' : 'text-amber-700'
+              }`}>
+                {selectedTerminalId
+                  ? (terminals.find((t: any) => t.id === selectedTerminalId)?.terminal_name ||
+                     terminals.find((t: any) => t.id === selectedTerminalId)?.name ||
+                     `Terminal #${selectedTerminalId}`)
+                  : 'None'}
+              </span>
+              <Link
+                to="/settings"
+                className="text-xs text-blue-600 hover:text-blue-800 hover:underline ml-1 border-l pl-1.5 border-gray-300 font-medium"
+              >
+                Change
+              </Link>
+            </div>
+
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-xl
+                hover:bg-indigo-700 active:scale-95 transition-all shadow-sm shadow-indigo-200"
+            >
+              <Plus size={18} />
+              New Installment Sale
+            </button>
+          </div>
         </div>
+
+        {/* No terminal warning */}
+        {!selectedTerminalId && (
+          <div className="max-w-7xl mx-auto mt-3">
+            <div className="w-full bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-center gap-2 text-amber-800 text-sm">
+              <AlertCircle size={16} className="text-amber-500 flex-shrink-0 animate-pulse" />
+              <span>No active terminal selected. Payment and collection actions require a terminal.{' '}
+                <Link to="/settings" className="font-semibold underline hover:text-amber-900">Go to Settings</Link> to assign one.
+              </span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Detail-level error banner */}
