@@ -11,6 +11,7 @@ import { SalesSection } from '../components/usermanual/SalesSection'
 import { DebtSection } from '../components/usermanual/DebtSection'
 import { InstallmentSection } from '../components/usermanual/InstallmentSection'
 import { ComplianceSection } from '../components/usermanual/ComplianceSection'
+import { AccountingSection } from '../components/usermanual/AccountingSection'
 import { SettingsSection } from '../components/usermanual/SettingsSection'
 import { OfflineSection } from '../components/usermanual/OfflineSection'
 import { ArchitectureSection } from '../components/usermanual/ArchitectureSection'
@@ -446,11 +447,29 @@ const chapters: ManualChapter[] = [
     `
   },
   {
+    id: 'accounting',
+    title: '12. Accounting & Financial Management (BIR Tax Ledger, A/R Aging & P&L Statement)',
+    component: <AccountingSection />,
+    rawHtml: `
+      <h2>12. Accounting &amp; Financial Management</h2>
+      <p><strong>Sub-Menu:</strong> Accounting | <strong>Access:</strong> BIR Tax Ledger, A/R Aging Report, P&amp;L Statement (Admin only)</p>
+      <h3>1. BIR Tax Ledger</h3>
+      <p><strong>Route:</strong> <code>/accounting/bir-tax-ledger</code></p>
+      <p>Automated BIR Form 2550Q (Quarterly VAT) and BIR Form 2551Q (Quarterly Percentage Tax) return declarations with automatic store VAT status detection, Line 15A/15B breakdowns, discount deductions, CSV exports, and print views.</p>
+      <h3>2. Accounts Receivable (A/R) Aging Report</h3>
+      <p><strong>Route:</strong> <code>/accounting/ar-aging</code></p>
+      <p>Consolidated customer debt and installment balance aging report with risk buckets (0-30 days current, 31-60 days, 61-90 days, over 90 days high risk), customer search, and CSV export.</p>
+      <h3>3. Profit &amp; Loss (P&amp;L) Statement</h3>
+      <p><strong>Route:</strong> <code>/accounting/pnl-statement</code></p>
+      <p>Income Statement breaking down gross revenue, discounts, net sales realized, cost of goods sold (COGS), gross profit margins, petty cash operating expenses, and net operating income with visual margin indicators.</p>
+    `
+  },
+  {
     id: 'settings',
-    title: '12. Terminals, Printers & Staff Configuration',
+    title: '13. Terminals, Printers & Staff Configuration',
     component: <SettingsSection />,
     rawHtml: `
-      <h2>12. Terminals, Printers & Staff Configuration</h2>
+      <h2>13. Terminals, Printers &amp; Staff Configuration</h2>
       <h3>1. System Settings Pages</h3>
       <p><strong>Route:</strong> <code>/settings</code> | <strong>Access:</strong> Admin, Staff (limited)</p>
       <ul>

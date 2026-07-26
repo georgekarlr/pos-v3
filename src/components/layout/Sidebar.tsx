@@ -13,7 +13,8 @@ import {
   ChevronRight,
   Wallet,
   ClipboardList,
-  CreditCard
+  CreditCard,
+  Calculator
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -51,6 +52,15 @@ const adminNavigation: NavigationItem[] = [
     ]
   },
   { name: 'Installments', href: '/installments', icon: CreditCard },
+  {
+    name: 'Accounting (Beta)',
+    icon: Calculator,
+    children: [
+      { name: 'BIR Tax Ledger', href: '/accounting/bir-tax-ledger' },
+      { name: 'A/R Aging Report', href: '/accounting/ar-aging' },
+      { name: 'P&L Statement', href: '/accounting/pnl-statement' },
+    ]
+  },
   { name: 'Analytics Reports', href: '/analytics-reports', icon: BarChart3 },
   {
     name: 'Reports & Compliance',
@@ -92,6 +102,7 @@ const staffNavigation: NavigationItem[] = [
     name: 'Reports & Compliance',
     icon: ClipboardList,
     children: [
+      { name: 'Z-Reading', href: '/reports-compliance/z-reading' },
       { name: 'X-Reading', href: '/reports-compliance/x-reading' },
     ]
   },

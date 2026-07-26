@@ -31,6 +31,9 @@ import SystemAuditTrail from './pages/SystemAuditTrail'
 import Settings from './pages/Settings'
 import UserManual from './pages/UserManual'
 import Promotions from './pages/Promotions'
+import BIRTaxLedgerPage from './pages/accounting/BIRTaxLedgerPage'
+import ARAgingPage from './pages/accounting/ARAgingPage'
+import PnLStatementPage from './pages/accounting/PnLStatementPage'
 
 function App() {
   useEffect(() => {
@@ -154,6 +157,36 @@ function App() {
                   <PersonaProtectedRoute>
                     <Layout>
                       <Installments />
+                    </Layout>
+                  </PersonaProtectedRoute>
+                </ProtectedRoute>
+              } />
+
+              <Route path="/accounting/bir-tax-ledger" element={
+                <ProtectedRoute>
+                  <PersonaProtectedRoute>
+                    <Layout>
+                      <BIRTaxLedgerPage />
+                    </Layout>
+                  </PersonaProtectedRoute>
+                </ProtectedRoute>
+              } />
+
+              <Route path="/accounting/ar-aging" element={
+                <ProtectedRoute>
+                  <PersonaProtectedRoute>
+                    <Layout>
+                      <ARAgingPage />
+                    </Layout>
+                  </PersonaProtectedRoute>
+                </ProtectedRoute>
+              } />
+
+              <Route path="/accounting/pnl-statement" element={
+                <ProtectedRoute>
+                  <PersonaProtectedRoute>
+                    <Layout>
+                      <PnLStatementPage />
                     </Layout>
                   </PersonaProtectedRoute>
                 </ProtectedRoute>
