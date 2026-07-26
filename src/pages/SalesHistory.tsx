@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { History, AlertCircle } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { History, AlertCircle, Monitor } from 'lucide-react'
 import SalesFilters, { SalesFiltersValue } from '../components/sales/SalesFilters'
 import SalesTable from '../components/sales/SalesTable'
 import PaginationControls from '../components/sales/PaginationControls'
@@ -15,6 +16,7 @@ import ManualSaleModal from '../components/sales/ManualSaleModal'
 import { useAuth } from '../contexts/AuthContext'
 import { FormatDateTime } from "../utils/formatDateTime.ts";
 import { getTerminalId } from '../utils/terminalStorage'
+import { PosService } from '../services/posService'
 
 const PAGE_SIZE = 20
 
@@ -50,6 +52,10 @@ const SalesHistory: React.FC = () => {
 
   const [manualSaleOpen, setManualSaleOpen] = useState(false)
 
+  // Terminal state
+  const [terminalId, setTerminalId] = useState<number | null>(null)
+  const [terminals, setTerminals] = useState<any[]>([])
+
   const offset = useMemo(() => (page - 1) * PAGE_SIZE, [page])
 
   const fetchRows = async () => {
@@ -73,6 +79,23 @@ const SalesHistory: React.FC = () => {
       setLoading(false)
     }
   }
+
+  // Load terminal info once on mount
+  useEffect(() => {
+    PosService.getActiveTerminals().then(({ data }) => {
+      if (data && data.length > 0) {
+        setTerminals(data);
+        const savedId = getTerminalId();
+        if (savedId && data.some((t: any) => t.id === savedId)) {
+          setTerminalId(savedId);
+        } else if (data.length === 1) {
+          setTerminalId(data[0].id);
+        }
+      } else {
+        setTerminalId(getTerminalId());
+      }
+    });
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     fetchRows()
@@ -125,7 +148,6 @@ const SalesHistory: React.FC = () => {
   }
 
   const requestingAccountId = persona?.id ?? null
-  const terminalId = getTerminalId()
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -139,7 +161,32 @@ const SalesHistory: React.FC = () => {
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Sales History</h1>
               <p className="mt-1 text-sm text-gray-500">View and search past transactions. Click an order to view the receipt.</p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Active Terminal Display */}
+              <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border shadow-sm text-sm ${
+                terminalId
+                  ? 'bg-white border-gray-200'
+                  : 'bg-amber-50 border-amber-300'
+              }`}>
+                <Monitor className={`h-4 w-4 ${terminalId ? 'text-indigo-500' : 'text-amber-500'}`} />
+                <span className="text-gray-500 font-medium">Terminal:</span>
+                <span className={`font-semibold ${
+                  terminalId ? 'text-gray-900' : 'text-amber-700'
+                }`}>
+                  {terminalId
+                    ? (terminals.find((t: any) => t.id === terminalId)?.terminal_name ||
+                       terminals.find((t: any) => t.id === terminalId)?.name ||
+                       `Terminal #${terminalId}`)
+                    : 'None'}
+                </span>
+                <Link
+                  to="/settings"
+                  className="text-xs text-blue-600 hover:text-blue-800 hover:underline ml-1 border-l pl-1.5 border-gray-300 font-medium"
+                >
+                  Change
+                </Link>
+              </div>
+
               <button onClick={() => setManualSaleOpen(true)} className="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 text-sm font-medium">Record Manual Sale</button>
               <button onClick={openAllRefunds} className="inline-flex items-center gap-2 px-3 py-2 rounded-md border border-blue-300 text-blue-700 hover:bg-blue-50 text-sm">View All Refunds</button>
             </div>

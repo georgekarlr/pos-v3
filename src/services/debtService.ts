@@ -102,6 +102,9 @@ export class DebtService {
         p_occurred_at: params.p_occurred_at || null
       });
 
+      console.log('Data returned from createCustomerAndAddDebt:', data);
+      console.log('Error returned from createCustomerAndAddDebt:', error);
+
       if (error) {
         console.error('Error adding debt:', error);
         return { data: null, error: error.message };

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { DebtService } from '../services/debtService';
 import { CustomerListItem, CustomerDebtDetails } from '../types/debt';
@@ -20,7 +21,8 @@ import {
   Clock,
   ChevronDown,
   ChevronUp,
-  Award
+  Award,
+  Monitor
 } from 'lucide-react';
 import {PosService} from "../services/posService.ts";
 import { getTerminalId } from '../utils/terminalStorage';
@@ -37,6 +39,7 @@ const CustomersAndDebts: React.FC = () => {
 
   // Terminal & Auth Context Integration
   const [terminalId, setTerminalId] = useState<number | null>(null);
+  const [terminals, setTerminals] = useState<any[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
 
@@ -57,6 +60,7 @@ const CustomersAndDebts: React.FC = () => {
       if (termError) {
         console.error('Failed to load terminals:', termError)
       } else {
+        setTerminals(data || []);
         if (data && data.length > 0) {
           const savedId = getTerminalId()
           if (savedId && data.some((t: any) => t.id === savedId)) {
@@ -160,12 +164,37 @@ const CustomersAndDebts: React.FC = () => {
 
   return (
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-wrap justify-between items-center gap-3">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Customers & Debts</h1>
             <p className="text-gray-500">Manage customer balances and debt records</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Active Terminal Display */}
+            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border shadow-sm text-sm ${
+              terminalId
+                ? 'bg-white border-gray-200'
+                : 'bg-amber-50 border-amber-300'
+            }`}>
+              <Monitor size={15} className={terminalId ? 'text-indigo-500' : 'text-amber-500'} />
+              <span className="text-gray-500 font-medium">Terminal:</span>
+              <span className={`font-semibold ${
+                terminalId ? 'text-gray-900' : 'text-amber-700'
+              }`}>
+                {terminalId
+                  ? (terminals.find((t: any) => t.id === terminalId)?.terminal_name ||
+                     terminals.find((t: any) => t.id === terminalId)?.name ||
+                     `Terminal #${terminalId}`)
+                  : 'None'}
+              </span>
+              <Link
+                to="/settings"
+                className="text-xs text-blue-600 hover:text-blue-800 hover:underline ml-1 border-l pl-1.5 border-gray-300 font-medium"
+              >
+                Change
+              </Link>
+            </div>
+
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
               <input
@@ -178,6 +207,16 @@ const CustomersAndDebts: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* No terminal warning */}
+        {!terminalId && (
+          <div className="w-full bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-center gap-2 text-amber-800 text-sm">
+            <AlertCircle size={16} className="text-amber-500 flex-shrink-0 animate-pulse" />
+            <span>No active terminal selected. Payment and collection actions require a terminal.{' '}
+              <Link to="/settings" className="font-semibold underline hover:text-amber-900">Go to Settings</Link> to assign one.
+            </span>
+          </div>
+        )}
 
         <div className="bg-white shadow-sm rounded-lg overflow-hidden border border-gray-200">
           <div className="overflow-x-auto">

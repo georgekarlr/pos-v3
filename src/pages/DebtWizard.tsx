@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { DebtService } from '../services/debtService';
 import { ProductService } from '../services/productService';
@@ -19,8 +20,11 @@ import {
   Loader2,
   Trash2,
   AlertCircle,
-  X
+  X,
+  Monitor
 } from 'lucide-react';
+import { PosService } from '../services/posService';
+import { getTerminalId } from '../utils/terminalStorage';
 
 type Step = 'customer' | 'items' | 'loan' | 'summary';
 
@@ -54,8 +58,25 @@ const DebtWizard: React.FC = () => {
   const [occurredAt, setOccurredAt] = useState<string>(FormatDateTime.formatLocalTimestampForDatabase(new Date()));
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
+  // Terminal state
+  const [terminalId, setTerminalId] = useState<number | null>(null);
+  const [terminals, setTerminals] = useState<any[]>([]);
+
   // Load products once
   useEffect(() => {
+    // Load terminals
+    PosService.getActiveTerminals().then(({ data }) => {
+      if (data && data.length > 0) {
+        setTerminals(data);
+        const savedId = getTerminalId();
+        if (savedId && data.some((t: any) => t.id === savedId)) {
+          setTerminalId(savedId);
+        } else if (data.length === 1) {
+          setTerminalId(data[0].id);
+        }
+      }
+    });
+
     const loadProducts = async () => {
       // Try to load from IndexedDB first for fast initial render or offline use
       const cachedProducts = await OfflineDB.getProducts();
@@ -218,12 +239,39 @@ const DebtWizard: React.FC = () => {
           <h1 className="text-2xl font-bold text-gray-900">Debt Wizard</h1>
           <p className="text-gray-500">Record a new product debt or cash loan for a customer.</p>
         </div>
-        {!isOnline && (
-          <div className="flex items-center gap-2 px-3 py-1 bg-amber-50 border border-amber-200 text-amber-700 rounded-full text-xs font-medium">
-            <AlertCircle size={14} />
-            Offline Mode
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Active Terminal Display */}
+          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border shadow-sm text-sm ${
+            terminalId
+              ? 'bg-white border-gray-200'
+              : 'bg-amber-50 border-amber-300'
+          }`}>
+            <Monitor size={15} className={terminalId ? 'text-indigo-500' : 'text-amber-500'} />
+            <span className="text-gray-500 font-medium">Terminal:</span>
+            <span className={`font-semibold ${
+              terminalId ? 'text-gray-900' : 'text-amber-700'
+            }`}>
+              {terminalId
+                ? (terminals.find((t: any) => t.id === terminalId)?.terminal_name ||
+                   terminals.find((t: any) => t.id === terminalId)?.name ||
+                   `Terminal #${terminalId}`)
+                : 'None'}
+            </span>
+            <Link
+              to="/settings"
+              className="text-xs text-blue-600 hover:text-blue-800 hover:underline ml-1 border-l pl-1.5 border-gray-300 font-medium"
+            >
+              Change
+            </Link>
           </div>
-        )}
+
+          {!isOnline && (
+            <div className="flex items-center gap-2 px-3 py-1 bg-amber-50 border border-amber-200 text-amber-700 rounded-full text-xs font-medium">
+              <AlertCircle size={14} />
+              Offline Mode
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Stepper */}
