@@ -132,6 +132,23 @@ export interface GenerateZReadingParams {
   target_date: string // 'YYYY-MM-DD'
 }
 
+export interface CheckUnclosedZReadingsResult {
+  has_unclosed_day: boolean
+  unclosed_date: string | null
+}
+
+export interface BatchCatchupZReadingsResult {
+  success: boolean
+  message: string
+  data: ZReadingResult[] | null
+}
+
+export interface BatchCatchupZReadingsParams {
+  requesting_account_id: number
+  terminal_id: number
+  current_date?: string // 'YYYY-MM-DD'
+}
+
 // ─── E-Journal ────────────────────────────────────────────────────────────────
 
 export interface EJournalRow {

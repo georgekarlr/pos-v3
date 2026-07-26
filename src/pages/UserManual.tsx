@@ -412,9 +412,16 @@ const chapters: ManualChapter[] = [
       <h3>1. X-Reading</h3>
       <p><strong>Route:</strong> <code>/reports-compliance/x-reading</code></p>
       <p>Generates a temporary snapshot report of the selected terminal's daily activity: gross sales, net sales, voids, refunds, senior citizen discounts, tax values, and payment collections breakdown (Cash, Card, GCash, etc.). Non-persistent: no database commits. The physical printout includes the software provider and PTU compliance footer just like Z-readings.</p>
-      <h3>2. Z-Reading</h3>
+      <h3>2. Z-Reading &amp; Morning Register Open Check</h3>
       <p><strong>Route:</strong> <code>/reports-compliance/z-reading</code></p>
       <p>The official daily closing procedure required for tax registry and audit logs: compiles active sales transactions, writes them into a permanent ledger lock, increments the Z-Counter, and resets daily counts. Non-reversible transaction.</p>
+      <p><strong>Morning "Register Open" Catch-Up Gate:</strong></p>
+      <ul>
+        <li><strong>Automatic Background Check:</strong> When a terminal is selected in the POS screen, the system automatically calls <code>pos2_check_unclosed_z_readings</code>.</li>
+        <li><strong>Screen Lock Warning Modal:</strong> If unclosed past sales dates exist for the terminal, an un-dismissible lock-screen modal appears and blocks sales operations until caught up.</li>
+        <li><strong>Manager Batch Catch-Up:</strong> Administrators can process all unclosed dates in a single click (or validate with Admin password if a staff persona is active). The system executes <code>pos2_batch_catchup_z_readings</code> to generate and save missing Z-Readings.</li>
+        <li><strong>Tape Stack Printing:</strong> Shows a stack of generated Z-Reading audit tapes with options to auto-print to the receipt printer, print/save via browser PDF, or navigate to Settings to configure printers before unlocking the register.</li>
+      </ul>
       <h3>3. Electronic Journal (E-Journal)</h3>
       <p><strong>Route:</strong> <code>/reports-compliance/e-journal</code></p>
       <p>A complete audit log of all system actions: logs transactions, refunds, logins, settings modifications, voided sales, and stock adjustments. Search and filter by keywords, terminal IDs, or cashier names. Each sale event details the items sold, payments applied, taxes, discounts, and any VAT exemption amounts removed for BIR auditing compliance.</p>
