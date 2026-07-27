@@ -13,6 +13,7 @@ import {
   SalesByStaffRow,
   SalesOverTimeRow,
   XReadingResult,
+  ZReadingResult,
   ZReadingRPCRow,
   BIRSalesBookRow,
   SCPWDBookRow,
