@@ -240,19 +240,21 @@ const EJournalPanel: React.FC = () => {
 
         const promotions = Number(deductions.Promotions || 0).toFixed(2)
         const vatExemptDisc = Number(deductions.VAT_Exempt_Discount || 0).toFixed(2)
-        const scPwd = Number(deductions.SC_PWD_Discount || 0).toFixed(2)
+        const scPwd = Number(deductions.SC_PWD_Discount ?? deductions.SC_PWD ?? 0).toFixed(2)
         const refunds = Number(deductions.Refunds || 0).toFixed(2)
         const voids = Number(deductions.Voids || 0).toFixed(2)
         const totalDeductions = (
           Number(deductions.Promotions || 0) +
           Number(deductions.VAT_Exempt_Discount || 0) +
-          Number(deductions.SC_PWD_Discount || 0) +
+          Number(deductions.SC_PWD_Discount ?? deductions.SC_PWD ?? 0) +
           Number(deductions.Refunds || 0) +
           Number(deductions.Voids || 0)
         ).toFixed(2)
 
         const vatableAmt = Number(vat.VATable || 0).toFixed(2)
-        const vatAmount = Number(vat.VATAmount || 0).toFixed(2)
+        const grossVatAmt = Number(vat.GrossVATAmount ?? vat.VATAmount ?? 0).toFixed(2)
+        const refundVatAmt = Number(vat.RefundVAT || 0).toFixed(2)
+        const netVatPayableAmt = Number(vat.NetVATPayable ?? vat.VATAmount ?? 0).toFixed(2)
         const vatExempt = Number(vat.Exempt || 0).toFixed(2)
         const zeroRated = Number(vat.ZeroRated || 0).toFixed(2)
 
@@ -283,7 +285,10 @@ const EJournalPanel: React.FC = () => {
 
         text += `VAT Details:\n`
         text += `  VATable Sales:         ${vatableAmt.padStart(12)}\n`
-        text += `  VAT Amount (12%):      ${vatAmount.padStart(12)}\n`
+        text += `  Gross VAT Amount (12%): ${grossVatAmt.padStart(12)}\n`
+        text += `  Less: Refund VAT:      ${refundVatAmt.padStart(12)}\n`
+        text += `    ----------------------------------\n`
+        text += `  NET Output VAT Payable: ${netVatPayableAmt.padStart(12)}\n`
         text += `  VAT-Exempt Sales:      ${vatExempt.padStart(12)}\n`
         text += `  Zero-Rated Sales:      ${zeroRated.padStart(12)}\n`
         text += `\n`
@@ -317,16 +322,20 @@ const EJournalPanel: React.FC = () => {
 
         const xPromotions = Number(xDeductions.Promotions || 0).toFixed(2)
         const xVatExemptDisc = Number(xDeductions.VAT_Exempt_Discount || 0).toFixed(2)
-        const xScPwd = Number(xDeductions.SC_PWD_Discount || 0).toFixed(2)
+        const xScPwd = Number(xDeductions.SC_PWD_Discount ?? xDeductions.SC_PWD ?? 0).toFixed(2)
         const xRefunds = Number(xDeductions.Refunds || 0).toFixed(2)
         const xVoids = Number(xDeductions.Voids || 0).toFixed(2)
         const xTotalDed = (
           Number(xDeductions.Promotions || 0) +
           Number(xDeductions.VAT_Exempt_Discount || 0) +
-          Number(xDeductions.SC_PWD_Discount || 0) +
+          Number(xDeductions.SC_PWD_Discount ?? xDeductions.SC_PWD ?? 0) +
           Number(xDeductions.Refunds || 0) +
           Number(xDeductions.Voids || 0)
         ).toFixed(2)
+
+        const xGrossVat = Number(xVat.GrossVATAmount ?? xVat.VATAmount ?? 0).toFixed(2)
+        const xRefundVat = Number(xVat.RefundVAT || 0).toFixed(2)
+        const xNetVat = Number(xVat.NetVATPayable ?? xVat.VATAmount ?? 0).toFixed(2)
 
         text += `Details: ${row.event_description}\n`
         if (xTerminal.Name) text += `Terminal: ${xTerminal.Name}  MIN: ${xTerminal.MIN || 'N/A'}\n`
@@ -351,7 +360,10 @@ const EJournalPanel: React.FC = () => {
 
         text += `VAT Details:\n`
         text += `  VATable Sales:         ${Number(xVat.VATable || 0).toFixed(2).padStart(12)}\n`
-        text += `  VAT Amount (12%):      ${Number(xVat.VATAmount || 0).toFixed(2).padStart(12)}\n`
+        text += `  Gross VAT Amount (12%): ${xGrossVat.padStart(12)}\n`
+        text += `  Less: Refund VAT:      ${xRefundVat.padStart(12)}\n`
+        text += `    ----------------------------------\n`
+        text += `  NET Output VAT Payable: ${xNetVat.padStart(12)}\n`
         text += `  VAT-Exempt Sales:      ${Number(xVat.Exempt || 0).toFixed(2).padStart(12)}\n`
         text += `  Zero-Rated Sales:      ${Number(xVat.ZeroRated || 0).toFixed(2).padStart(12)}\n`
 

@@ -12,7 +12,7 @@ import { FormatDateTime } from '../../utils/formatDateTime'
 
 
 
-const generateZReadingText = (
+export const generateZReadingText = (
   report: ZReadingResult,
   businessSettings: BusinessSettings | null,
 ) => {
@@ -132,8 +132,18 @@ const generateZReadingText = (
     }
   }
 
-  const zCounter = (report as any).z_counter || (report as any).id || (report as any).z_reading_id || 142;
+  const zCounter = report.Terminal?.ZCounter || (report as any).z_counter || (report as any).id || (report as any).z_reading_id || 1;
   const zCounterStr = String(zCounter).padStart(6, '0');
+
+  const startInv = report.Invoices?.Start || report.TransactionRange?.Start || 'N/A';
+  const endInv = report.Invoices?.End || report.TransactionRange?.End || 'N/A';
+
+  const scPwdDisc = report.Deductions?.SC_PWD_Discount ?? report.Deductions?.SC_PWD ?? 0;
+  const vatExemptDisc = report.Deductions?.VAT_Exempt_Discount || 0;
+  const promoDisc = report.Deductions?.Promotions || 0;
+  const refundsAmt = report.Deductions?.Refunds || 0;
+  const voidsAmt = report.Deductions?.Voids || 0;
+  const totalDeductions = promoDisc + vatExemptDisc + scPwdDisc + refundsAmt + voidsAmt;
 
   let text = '';
   text += `${line}\n`;
@@ -153,27 +163,32 @@ const generateZReadingText = (
   text += `${align('Z-Counter:', zCounterStr)}\n`;
   text += `${line}\n`;
   text += `TRANSACTION RANGE\n`;
-  text += `${align('Beginning Inv No:', report.Invoices?.Start || 'N/A')}\n`;
-  text += `${align('Ending Inv No:', report.Invoices?.End || 'N/A')}\n`;
+  text += `${align('Beginning Inv No:', startInv)}\n`;
+  text += `${align('Ending Inv No:', endInv)}\n`;
   text += `${line}\n`;
   text += `SALES BREAKDOWN\n\n`;
   text += `${align('Gross Sales:', fmtAmt(report.GrossSales))}\n`;
   text += `  (Total of all items rung up)\n\n`;
   text += `Less Deductions:\n`;
-  text += `${align('  Promotions:', fmtAmt(report.Deductions?.Promotions || 0))}\n`;
-  text += `${align('  VAT-Exempt Discount:', fmtAmt(report.Deductions?.VAT_Exempt_Discount || 0))}\n`;
-  text += `${align('  SC/PWD Discounts:', fmtAmt(report.Deductions?.SC_PWD_Discount || 0))}\n`;
-  text += `${align('  Refunds/Returns:', fmtAmt(report.Deductions?.Refunds || 0))}\n`;
-  text += `${align('  Voids:', fmtAmt(report.Deductions?.Voids || 0))}\n`;
+  text += `${align('  Promotions:', fmtAmt(promoDisc))}\n`;
+  text += `${align('  VAT-Exempt Discount:', fmtAmt(vatExemptDisc))}\n`;
+  text += `${align('  SC/PWD Discounts:', fmtAmt(scPwdDisc))}\n`;
+  text += `${align('  Refunds/Returns:', fmtAmt(refundsAmt))}\n`;
+  text += `${align('  Voids:', fmtAmt(voidsAmt))}\n`;
   text += `                            ---------------\n`;
-  const totalDeductions = (report.Deductions?.Promotions || 0) + (report.Deductions?.VAT_Exempt_Discount || 0) + (report.Deductions?.SC_PWD_Discount || 0) + (report.Deductions?.Refunds || 0) + (report.Deductions?.Voids || 0);
   text += `${align('Total Deductions:', fmtAmt(totalDeductions))}\n\n`;
   text += `${align('NET SALES:', fmtAmt(report.NetSales))}\n`;
   text += `${line}\n`;
   if (businessSettings?.is_vat_registered !== false) {
+    const grossVat = report.VAT?.GrossVATAmount ?? (report.VAT?.VATAmount || 0);
+    const refundVat = report.VAT?.RefundVAT || 0;
+    const netVat = report.VAT?.NetVATPayable ?? (report.VAT?.VATAmount || 0);
     text += `VAT DETAILS (Based on Net Sales)\n\n`;
     text += `${align('VATable Sales:', fmtAmt(report.VAT?.VATable || 0))}\n`;
-    text += `${align('VAT Amount (12%):', fmtAmt(report.VAT?.VATAmount || 0))}\n`;
+    text += `${align('Gross VAT Amount (12%):', fmtAmt(grossVat))}\n`;
+    text += `${align('Less: Refund VAT:', fmtAmt(refundVat))}\n`;
+    text += `                            ---------------\n`;
+    text += `${align('NET Output VAT Payable:', fmtAmt(netVat))}\n`;
     text += `${align('VAT-Exempt Sales:', fmtAmt(report.VAT?.Exempt || 0))}\n`;
     text += `${align('Zero-Rated Sales:', fmtAmt(report.VAT?.ZeroRated || 0))}\n`;
     text += `${line}\n`;

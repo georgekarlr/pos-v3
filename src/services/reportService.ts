@@ -167,6 +167,7 @@ export const ReportService = {
       p_start_date: start_date,
       p_end_date: end_date,
     })
+    console.log('data bir sales book', data);
     if (error) { console.error('Error fetching BIR Sales Book:', error); throw new Error(error.message) }
     return (data || []) as BIRSalesBookRow[]
   },

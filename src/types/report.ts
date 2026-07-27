@@ -66,6 +66,9 @@ export interface XReadingDeductions {
 
 export interface XReadingVAT {
   VATable: number
+  GrossVATAmount?: number
+  RefundVAT?: number
+  NetVATPayable?: number
   VATAmount: number
   Exempt: number
   ZeroRated: number
@@ -75,7 +78,7 @@ export interface XReadingResult {
   ReportType: string
   GeneratedAt: string
   Business?: { Name: string; Address: string; TIN: string }
-  Terminal: { Name: string; MIN: string; CashierName: string }
+  Terminal: { Name: string; MIN: string; CashierName: string; ZCounter?: number }
   TransactionRange: { Start: string | null; End: string | null }
   GrossSales: number
   Deductions: XReadingDeductions
@@ -100,9 +103,21 @@ export interface ZReadingGrandTotals {
 
 export interface ZReadingVAT {
   VATable: number
+  GrossVATAmount?: number
+  RefundVAT?: number
+  NetVATPayable?: number
   VATAmount: number
   Exempt: number
   ZeroRated: number
+}
+
+export interface ZReadingDeductions {
+  SC_PWD_Discount?: number
+  SC_PWD?: number
+  VAT_Exempt_Discount: number
+  Promotions: number
+  Refunds: number
+  Voids: number
 }
 
 export interface ZReadingResult {
@@ -110,11 +125,12 @@ export interface ZReadingResult {
   ReadingDate: string
   GeneratedAt: string
   Business: { Name: string; Address: string; TIN: string }
-  Terminal: { Name: string; MIN: string; PTU: string; AdminName: string }
-  Invoices: { Start: string | null; End: string | null }
+  Terminal: { Name: string; MIN: string; PTU: string; AdminName: string; ZCounter?: number }
+  Invoices?: { Start: string | null; End: string | null }
+  TransactionRange?: { Start: string | null; End: string | null }
   GrossSales: number
   NetSales: number
-  Deductions: { SC_PWD_Discount: number; VAT_Exempt_Discount: number; Promotions: number; Refunds: number; Voids: number }
+  Deductions: ZReadingDeductions
   VAT: ZReadingVAT
   GrandTotals: ZReadingGrandTotals
   Collections?: CollectionDetails
@@ -203,7 +219,9 @@ export interface BIRSalesBookRow {
   ending_invoice: string | null
   gross_sales: number
   vatable_sales: number
-  vat_amount: number
+  gross_vat_amount: number
+  refund_vat_amount: number
+  net_vat_amount: number
   vat_exempt_sales: number
   zero_rated_sales: number
   total_discounts: number
