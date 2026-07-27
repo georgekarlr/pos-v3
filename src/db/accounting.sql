@@ -8,113 +8,239 @@ CREATE OR REPLACE FUNCTION pos2_get_bir_tax_ledger(
   p_limit integer DEFAULT 100,
   p_offset integer DEFAULT 0
 )
-RETURNS TABLE(
-  invoice_id bigint,
-  invoice_date timestamp without time zone,
-  invoice_number text,
-  terminal_name text,
-  customer_name text,
-  order_status order_status_type,
-  gross_amount numeric,
-  vatable_sales numeric,
-  vat_amount numeric,
-  vat_exempt_sales numeric,
-  zero_rated_sales numeric,
-  sc_pwd_discount numeric,
-  promo_discount numeric,
-  refund_amount numeric,
-  net_taxable_sales numeric
-)
+RETURNS jsonb
 LANGUAGE plpgsql
 STABLE
 AS $function$
+DECLARE
+  v_summary JSONB;
+  v_ledger JSONB;
+  v_raw_net_vat NUMERIC := 0.00;
+  v_net_vat_payable NUMERIC := 0.00;
+  v_excess_vat_credit NUMERIC := 0.00;
+  
+  v_order_totals RECORD;
+  v_item_totals RECORD;
+  v_refunds RECORD;
+  v_voids RECORD;
 BEGIN
-  -- Security Check: Only Admins can access BIR Tax Ledgers
+  -- Security Check
   IF NOT pos_is_admin(p_requesting_account_id) THEN
     RAISE EXCEPTION 'Permission denied: Only admins can access the BIR Tax Ledger.';
   END IF;
 
-  RETURN QUERY
+  -- 1. SUMMARY KPI CARDS: Order-Level Aggregation
   SELECT
-    o.id AS invoice_id,
-    COALESCE(o.occurred_at, o.created_at) AS invoice_date,
-    o.invoice_number,
-    COALESCE(t.terminal_name, 'System/Manual') AS terminal_name,
-    COALESCE(c.full_name, 'General Customer') AS customer_name,
-    o.status AS order_status,
-    
-    -- Gross Amount (Shelf Subtotal before discounts)
-    o.subtotal_amount AS gross_amount,
+    COUNT(id) AS total_invoices_recorded,
+    COUNT(CASE WHEN status = 'completed' THEN 1 END) AS completed_invoices,
+    COALESCE(SUM(CASE WHEN status = 'completed' THEN subtotal_amount ELSE 0 END), 0.00) AS completed_gross,
+    COALESCE(SUM(CASE WHEN status = 'completed' THEN total_amount ELSE 0 END), 0.00) AS completed_net,
+    COALESCE(SUM(CASE WHEN status = 'completed' THEN tax_amount ELSE 0 END), 0.00) AS gross_output_vat,
+    COALESCE(SUM(CASE WHEN status = 'completed' THEN sc_pwd_discount_amount ELSE 0 END), 0.00) AS sc_pwd_discounts,
+    COALESCE(SUM(CASE WHEN status = 'completed' THEN vat_exempt_discount_amount ELSE 0 END), 0.00) AS vat_exemptions,
+    COALESCE(SUM(CASE WHEN status = 'completed' THEN promo_discount_total ELSE 0 END), 0.00) AS promo_discounts
+  INTO v_order_totals
+  FROM pos2_orders
+  WHERE user_id = auth.uid()
+    AND COALESCE(occurred_at, created_at)::DATE >= p_start_date
+    AND COALESCE(occurred_at, created_at)::DATE <= p_end_date
+    AND (p_terminal_id IS NULL OR terminal_id = p_terminal_id);
 
-    -- VATable Sales Base (₱0.00 if transaction was voided)
-    CASE 
-      WHEN o.status = 'voided' THEN 0.00
-      ELSE COALESCE(SUM(CASE WHEN oi.tax_type_at_purchase = 'VATable' THEN ((oi.base_price_at_purchase * oi.quantity) - oi.promo_discount_amount) ELSE 0 END), 0.00)
-    END AS vatable_sales,
+  -- 2. SUMMARY KPI CARDS: Item-Level Tax Base Breakdown
+  SELECT
+    COALESCE(SUM(
+      CASE 
+        WHEN oi.tax_type_at_purchase = 'VATable' AND (o.sc_pwd_discount_amount = 0 OR p.is_sc_pwd_eligible = FALSE)
+        THEN ((oi.base_price_at_purchase * oi.quantity) - oi.promo_discount_amount)
+        ELSE 0 
+      END
+    ), 0.00) AS vatable_sales_base,
 
-    -- Output VAT (₱0.00 if transaction was voided)
-    CASE 
-      WHEN o.status = 'voided' THEN 0.00
-      ELSE o.tax_amount
-    END AS vat_amount,
+    COALESCE(SUM(
+      CASE 
+        WHEN oi.tax_type_at_purchase = 'VAT-Exempt' OR (oi.tax_type_at_purchase = 'VATable' AND o.sc_pwd_discount_amount > 0 AND p.is_sc_pwd_eligible = TRUE)
+        THEN ((oi.base_price_at_purchase * oi.quantity) - oi.promo_discount_amount)
+        ELSE 0 
+      END
+    ), 0.00) AS vat_exempt_sales_base,
 
-    -- VAT-Exempt Sales Base
-    CASE 
-      WHEN o.status = 'voided' THEN 0.00
-      ELSE GREATEST(COALESCE(SUM(CASE WHEN oi.tax_type_at_purchase = 'VAT-Exempt' THEN ((oi.base_price_at_purchase * oi.quantity) - oi.promo_discount_amount) ELSE 0 END), 0.00) - o.sc_pwd_discount_amount, 0.00)
-    END AS vat_exempt_sales,
+    COALESCE(SUM(
+      CASE 
+        WHEN oi.tax_type_at_purchase = 'Zero-Rated'
+        THEN ((oi.base_price_at_purchase * oi.quantity) - oi.promo_discount_amount)
+        ELSE 0 
+      END
+    ), 0.00) AS zero_rated_sales_base
 
-    -- Zero-Rated Sales Base
-    CASE 
-      WHEN o.status = 'voided' THEN 0.00
-      ELSE COALESCE(SUM(CASE WHEN oi.tax_type_at_purchase = 'Zero-Rated' THEN ((oi.base_price_at_purchase * oi.quantity) - oi.promo_discount_amount) ELSE 0 END), 0.00)
-    END AS zero_rated_sales,
+  INTO v_item_totals
+  FROM pos2_order_items oi
+  JOIN pos2_orders o ON oi.order_id = o.id
+  JOIN pos2_products p ON oi.product_id = p.id
+  WHERE o.user_id = auth.uid()
+    AND o.status = 'completed'
+    AND COALESCE(o.occurred_at, o.created_at)::DATE >= p_start_date
+    AND COALESCE(o.occurred_at, o.created_at)::DATE <= p_end_date
+    AND (p_terminal_id IS NULL OR o.terminal_id = p_terminal_id);
 
-    -- Discounts Applied
-    o.sc_pwd_discount_amount AS sc_pwd_discount,
-    o.promo_discount_total AS promo_discount,
+  -- 3. SUMMARY KPI CARDS: Voids
+  SELECT 
+    COUNT(id) AS total_void_transactions,
+    COALESCE(SUM(total_amount), 0.00) AS void_total_amount
+  INTO v_voids
+  FROM pos2_orders
+  WHERE user_id = auth.uid()
+    AND status = 'voided'
+    AND COALESCE(occurred_at, created_at)::DATE >= p_start_date
+    AND COALESCE(occurred_at, created_at)::DATE <= p_end_date
+    AND (p_terminal_id IS NULL OR terminal_id = p_terminal_id);
 
-    -- Refunded Portion (Sub-queried from refunds table)
-    COALESCE((
-      SELECT SUM(r.refund_amount + r.tax_component)
-      FROM pos2_refunds r
-      WHERE r.order_id = o.id
-    ), 0.00) AS refund_amount,
+  -- 4. SUMMARY KPI CARDS: Refunds
+  SELECT 
+    COALESCE(SUM(r.refund_amount), 0.00) AS refund_net,
+    COALESCE(SUM(r.tax_component), 0.00) AS refund_vat
+  INTO v_refunds
+  FROM pos2_refunds r
+  JOIN pos2_orders o ON r.order_id = o.id
+  WHERE r.user_id = auth.uid()
+    AND r.created_at::DATE >= p_start_date
+    AND r.created_at::DATE <= p_end_date
+    AND (p_terminal_id IS NULL OR o.terminal_id = p_terminal_id);
 
-    -- Final Realized Net Taxable Sales (₱0.00 if voided)
-    CASE 
-      WHEN o.status = 'voided' THEN 0.00
-      ELSE (o.total_amount - COALESCE((
+  -- Deduct SC/PWD discount from Exempt bucket for display
+  v_item_totals.vat_exempt_sales_base := GREATEST(v_item_totals.vat_exempt_sales_base - v_order_totals.sc_pwd_discounts, 0.00);
+
+  -- Calculate Net VAT Payable vs Excess Credit
+  v_raw_net_vat := v_order_totals.gross_output_vat - v_refunds.refund_vat;
+  IF v_raw_net_vat < 0 THEN
+    v_net_vat_payable := 0.00;
+    v_excess_vat_credit := ABS(v_raw_net_vat);
+  ELSE
+    v_net_vat_payable := v_raw_net_vat;
+    v_excess_vat_credit := 0.00;
+  END IF;
+
+  -- Build Summary JSON Block
+  v_summary := jsonb_build_object(
+    'gross_transactions', (v_order_totals.completed_gross + v_voids.void_total_amount),
+    'total_invoices_recorded', v_order_totals.total_invoices_recorded,
+    'completed_invoices', v_order_totals.completed_invoices,
+    'voided_invoices', v_voids.total_void_transactions,
+    'vatable_sales_base', v_item_totals.vatable_sales_base,
+    'gross_output_vat', v_order_totals.gross_output_vat,
+    'refund_output_vat', v_refunds.refund_vat,
+    'net_output_vat_payable', v_net_vat_payable,
+    'excess_vat_credit', v_excess_vat_credit,
+    'exempt_and_zero_rated', (v_item_totals.vat_exempt_sales_base + v_item_totals.zero_rated_sales_base),
+    'net_taxable_realized', (v_order_totals.completed_net - (v_refunds.refund_net + v_refunds.refund_vat))
+  );
+
+  -- 5. ITEMIZED LEDGER ARRAY (Invoices List)
+  SELECT COALESCE(jsonb_agg(row_to_json(l)), '[]'::jsonb)
+  INTO v_ledger
+  FROM (
+    SELECT
+      o.id AS invoice_id,
+      COALESCE(o.occurred_at, o.created_at) AS invoice_date,
+      o.invoice_number,
+      COALESCE(t.terminal_name, 'System/Manual') AS terminal_name,
+      COALESCE(c.full_name, 'General Customer') AS customer_name,
+      o.status AS order_status,
+      o.subtotal_amount AS gross_amount,
+
+      CASE 
+        WHEN o.status = 'voided' THEN 0.00
+        ELSE COALESCE(SUM(
+          CASE 
+            WHEN oi.tax_type_at_purchase = 'VATable' AND (o.sc_pwd_discount_amount = 0 OR p.is_sc_pwd_eligible = FALSE)
+            THEN ((oi.base_price_at_purchase * oi.quantity) - oi.promo_discount_amount)
+            ELSE 0 
+          END
+        ), 0.00)
+      END AS vatable_sales,
+
+      CASE 
+        WHEN o.status = 'voided' THEN 0.00
+        ELSE o.tax_amount
+      END AS gross_vat_amount,
+
+      COALESCE((
+        SELECT SUM(r.tax_component)
+        FROM pos2_refunds r
+        WHERE r.order_id = o.id
+      ), 0.00) AS refund_vat_amount,
+
+      CASE 
+        WHEN o.status = 'voided' THEN 0.00
+        ELSE GREATEST(o.tax_amount - COALESCE((
+          SELECT SUM(r.tax_component)
+          FROM pos2_refunds r
+          WHERE r.order_id = o.id
+        ), 0.00), 0.00)
+      END AS net_vat_amount,
+
+      CASE 
+        WHEN o.status = 'voided' THEN 0.00
+        ELSE GREATEST(COALESCE(SUM(
+          CASE 
+            WHEN oi.tax_type_at_purchase = 'VAT-Exempt' OR (oi.tax_type_at_purchase = 'VATable' AND o.sc_pwd_discount_amount > 0 AND p.is_sc_pwd_eligible = TRUE)
+            THEN ((oi.base_price_at_purchase * oi.quantity) - oi.promo_discount_amount)
+            ELSE 0 
+          END
+        ), 0.00) - o.sc_pwd_discount_amount, 0.00)
+      END AS vat_exempt_sales,
+
+      CASE 
+        WHEN o.status = 'voided' THEN 0.00
+        ELSE COALESCE(SUM(
+          CASE 
+            WHEN oi.tax_type_at_purchase = 'Zero-Rated'
+            THEN ((oi.base_price_at_purchase * oi.quantity) - oi.promo_discount_amount)
+            ELSE 0 
+          END
+        ), 0.00)
+      END AS zero_rated_sales,
+
+      o.sc_pwd_discount_amount AS sc_pwd_discount,
+      o.promo_discount_total AS promo_discount,
+
+      COALESCE((
         SELECT SUM(r.refund_amount + r.tax_component)
         FROM pos2_refunds r
         WHERE r.order_id = o.id
-      ), 0.00))
-    END AS net_taxable_sales
+      ), 0.00) AS refund_amount,
 
-  FROM pos2_orders o
-  LEFT JOIN pos2_order_items oi ON o.id = oi.order_id
-  LEFT JOIN pos2_terminals t ON o.terminal_id = t.id
-  LEFT JOIN pos2_customers c ON o.customer_id = c.id
-  WHERE o.user_id = auth.uid()
-    AND COALESCE(o.occurred_at, o.created_at)::DATE >= p_start_date
-    AND COALESCE(o.occurred_at, o.created_at)::DATE <= p_end_date
-    AND (p_terminal_id IS NULL OR o.terminal_id = p_terminal_id)
-  GROUP BY 
-    o.id, 
-    o.occurred_at, 
-    o.created_at, 
-    o.invoice_number, 
-    t.terminal_name, 
-    c.full_name, 
-    o.status, 
-    o.subtotal_amount, 
-    o.tax_amount, 
-    o.sc_pwd_discount_amount, 
-    o.promo_discount_total, 
-    o.total_amount
-  ORDER BY COALESCE(o.occurred_at, o.created_at) ASC, o.invoice_number ASC
-  LIMIT p_limit
-  OFFSET p_offset;
+      CASE 
+        WHEN o.status = 'voided' THEN 0.00
+        ELSE (o.total_amount - COALESCE((
+          SELECT SUM(r.refund_amount + r.tax_component)
+          FROM pos2_refunds r
+          WHERE r.order_id = o.id
+        ), 0.00))
+      END AS net_taxable_sales
+
+    FROM pos2_orders o
+    LEFT JOIN pos2_order_items oi ON o.id = oi.order_id
+    LEFT JOIN pos2_products p ON oi.product_id = p.id
+    LEFT JOIN pos2_terminals t ON o.terminal_id = t.id
+    LEFT JOIN pos2_customers c ON o.customer_id = c.id
+    WHERE o.user_id = auth.uid()
+      AND COALESCE(o.occurred_at, o.created_at)::DATE >= p_start_date
+      AND COALESCE(o.occurred_at, o.created_at)::DATE <= p_end_date
+      AND (p_terminal_id IS NULL OR o.terminal_id = p_terminal_id)
+    GROUP BY 
+      o.id, o.occurred_at, o.created_at, o.invoice_number, 
+      t.terminal_name, c.full_name, o.status, o.subtotal_amount, 
+      o.tax_amount, o.sc_pwd_discount_amount, o.promo_discount_total, o.total_amount
+    ORDER BY COALESCE(o.occurred_at, o.created_at) DESC, o.invoice_number DESC
+    LIMIT p_limit
+    OFFSET p_offset
+  ) l;
+
+  -- 6. COMBINED JSON RETURN
+  RETURN jsonb_build_object(
+    'summary', v_summary,
+    'ledger', v_ledger
+  );
 END;
 $function$;
 
@@ -297,6 +423,45 @@ BEGIN
 END;
 $function$;
 
+-- =============================================================================
+-- API FUNCTION: pos2_get_monthly_tax_preparation
+-- Returns JSONB BIR Monthly Tax Preparation Declaration (Form 2550Q / Form 2551Q).
+-- 
+-- API Response Schema (JSONB):
+-- {
+--   "ReportType": string,
+--   "TaxpayerCategory": "VAT-REGISTERED" | "NON-VAT",
+--   "TaxPeriod": { "StartDate": date, "EndDate": date },
+--   "BusinessInfo": { "Name": text, "TIN": text, "Address": text },
+--   "GeneratedAt": timestamp,
+--   "SalesSummary": {
+--     "TotalCompletedTransactions": bigint,
+--     "TotalVoidTransactions": bigint,
+--     "GrossSalesWithVoids": numeric,
+--     "LessVoids": numeric,
+--     "LessPromotions": numeric,
+--     "LessSCPWDDiscounts": numeric,
+--     "LessVATExemptions": numeric,
+--     "LessReturnsRefunds": numeric,
+--     "NetTaxableSales": numeric
+--   },
+--   "InstallmentFinancingSummary": {
+--     "NewContractsCreated": bigint,
+--     "TotalInvoicedPrincipal": numeric,
+--     "FinancedAmountOnCredit": numeric,
+--     "UnearnedInterestRecognized": numeric
+--   },
+--   "TaxBreakdown": {
+--     "VATableSales": numeric,
+--     "OutputVATCollected": numeric,
+--     "LessRefundOutputVAT": numeric,
+--     "NetOutputVATPayable": numeric,
+--     "ExcessVATCreditCarriedOver": numeric, -- Form 2550Q Line 23 Credit
+--     "VATExemptSales": numeric,
+--     "ZeroRatedSales": numeric
+--   }
+-- }
+-- =============================================================================
 DROP FUNCTION IF EXISTS pos2_get_monthly_tax_preparation;
 
 CREATE OR REPLACE FUNCTION pos2_get_monthly_tax_preparation(
@@ -311,10 +476,14 @@ AS $function$
 DECLARE
   v_billing_type TEXT;
   v_business RECORD;
-  v_sales RECORD;
+  v_order_totals RECORD;
+  v_item_totals RECORD;
   v_installments RECORD;
   v_voids RECORD;
   v_refunds RECORD;
+  v_raw_net_vat NUMERIC := 0.00;
+  v_net_vat_payable NUMERIC := 0.00;
+  v_excess_vat_credit NUMERIC := 0.00;
   v_report_json JSONB;
 BEGIN
   -- Security Check
@@ -331,29 +500,68 @@ BEGIN
   FROM pos2_business_settings
   WHERE user_id = auth.uid();
 
-  -- 2. Aggregate Completed Sales & Tax Components (Includes Installment Invoices)
+  -- 2. ORDER-LEVEL AGGREGATION
   SELECT
-    COUNT(o.id) AS total_completed_transactions,
-    COALESCE(SUM(o.subtotal_amount), 0.00) AS completed_gross_sales,
-    COALESCE(SUM(o.total_amount), 0.00) AS net_sales_realized,
-    COALESCE(SUM(o.tax_amount), 0.00) AS total_output_vat,
-    COALESCE(SUM(o.sc_pwd_discount_amount), 0.00) AS sc_pwd_discounts,
-    COALESCE(SUM(o.vat_exempt_discount_amount), 0.00) AS vat_exemptions,
-    COALESCE(SUM(o.promo_discount_total), 0.00) AS promo_discounts,
-    
-    -- Item-level breakdown by tax category
-    COALESCE(SUM(CASE WHEN oi.tax_type_at_purchase = 'VATable' THEN ((oi.base_price_at_purchase * oi.quantity) - oi.promo_discount_amount) ELSE 0 END), 0.00) AS vatable_sales_base,
-    COALESCE(SUM(CASE WHEN oi.tax_type_at_purchase = 'VAT-Exempt' THEN ((oi.base_price_at_purchase * oi.quantity) - oi.promo_discount_amount) ELSE 0 END), 0.00) AS vat_exempt_sales_base,
-    COALESCE(SUM(CASE WHEN oi.tax_type_at_purchase = 'Zero-Rated' THEN ((oi.base_price_at_purchase * oi.quantity) - oi.promo_discount_amount) ELSE 0 END), 0.00) AS zero_rated_sales_base
-  INTO v_sales
-  FROM pos2_orders o
-  LEFT JOIN pos2_order_items oi ON o.id = oi.order_id
+    COUNT(id) AS total_completed_transactions,
+    COALESCE(SUM(subtotal_amount), 0.00) AS completed_gross_sales,
+    COALESCE(SUM(total_amount), 0.00) AS net_sales_realized,
+    COALESCE(SUM(tax_amount), 0.00) AS total_output_vat,
+    COALESCE(SUM(sc_pwd_discount_amount), 0.00) AS sc_pwd_discounts,
+    COALESCE(SUM(vat_exempt_discount_amount), 0.00) AS vat_exemptions,
+    COALESCE(SUM(promo_discount_total), 0.00) AS promo_discounts
+  INTO v_order_totals
+  FROM pos2_orders
+  WHERE user_id = auth.uid()
+    AND status = 'completed'
+    AND COALESCE(occurred_at, created_at)::DATE >= p_start_date
+    AND COALESCE(occurred_at, created_at)::DATE <= p_end_date;
+
+  -- 3. ITEM-LEVEL TAX BREAKDOWN AGGREGATION
+  SELECT
+    COALESCE(SUM(
+      CASE 
+        WHEN oi.tax_type_at_purchase = 'VATable' AND (o.sc_pwd_discount_amount = 0 OR p.is_sc_pwd_eligible = FALSE)
+        THEN ((oi.base_price_at_purchase * oi.quantity) - oi.promo_discount_amount)
+        ELSE 0 
+      END
+    ), 0.00) AS gross_vatable_sales_base,
+
+    COALESCE(SUM(
+      CASE 
+        WHEN oi.tax_type_at_purchase = 'VAT-Exempt' OR (oi.tax_type_at_purchase = 'VATable' AND o.sc_pwd_discount_amount > 0 AND p.is_sc_pwd_eligible = TRUE)
+        THEN ((oi.base_price_at_purchase * oi.quantity) - oi.promo_discount_amount)
+        ELSE 0 
+      END
+    ), 0.00) AS vat_exempt_sales_base,
+
+    COALESCE(SUM(
+      CASE 
+        WHEN oi.tax_type_at_purchase = 'Zero-Rated'
+        THEN ((oi.base_price_at_purchase * oi.quantity) - oi.promo_discount_amount)
+        ELSE 0 
+      END
+    ), 0.00) AS zero_rated_sales_base
+
+  INTO v_item_totals
+  FROM pos2_order_items oi
+  JOIN pos2_orders o ON oi.order_id = o.id
+  JOIN pos2_products p ON oi.product_id = p.id
   WHERE o.user_id = auth.uid()
     AND o.status = 'completed'
     AND COALESCE(o.occurred_at, o.created_at)::DATE >= p_start_date
     AND COALESCE(o.occurred_at, o.created_at)::DATE <= p_end_date;
 
-  -- 3. Isolate Installment Sales Contracts Initiated in Period
+  -- 4. AGGREGATE REFUNDS & REFUNDED Output VAT
+  SELECT 
+    COALESCE(SUM(r.refund_amount), 0.00) AS refund_net,
+    COALESCE(SUM(r.tax_component), 0.00) AS refund_vat
+  INTO v_refunds
+  FROM pos2_refunds r
+  WHERE r.user_id = auth.uid()
+    AND r.created_at::DATE >= p_start_date
+    AND r.created_at::DATE <= p_end_date;
+
+  -- 5. Aggregate Installment Sales
   SELECT 
     COUNT(id) AS installment_contracts_count,
     COALESCE(SUM(total_contract_value), 0.00) AS total_installment_principal,
@@ -365,7 +573,7 @@ BEGIN
     AND created_at::DATE >= p_start_date
     AND created_at::DATE <= p_end_date;
 
-  -- 4. Aggregate Voided Orders
+  -- 6. Aggregate Voids
   SELECT 
     COUNT(id) AS total_void_transactions,
     COALESCE(SUM(total_amount), 0.00) AS void_total_amount
@@ -376,20 +584,21 @@ BEGIN
     AND COALESCE(occurred_at, created_at)::DATE >= p_start_date
     AND COALESCE(occurred_at, created_at)::DATE <= p_end_date;
 
-  -- 5. Aggregate Refunds & Tax Deductions
-  SELECT 
-    COALESCE(SUM(r.refund_amount), 0.00) AS refund_net,
-    COALESCE(SUM(r.tax_component), 0.00) AS refund_vat
-  INTO v_refunds
-  FROM pos2_refunds r
-  WHERE r.user_id = auth.uid()
-    AND r.created_at::DATE >= p_start_date
-    AND r.created_at::DATE <= p_end_date;
+  -- Deduct SC/PWD discount from Exempt bucket for clean display
+  v_item_totals.vat_exempt_sales_base := GREATEST(v_item_totals.vat_exempt_sales_base - v_order_totals.sc_pwd_discounts, 0.00);
 
-  -- Deduct SC/PWD discount from VAT Exempt Bucket for accurate display
-  v_sales.vat_exempt_sales_base := GREATEST(v_sales.vat_exempt_sales_base - v_sales.sc_pwd_discounts, 0.00);
+  -- 7. CALCULATE NET Output VAT PAYABLE vs. EXCESS CARRY-OVER
+  v_raw_net_vat := v_order_totals.total_output_vat - v_refunds.refund_vat;
+  
+  IF v_raw_net_vat < 0 THEN
+    v_net_vat_payable := 0.00;
+    v_excess_vat_credit := ABS(v_raw_net_vat);
+  ELSE
+    v_net_vat_payable := v_raw_net_vat;
+    v_excess_vat_credit := 0.00;
+  END IF;
 
-  -- 6. BUILD TAX PREPARATION JSON
+  -- 8. BUILD TAX PREPARATION JSON
   v_report_json := jsonb_build_object(
     'ReportType', 'BIR MONTHLY TAX PREPARATION REPORT',
     'TaxpayerCategory', v_billing_type,
@@ -402,15 +611,15 @@ BEGIN
     'GeneratedAt', NOW(),
 
     'SalesSummary', jsonb_build_object(
-      'TotalCompletedTransactions', v_sales.total_completed_transactions,
+      'TotalCompletedTransactions', v_order_totals.total_completed_transactions,
       'TotalVoidTransactions', v_voids.total_void_transactions,
-      'GrossSalesWithVoids', (v_sales.completed_gross_sales + v_voids.void_total_amount),
+      'GrossSalesWithVoids', (v_order_totals.completed_gross_sales + v_voids.void_total_amount),
       'LessVoids', v_voids.void_total_amount,
-      'LessPromotions', v_sales.promo_discounts,
-      'LessSCPWDDiscounts', v_sales.sc_pwd_discounts,
-      'LessVATExemptions', v_sales.vat_exemptions,
-      'LessReturnsRefunds', v_refunds.refund_net,
-      'NetTaxableSales', (v_sales.net_sales_realized - v_refunds.refund_net)
+      'LessPromotions', v_order_totals.promo_discounts,
+      'LessSCPWDDiscounts', v_order_totals.sc_pwd_discounts,
+      'LessVATExemptions', v_order_totals.vat_exemptions,
+      'LessReturnsRefunds', (v_refunds.refund_net + v_refunds.refund_vat),
+      'NetTaxableSales', (v_order_totals.net_sales_realized - (v_refunds.refund_net + v_refunds.refund_vat))
     ),
 
     'InstallmentFinancingSummary', jsonb_build_object(
@@ -421,12 +630,13 @@ BEGIN
     ),
 
     'TaxBreakdown', jsonb_build_object(
-      'VATableSales', v_sales.vatable_sales_base,
-      'OutputVATCollected', v_sales.total_output_vat,
+      'VATableSales', v_item_totals.gross_vatable_sales_base,
+      'OutputVATCollected', v_order_totals.total_output_vat,
       'LessRefundOutputVAT', v_refunds.refund_vat,
-      'NetOutputVATPayable', (v_sales.total_output_vat - v_refunds.refund_vat),
-      'VATExemptSales', v_sales.vat_exempt_sales_base,
-      'ZeroRatedSales', v_sales.zero_rated_sales_base
+      'NetOutputVATPayable', v_net_vat_payable,                      -- Capped at ₱0.00 minimum
+      'ExcessVATCreditCarriedOver', v_excess_vat_credit,            -- Form 2550Q Line 23 Credit
+      'VATExemptSales', v_item_totals.vat_exempt_sales_base,
+      'ZeroRatedSales', v_item_totals.zero_rated_sales_base
     )
   );
 

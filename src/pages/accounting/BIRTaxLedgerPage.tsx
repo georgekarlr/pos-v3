@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { AccountingService } from '../../services/accountingService'
-import { BIRTaxLedgerRow, MonthlyTaxPrepResult } from '../../types/accounting'
+import { BIRTaxLedgerRow, BIRTaxLedgerSummary, MonthlyTaxPrepResult } from '../../types/accounting'
 import { AccountingDateFilter } from '../../components/accounting/AccountingDateFilter'
 import { TaxLedgerView } from '../../components/accounting/TaxLedgerView'
 import { MonthlyTaxPrepView } from '../../components/accounting/MonthlyTaxPrepView'
@@ -23,6 +23,7 @@ export const BIRTaxLedgerPage: React.FC = () => {
   const [endDate, setEndDate] = useState(todayISO)
 
   const [itemizedRows, setItemizedRows] = useState<BIRTaxLedgerRow[]>([])
+  const [ledgerSummary, setLedgerSummary] = useState<BIRTaxLedgerSummary | null>(null)
   const [prepSummary, setPrepSummary] = useState<MonthlyTaxPrepResult | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -33,12 +34,13 @@ export const BIRTaxLedgerPage: React.FC = () => {
     setError(null)
     try {
       if (activeTab === 'itemized') {
-        const rows = await AccountingService.getBIRTaxLedger({
+        const response = await AccountingService.getBIRTaxLedger({
           requesting_account_id: persona.id,
           start_date: startDate,
           end_date: endDate,
         })
-        setItemizedRows(rows)
+        setItemizedRows(response.ledger)
+        setLedgerSummary(response.summary)
       } else {
         const summary = await AccountingService.getMonthlyTaxPreparation({
           requesting_account_id: persona.id,
@@ -126,7 +128,7 @@ export const BIRTaxLedgerPage: React.FC = () => {
           <LoadingSpinner />
         </div>
       ) : activeTab === 'itemized' ? (
-        <TaxLedgerView rows={itemizedRows} startDate={startDate} endDate={endDate} />
+        <TaxLedgerView rows={itemizedRows} summary={ledgerSummary} startDate={startDate} endDate={endDate} />
       ) : (
         <MonthlyTaxPrepView data={prepSummary} startDate={startDate} endDate={endDate} />
       )}

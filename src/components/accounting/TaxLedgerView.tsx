@@ -1,10 +1,12 @@
 import React, { useState, useMemo } from 'react'
-import { BIRTaxLedgerRow } from '../../types/accounting'
+import { BIRTaxLedgerRow, BIRTaxLedgerSummary } from '../../types/accounting'
 import { exportToCSV } from '../../utils/csvExporter'
-import { Download, Printer, Search, Receipt, Filter } from 'lucide-react'
+import { Download, Printer, Search, Filter } from 'lucide-react'
 
 interface TaxLedgerViewProps {
   rows: BIRTaxLedgerRow[]
+  /** Server-side KPI summary from pos2_get_bir_tax_ledger */
+  summary: BIRTaxLedgerSummary | null
   startDate: string
   endDate: string
   loading?: boolean
@@ -32,6 +34,7 @@ const formatDate = (dateStr: string) => {
 
 export const TaxLedgerView: React.FC<TaxLedgerViewProps> = ({
   rows,
+  summary,
   startDate,
   endDate,
   loading = false,
@@ -64,13 +67,15 @@ export const TaxLedgerView: React.FC<TaxLedgerViewProps> = ({
     })
   }, [rows, searchTerm, selectedTerminal])
 
-  // Aggregate Totals
+  // Aggregate Totals (for the table footer only — KPI cards use server summary)
   const totals = useMemo(() => {
     return filteredRows.reduce(
       (acc, r) => {
         acc.gross += Number(r.gross_amount || 0)
         acc.vatable += Number(r.vatable_sales || 0)
-        acc.vatAmount += Number(r.vat_amount || 0)
+        acc.grossVat += Number(r.gross_vat_amount || 0)
+        acc.refundVat += Number(r.refund_vat_amount || 0)
+        acc.netVat += Number(r.net_vat_amount || 0)
         acc.vatExempt += Number(r.vat_exempt_sales || 0)
         acc.zeroRated += Number(r.zero_rated_sales || 0)
         acc.scPwd += Number(r.sc_pwd_discount || 0)
@@ -82,7 +87,9 @@ export const TaxLedgerView: React.FC<TaxLedgerViewProps> = ({
       {
         gross: 0,
         vatable: 0,
-        vatAmount: 0,
+        grossVat: 0,
+        refundVat: 0,
+        netVat: 0,
         vatExempt: 0,
         zeroRated: 0,
         scPwd: 0,
@@ -102,7 +109,9 @@ export const TaxLedgerView: React.FC<TaxLedgerViewProps> = ({
       r.order_status,
       r.gross_amount,
       r.vatable_sales,
-      r.vat_amount,
+      r.gross_vat_amount,
+      r.refund_vat_amount,
+      r.net_vat_amount,
       r.vat_exempt_sales,
       r.zero_rated_sales,
       r.sc_pwd_discount,
@@ -120,7 +129,9 @@ export const TaxLedgerView: React.FC<TaxLedgerViewProps> = ({
       '',
       totals.gross,
       totals.vatable,
-      totals.vatAmount,
+      totals.grossVat,
+      totals.refundVat,
+      totals.netVat,
       totals.vatExempt,
       totals.zeroRated,
       totals.scPwd,
@@ -140,7 +151,9 @@ export const TaxLedgerView: React.FC<TaxLedgerViewProps> = ({
         'Status',
         'Gross Amount',
         'VATable Sales',
-        'Output VAT (12%)',
+        'Gross Output VAT (12%)',
+        'Refund VAT',
+        'Net Output VAT',
         'VAT-Exempt Sales',
         'Zero-Rated Sales',
         'SC/PWD Discount',
@@ -160,38 +173,46 @@ export const TaxLedgerView: React.FC<TaxLedgerViewProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Top KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      {/* Top KPI Cards — driven by server-side summary */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
         <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
           <span className="text-xs text-gray-500 font-medium">Gross Transactions</span>
-          <p className="text-xl font-bold text-gray-900 mt-1">{formatCurrency(totals.gross)}</p>
-          <span className="text-xs text-gray-400">{filteredRows.length} invoices recorded</span>
+          <p className="text-xl font-bold text-gray-900 mt-1">{formatCurrency(summary?.gross_transactions)}</p>
+          <span className="text-xs text-gray-400">{summary?.total_invoices_recorded ?? 0} invoices recorded</span>
+        </div>
+
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+          <span className="text-xs text-gray-500 font-medium">Completed / Voided</span>
+          <p className="text-xl font-bold text-gray-900 mt-1">{summary?.completed_invoices ?? 0}</p>
+          <span className="text-xs text-red-500">{summary?.voided_invoices ?? 0} voided</span>
         </div>
 
         <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
           <span className="text-xs text-indigo-600 font-medium">VATable Sales Base</span>
-          <p className="text-xl font-bold text-indigo-600 mt-1">{formatCurrency(totals.vatable)}</p>
+          <p className="text-xl font-bold text-indigo-600 mt-1">{formatCurrency(summary?.vatable_sales_base)}</p>
           <span className="text-xs text-indigo-700">Taxable revenue base</span>
         </div>
 
         <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-          <span className="text-xs text-blue-600 font-medium">12% Output VAT</span>
-          <p className="text-xl font-bold text-blue-600 mt-1">{formatCurrency(totals.vatAmount)}</p>
-          <span className="text-xs text-blue-700">Output tax collected</span>
+          <span className="text-xs text-blue-600 font-medium">Gross Output VAT</span>
+          <p className="text-xl font-bold text-blue-600 mt-1">{formatCurrency(summary?.gross_output_vat)}</p>
+          <span className="text-xs text-red-500">- {formatCurrency(summary?.refund_output_vat)} refunded</span>
         </div>
 
         <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
           <span className="text-xs text-amber-600 font-medium">Exempt & Zero-Rated</span>
-          <p className="text-xl font-bold text-amber-600 mt-1">
-            {formatCurrency(totals.vatExempt + totals.zeroRated)}
-          </p>
+          <p className="text-xl font-bold text-amber-600 mt-1">{formatCurrency(summary?.exempt_and_zero_rated)}</p>
           <span className="text-xs text-amber-700">Statutory exemptions</span>
         </div>
 
         <div className="bg-indigo-50 p-4 rounded-xl shadow-sm border border-indigo-100">
-          <span className="text-xs text-indigo-800 font-medium">Net Taxable Realized</span>
-          <p className="text-xl font-bold text-indigo-900 mt-1">{formatCurrency(totals.netTaxable)}</p>
-          <span className="text-xs text-indigo-700 font-semibold">Net of returns & refunds</span>
+          <span className="text-xs text-indigo-800 font-medium">Net VAT Payable</span>
+          <p className="text-xl font-bold text-indigo-900 mt-1">{formatCurrency(summary?.net_output_vat_payable)}</p>
+          {(summary?.excess_vat_credit ?? 0) > 0 && (
+            <span className="text-xs text-emerald-600 font-semibold">
+              + {formatCurrency(summary?.excess_vat_credit)} credit
+            </span>
+          )}
         </div>
       </div>
 
@@ -263,25 +284,27 @@ export const TaxLedgerView: React.FC<TaxLedgerViewProps> = ({
                 <th className="px-3 py-3 text-center font-semibold text-gray-700">Status</th>
                 <th className="px-3 py-3 text-right font-semibold text-gray-700">Gross</th>
                 <th className="px-3 py-3 text-right font-semibold text-indigo-700">VATable</th>
-                <th className="px-3 py-3 text-right font-semibold text-blue-700">Output VAT</th>
+                <th className="px-3 py-3 text-right font-semibold text-blue-700">Gross VAT</th>
+                <th className="px-3 py-3 text-right font-semibold text-pink-700">Refund VAT</th>
+                <th className="px-3 py-3 text-right font-semibold text-cyan-700">Net VAT</th>
                 <th className="px-3 py-3 text-right font-semibold text-amber-700">Exempt</th>
                 <th className="px-3 py-3 text-right font-semibold text-teal-700">Zero-Rated</th>
                 <th className="px-3 py-3 text-right font-semibold text-purple-700">SC/PWD Disc</th>
                 <th className="px-3 py-3 text-right font-semibold text-orange-700">Promo Disc</th>
-                <th className="px-3 py-3 text-right font-semibold text-pink-700">Refunds</th>
+                <th className="px-3 py-3 text-right font-semibold text-red-700">Refunds</th>
                 <th className="px-3 py-3 text-right font-semibold text-gray-900">Net Taxable</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 bg-white">
               {loading ? (
                 <tr>
-                  <td colSpan={14} className="px-4 py-8 text-center text-gray-500">
+                  <td colSpan={16} className="px-4 py-8 text-center text-gray-500">
                     Loading BIR tax ledger records...
                   </td>
                 </tr>
               ) : filteredRows.length === 0 ? (
                 <tr>
-                  <td colSpan={14} className="px-4 py-8 text-center text-gray-500">
+                  <td colSpan={16} className="px-4 py-8 text-center text-gray-500">
                     No tax ledger transactions found for the selected period.
                   </td>
                 </tr>
@@ -319,7 +342,13 @@ export const TaxLedgerView: React.FC<TaxLedgerViewProps> = ({
                       {formatCurrency(row.vatable_sales)}
                     </td>
                     <td className="px-3 py-2.5 text-right font-mono font-medium text-blue-700">
-                      {formatCurrency(row.vat_amount)}
+                      {formatCurrency(row.gross_vat_amount)}
+                    </td>
+                    <td className="px-3 py-2.5 text-right font-mono text-pink-600">
+                      {row.refund_vat_amount > 0 ? `- ${formatCurrency(row.refund_vat_amount)}` : '₱0.00'}
+                    </td>
+                    <td className="px-3 py-2.5 text-right font-mono font-medium text-cyan-700">
+                      {formatCurrency(row.net_vat_amount)}
                     </td>
                     <td className="px-3 py-2.5 text-right font-mono text-amber-700">
                       {formatCurrency(row.vat_exempt_sales)}
@@ -356,7 +385,13 @@ export const TaxLedgerView: React.FC<TaxLedgerViewProps> = ({
                     {formatCurrency(totals.vatable)}
                   </td>
                   <td className="px-3 py-3 text-right font-mono text-blue-900">
-                    {formatCurrency(totals.vatAmount)}
+                    {formatCurrency(totals.grossVat)}
+                  </td>
+                  <td className="px-3 py-3 text-right font-mono text-pink-700">
+                    - {formatCurrency(totals.refundVat)}
+                  </td>
+                  <td className="px-3 py-3 text-right font-mono text-cyan-900">
+                    {formatCurrency(totals.netVat)}
                   </td>
                   <td className="px-3 py-3 text-right font-mono text-amber-900">
                     {formatCurrency(totals.vatExempt)}

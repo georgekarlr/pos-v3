@@ -3,7 +3,7 @@ import {
   ARAgingParams,
   ARAgingRow,
   BIRTaxLedgerParams,
-  BIRTaxLedgerRow,
+  BIRTaxLedgerResponse,
   MonthlyTaxPrepParams,
   MonthlyTaxPrepResult,
   PnLStatementParams,
@@ -13,11 +13,12 @@ import { FormatDateTime } from '../utils/formatDateTime'
 
 export const AccountingService = {
   /**
-   * Fetch BIR Tax Ledger (Itemized sales transaction tax rows).
-   * Dates are normalized to local-timezone ISO date strings (YYYY-MM-DD) before
-   * being passed to the SQL function to prevent UTC-shift boundary errors.
+   * Fetch BIR Tax Ledger — returns the full response including the KPI
+   * summary block and the itemized ledger array.
+   * Dates are normalized to local-timezone ISO date strings (YYYY-MM-DD)
+   * before being passed to the SQL function to prevent UTC-shift errors.
    */
-  async getBIRTaxLedger(params: BIRTaxLedgerParams): Promise<BIRTaxLedgerRow[]> {
+  async getBIRTaxLedger(params: BIRTaxLedgerParams): Promise<BIRTaxLedgerResponse> {
     const { requesting_account_id, start_date, end_date, terminal_id, limit = 1000, offset = 0 } = params
     const { data, error } = await supabase.rpc('pos2_get_bir_tax_ledger', {
       p_requesting_account_id: requesting_account_id,
@@ -33,7 +34,11 @@ export const AccountingService = {
       throw new Error(error.message)
     }
 
-    return (data || []) as BIRTaxLedgerRow[]
+    const raw = data as { summary: Record<string, unknown>; ledger: unknown[] } | null
+    return {
+      summary: (raw?.summary ?? {}) as BIRTaxLedgerResponse['summary'],
+      ledger: (raw?.ledger ?? []) as BIRTaxLedgerResponse['ledger'],
+    }
   },
 
   /**
@@ -48,6 +53,7 @@ export const AccountingService = {
       p_start_date: FormatDateTime.getLocalDateISO(new Date(start_date)),
       p_end_date: FormatDateTime.getLocalDateISO(new Date(end_date)),
     })
+    console.log('data monthly tax prep', data);
 
     if (error) {
       console.error('Error fetching Monthly Tax Preparation report:', error)
