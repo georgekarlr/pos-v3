@@ -85,22 +85,20 @@ export const BIRTaxLedgerPage: React.FC = () => {
         <div className="flex items-center bg-gray-100 p-1 rounded-xl border border-gray-200">
           <button
             onClick={() => setActiveTab('itemized')}
-            className={`flex items-center space-x-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all ${
-              activeTab === 'itemized'
+            className={`flex items-center space-x-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all ${activeTab === 'itemized'
                 ? 'bg-white text-indigo-600 shadow-sm'
                 : 'text-gray-600 hover:text-gray-900'
-            }`}
+              }`}
           >
             <Table className="h-4 w-4" />
             <span>Itemized Tax Ledger</span>
           </button>
           <button
             onClick={() => setActiveTab('summary')}
-            className={`flex items-center space-x-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all ${
-              activeTab === 'summary'
+            className={`flex items-center space-x-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all ${activeTab === 'summary'
                 ? 'bg-white text-indigo-600 shadow-sm'
                 : 'text-gray-600 hover:text-gray-900'
-            }`}
+              }`}
           >
             <FileText className="h-4 w-4" />
             <span>Monthly Tax Declaration</span>
