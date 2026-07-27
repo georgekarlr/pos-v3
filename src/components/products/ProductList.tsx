@@ -1,6 +1,8 @@
 import React from 'react'
-import { Product, PRODUCT_UNIT_LABELS } from '../../types/product'
-import { Edit, Eye, Package } from 'lucide-react'
+import { Product } from '../../types/product'
+import { Package } from 'lucide-react'
+import ProductTableRow from './ProductTableRow'
+import ProductCard from './ProductCard'
 
 interface ProductListProps {
   products: Product[]
@@ -8,9 +10,9 @@ interface ProductListProps {
   isAdmin: boolean
 }
 
-const ProductList: React.FC<ProductListProps> = ({ products, onEdit, isAdmin }) => {
+export const ProductList: React.FC<ProductListProps> = ({ products, onEdit, isAdmin }) => {
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-PH', {
       style: 'currency',
       currency: 'PHP'
     }).format(amount)
@@ -18,10 +20,10 @@ const ProductList: React.FC<ProductListProps> = ({ products, onEdit, isAdmin }) 
 
   if (products.length === 0) {
     return (
-      <div className="text-center py-16">
+      <div className="text-center py-16 bg-white rounded-lg shadow-sm border border-gray-200">
         <Package className="mx-auto h-16 w-16 text-gray-300 mb-4" />
-        <h3 className="text-lg font-medium text-gray-900 mb-2">No products yet</h3>
-        <p className="text-gray-500">
+        <h3 className="text-lg font-medium text-gray-900 mb-2">No products found</h3>
+        <p className="text-gray-500 text-sm">
           {isAdmin ? 'Get started by adding your first product.' : 'No products available to display.'}
         </p>
       </div>
@@ -31,7 +33,7 @@ const ProductList: React.FC<ProductListProps> = ({ products, onEdit, isAdmin }) 
   return (
     <div className="space-y-4">
       {/* Desktop Table View */}
-      <div className="hidden lg:block overflow-x-auto bg-white rounded-lg shadow">
+      <div className="hidden lg:block overflow-x-auto bg-white rounded-lg shadow border border-gray-200">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
@@ -42,7 +44,10 @@ const ProductList: React.FC<ProductListProps> = ({ products, onEdit, isAdmin }) 
                 SKU / Barcode
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Base Price
+                Base & Cost Price
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Profit Margin
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Tax Rate
@@ -62,9 +67,6 @@ const ProductList: React.FC<ProductListProps> = ({ products, onEdit, isAdmin }) 
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Status
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                SC/PWD
-              </th>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actions
               </th>
@@ -72,122 +74,13 @@ const ProductList: React.FC<ProductListProps> = ({ products, onEdit, isAdmin }) 
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {products.map((product) => (
-              <tr key={product.id} className="hover:bg-gray-50 transition-colors">
-                <td className="px-6 py-4">
-                  <div className="flex items-center">
-                    {product.image_url ? (
-                      <img
-                        src={product.image_url}
-                        alt={product.name}
-                        className="h-10 w-10 rounded-lg object-cover mr-3"
-                      />
-                    ) : (
-                      <div className="h-10 w-10 rounded-lg bg-gray-100 flex items-center justify-center mr-3">
-                        <Package className="h-5 w-5 text-gray-400" />
-                      </div>
-                    )}
-                    <div>
-                      <div className="text-sm font-medium text-gray-900">{product.name}</div>
-                      {product.description && (
-                        <div className="text-sm text-gray-500 line-clamp-1">{product.description}</div>
-                      )}
-                    </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{product.sku || '-'}</div>
-                  <div className="text-sm text-gray-500">{product.barcode || '-'}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {formatCurrency(product.base_price)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {product.tax_rate}%
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm">
-                  <span
-                    className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${product.tax_type === 'VATable'
-                        ? 'bg-blue-100 text-blue-800 border border-blue-200'
-                        : product.tax_type === 'VAT-Exempt'
-                          ? 'bg-amber-100 text-amber-800 border border-amber-200'
-                          : 'bg-purple-100 text-purple-800 border border-purple-200'
-                      }`}
-                  >
-                    {product.tax_type || 'VATable'}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {formatCurrency(product.display_price)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  <div className="font-medium">
-                    {product.total_stock}{' '}
-                    {product.unit_type
-                      ? PRODUCT_UNIT_LABELS[product.unit_type] || product.unit_type
-                      : product.selling_method === 'unit'
-                        ? 'units'
-                        : ''}
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    {product.selling_method === 'unit' ? 'Sold by unit' : 'Sold by weight/volume'}
-                  </div>
-                  {product.inventory_type && (
-                    <div className={`text-[10px] mt-1 font-bold uppercase ${product.inventory_type === 'perishable' ? 'text-orange-600' : 'text-blue-600'
-                      }`}>
-                      {product.inventory_type.replace('_', '-')}
-                    </div>
-                  )}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span
-                    className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${product.is_for_sale
-                        ? 'bg-blue-100 text-blue-800'
-                        : 'bg-orange-100 text-orange-800'
-                      }`}
-                  >
-                    {product.is_for_sale ? 'For Sale' : 'Not for Sale'}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span
-                    className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${product.is_active
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-gray-100 text-gray-800'
-                      }`}
-                  >
-                    {product.is_active ? 'Active' : 'Inactive'}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span
-                    className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${product.is_sc_pwd_eligible
-                        ? 'bg-purple-100 text-purple-800 border border-purple-200'
-                        : 'bg-gray-100 text-gray-800 border border-gray-200'
-                      }`}
-                  >
-                    {product.is_sc_pwd_eligible ? 'Eligible' : 'Not Eligible'}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  {isAdmin ? (
-                    <button
-                      onClick={() => onEdit(product)}
-                      className="text-blue-600 hover:text-blue-900 inline-flex items-center gap-1 transition-colors"
-                    >
-                      <Edit className="h-4 w-4" />
-                      Edit
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => onEdit(product)}
-                      className="text-gray-600 hover:text-gray-900 inline-flex items-center gap-1 transition-colors"
-                    >
-                      <Eye className="h-4 w-4" />
-                      View
-                    </button>
-                  )}
-                </td>
-              </tr>
+              <ProductTableRow
+                key={product.id}
+                product={product}
+                onEdit={onEdit}
+                isAdmin={isAdmin}
+                formatCurrency={formatCurrency}
+              />
             ))}
           </tbody>
         </table>
@@ -196,131 +89,13 @@ const ProductList: React.FC<ProductListProps> = ({ products, onEdit, isAdmin }) 
       {/* Mobile Card View */}
       <div className="lg:hidden space-y-4">
         {products.map((product) => (
-          <div
+          <ProductCard
             key={product.id}
-            className="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow"
-          >
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex items-center flex-1">
-                {product.image_url ? (
-                  <img
-                    src={product.image_url}
-                    alt={product.name}
-                    className="h-12 w-12 rounded-lg object-cover mr-3"
-                  />
-                ) : (
-                  <div className="h-12 w-12 rounded-lg bg-gray-100 flex items-center justify-center mr-3">
-                    <Package className="h-6 w-6 text-gray-400" />
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-medium text-gray-900 truncate">{product.name}</h3>
-                  <p className="text-sm text-gray-500 line-clamp-2">{product.description || 'No description'}</p>
-                </div>
-              </div>
-              <div className="flex flex-col items-end gap-1 ml-2">
-                <span
-                  className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full flex-shrink-0 ${product.is_active
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-gray-100 text-gray-800'
-                    }`}
-                >
-                  {product.is_active ? 'Active' : 'Inactive'}
-                </span>
-                <span
-                  className={`inline-flex px-2 py-1 text-[10px] font-bold uppercase rounded-full flex-shrink-0 ${product.is_for_sale
-                      ? 'bg-blue-100 text-blue-800'
-                      : 'bg-orange-100 text-orange-800 border border-orange-200'
-                    }`}
-                >
-                  {product.is_for_sale ? 'For Sale' : 'Not for Sale'}
-                </span>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 text-sm mb-3">
-              <div>
-                <p className="text-gray-500">SKU</p>
-                <p className="font-medium text-gray-900">{product.sku || '-'}</p>
-              </div>
-              <div>
-                <p className="text-gray-500">Barcode</p>
-                <p className="font-medium text-gray-900">{product.barcode || '-'}</p>
-              </div>
-              <div>
-                <p className="text-gray-500">Base Price</p>
-                <p className="font-medium text-gray-900">{formatCurrency(product.base_price)}</p>
-              </div>
-              <div>
-                <p className="text-gray-500">Tax Rate / Type</p>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <span className="font-medium text-gray-950">{product.tax_rate}%</span>
-                  <span
-                    className={`inline-flex px-1.5 py-0.5 text-[10px] font-bold rounded-full ${product.tax_type === 'VATable'
-                        ? 'bg-blue-100 text-blue-800 border border-blue-200'
-                        : product.tax_type === 'VAT-Exempt'
-                          ? 'bg-amber-100 text-amber-800 border border-amber-200'
-                          : 'bg-purple-100 text-purple-800 border border-purple-200'
-                      }`}
-                  >
-                    {product.tax_type || 'VATable'}
-                  </span>
-                </div>
-              </div>
-              <div>
-                <p className="text-gray-500">SC/PWD Eligibility</p>
-                <span
-                  className={`inline-flex px-2 py-0.5 text-[10px] font-bold uppercase rounded-full mt-0.5 ${product.is_sc_pwd_eligible
-                      ? 'bg-purple-100 text-purple-800 border border-purple-200'
-                      : 'bg-gray-100 text-gray-800 border border-gray-200'
-                    }`}
-                >
-                  {product.is_sc_pwd_eligible ? 'Eligible' : 'Not Eligible'}
-                </span>
-              </div>
-              <div className="col-span-2">
-                <p className="text-gray-500">Inventory</p>
-                <p className="font-medium text-gray-900">
-                  {product.total_stock}{' '}
-                  {product.unit_type
-                    ? PRODUCT_UNIT_LABELS[product.unit_type] || product.unit_type
-                    : product.selling_method === 'unit'
-                      ? 'units'
-                      : ''}
-                  <span className="text-xs text-gray-500 ml-2">
-                    ({product.selling_method === 'unit' ? 'Unit' : 'Measured'})
-                  </span>
-                </p>
-                {product.inventory_type && (
-                  <p className={`text-[10px] font-bold uppercase mt-0.5 ${product.inventory_type === 'perishable' ? 'text-orange-600' : 'text-blue-600'
-                    }`}>
-                    {product.inventory_type.replace('_', '-')}
-                  </p>
-                )}
-              </div>
-              <div className="col-span-2">
-                <p className="text-gray-500">Display Price</p>
-                <p className="font-semibold text-lg text-gray-900">{formatCurrency(product.display_price)}</p>
-              </div>
-            </div>
-
-            <button
-              onClick={() => onEdit(product)}
-              className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors inline-flex items-center justify-center gap-2"
-            >
-              {isAdmin ? (
-                <>
-                  <Edit className="h-4 w-4" />
-                  Edit Product
-                </>
-              ) : (
-                <>
-                  <Eye className="h-4 w-4" />
-                  View Details
-                </>
-              )}
-            </button>
-          </div>
+            product={product}
+            onEdit={onEdit}
+            isAdmin={isAdmin}
+            formatCurrency={formatCurrency}
+          />
         ))}
       </div>
     </div>

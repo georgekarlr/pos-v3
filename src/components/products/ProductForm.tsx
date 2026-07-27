@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Product, ProductUnitType, PRODUCT_UNIT_LABELS, ProductInventoryType, ProductTaxType } from '../../types/product'
 import { X } from 'lucide-react'
+import ProductPriceInputs from './ProductPriceInputs'
 
 interface ProductFormProps {
   product: Product | null
@@ -13,6 +14,7 @@ export interface ProductFormData {
   name: string
   description: string
   base_price: number
+  cost_price: number
   tax_rate: number
   sku: string
   barcode: string
@@ -31,6 +33,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onCancel, 
     name: '',
     description: '',
     base_price: 0,
+    cost_price: 0,
     tax_rate: 12,
     sku: '',
     barcode: '',
@@ -52,6 +55,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onCancel, 
         name: product.name,
         description: product.description || '',
         base_price: product.base_price,
+        cost_price: product.cost_price || 0,
         tax_rate: product.tax_rate,
         sku: product.sku || '',
         barcode: product.barcode || '',
@@ -67,14 +71,13 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onCancel, 
     }
   }, [product])
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target
+  const handlePriceChange = (field: string, value: number | string) => {
     setFormData(prev => {
       const updated = {
         ...prev,
-        [name]: name === 'base_price' || name === 'tax_rate' ? (value === '' ? 0 : parseFloat(value)) : value
+        [field]: value
       }
-      if (name === 'tax_type') {
+      if (field === 'tax_type') {
         if (value === 'VAT-Exempt' || value === 'Zero-Rated') {
           updated.tax_rate = 0
         } else if (value === 'VATable') {
@@ -83,6 +86,14 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onCancel, 
       }
       return updated
     })
+  }
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -97,11 +108,6 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onCancel, 
     } finally {
       setIsSubmitting(false)
     }
-  }
-
-  const calculateDisplayPrice = () => {
-    const taxAmount = formData.base_price * (formData.tax_rate / 100)
-    return formData.base_price + taxAmount
   }
 
   return (
@@ -145,7 +151,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onCancel, 
                   onChange={handleChange}
                   required
                   disabled={!isAdmin}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500 text-sm"
                   placeholder="Enter product name"
                 />
               </div>
@@ -161,84 +167,20 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onCancel, 
                   onChange={handleChange}
                   disabled={!isAdmin}
                   rows={3}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500 text-sm"
                   placeholder="Enter product description"
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div>
-                  <label htmlFor="base_price" className="block text-sm font-medium text-gray-700 mb-1">
-                    Base Price <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">{'\u20b1'}</span>
-                    <input
-                      type="number"
-                      id="base_price"
-                      name="base_price"
-                      value={formData.base_price}
-                      onChange={handleChange}
-                      required
-                      disabled={!isAdmin}
-                      step="0.01"
-                      min="0"
-                      className="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500"
-                      placeholder="0.00"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label htmlFor="tax_type" className="block text-sm font-medium text-gray-700 mb-1">
-                    BIR Tax Type <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    id="tax_type"
-                    name="tax_type"
-                    value={formData.tax_type}
-                    onChange={handleChange}
-                    disabled={!isAdmin}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500"
-                  >
-                    <option value="VATable">VATable (12%)</option>
-                    <option value="VAT-Exempt">VAT-Exempt (0%)</option>
-                    <option value="Zero-Rated">Zero-Rated (0%)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label htmlFor="tax_rate" className="block text-sm font-medium text-gray-700 mb-1">
-                    Tax Rate <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      id="tax_rate"
-                      name="tax_rate"
-                      value={formData.tax_rate}
-                      onChange={handleChange}
-                      required
-                      disabled={!isAdmin || formData.tax_type !== 'VATable'}
-                      step="0.01"
-                      min="0"
-                      max="100"
-                      className="w-full pr-8 pl-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500"
-                      placeholder="0.00"
-                    />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">%</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-gray-700">Display Price (with tax)</span>
-                  <span className="text-lg font-semibold text-blue-600">
-                    {'\u20b1'} {calculateDisplayPrice().toFixed(2)}
-                  </span>
-                </div>
-              </div>
+              {/* Pricing & Cost Section */}
+              <ProductPriceInputs
+                basePrice={formData.base_price}
+                costPrice={formData.cost_price}
+                taxType={formData.tax_type}
+                taxRate={formData.tax_rate}
+                disabled={!isAdmin}
+                onChange={handlePriceChange}
+              />
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
@@ -252,7 +194,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onCancel, 
                     value={formData.sku}
                     onChange={handleChange}
                     disabled={!isAdmin}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500 text-sm"
                     placeholder="Enter SKU"
                   />
                 </div>
@@ -268,7 +210,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onCancel, 
                     value={formData.barcode}
                     onChange={handleChange}
                     disabled={!isAdmin}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500 text-sm"
                     placeholder="Enter barcode"
                   />
                 </div>
@@ -285,7 +227,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onCancel, 
                     value={formData.selling_method}
                     onChange={handleChange}
                     disabled={!isAdmin}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500 text-sm"
                   >
                     <option value="unit">By Unit (Countable)</option>
                     <option value="measured">By Weight/Volume/Length (Measured)</option>
@@ -303,7 +245,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onCancel, 
                     onChange={handleChange}
                     required={formData.selling_method === 'measured'}
                     disabled={!isAdmin}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500 text-sm"
                   >
                     <option value="">Select unit type</option>
                     {(Object.entries(PRODUCT_UNIT_LABELS) as [ProductUnitType, string][]).map(([value, label]) => (
@@ -377,7 +319,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onCancel, 
                     value={formData.inventory_type}
                     onChange={handleChange}
                     disabled={!isAdmin || !!product}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500 text-sm"
                   >
                     <option value="non_perishable">Non-Perishable</option>
                     <option value="perishable">Perishable</option>
@@ -396,35 +338,19 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onCancel, 
                       value={product.total_stock}
                       readOnly
                       disabled
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed text-sm"
                     />
                     <p className="mt-1 text-xs text-gray-500">Use Inventory tab to adjust stock.</p>
                   </div>
                 )}
               </div>
-
-              {/*<div>
-                <label htmlFor="image_url" className="block text-sm font-medium text-gray-700 mb-1">
-                  Image URL
-                </label>
-                <input
-                  type="url"
-                  id="image_url"
-                  name="image_url"
-                  value={formData.image_url}
-                  onChange={handleChange}
-                  disabled={!isAdmin}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500"
-                  placeholder="https://example.com/image.jpg"
-                />
-              </div>*/}
             </div>
 
             <div className="flex flex-col-reverse sm:flex-row gap-3 mt-6 pt-4 border-t border-gray-200">
               <button
                 type="button"
                 onClick={onCancel}
-                className="w-full sm:w-auto px-6 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                className="w-full sm:w-auto px-6 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm"
               >
                 {isAdmin ? 'Cancel' : 'Close'}
               </button>
@@ -432,7 +358,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onCancel, 
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full sm:w-auto px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed transition-colors font-medium"
+                  className="w-full sm:w-auto px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed transition-colors font-medium text-sm"
                 >
                   {isSubmitting ? 'Saving...' : product ? 'Update Product' : 'Create Product'}
                 </button>

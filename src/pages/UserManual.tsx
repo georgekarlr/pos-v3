@@ -186,7 +186,7 @@ const chapters: ManualChapter[] = [
       <h3>1. Product Directory</h3>
       <p>The directory adapts gracefully: presenting detailed columns on desktop tables, and shifting to simplified cards on mobile devices.</p>
       <ul>
-        <li><strong>Search Bar:</strong> Real-time filtering by Product Name or exact Barcode values.</li>
+        <li><strong>Search Bar & Filters:</strong> Real-time filtering by Product Name, SKU, Barcode, Active status, Sale status, or Inventory type.</li>
         <li><strong>Refresh:</strong> Triggers ProductService.getAllProducts() to load updates from the Postgres database.</li>
       </ul>
       <h3>2. Product Configuration Fields</h3>
@@ -202,8 +202,10 @@ const chapters: ManualChapter[] = [
           <tr><td>Selling Method</td><td>Unit (discrete counts e.g., pieces, cans) or Measured (fractional values e.g., kg, liters).</td></tr>
           <tr><td>Inventory Type</td><td>Perishable (tracks batches and expiration dates) or Non-perishable (general stock count).</td></tr>
           <tr><td>Pricing Logic</td><td>Base Price is entered manually. Entering a Tax Rate (e.g. 12%) automatically computes and previews the tax-inclusive Display Price.</td></tr>
+          <tr><td>Cost Price & Margin</td><td>Cost Price (COGS) input tracks product acquisition cost. Real-time profit margin amount (Base Price - Cost Price) and margin percentage are dynamically previewed.</td></tr>
           <tr><td>Identifiers</td><td>SKU and Barcode inputs to hook items to POS barcode scan listeners.</td></tr>
           <tr><td>Sale Status</td><td>A toggle to set products as For Sale. Non-retail items (such as raw materials) can be configured and are filtered out from the cashier POS screen.</td></tr>
+          <tr><td>SC/PWD Eligibility</td><td>A toggle to mark products as eligible for Senior Citizen and PWD discounts. Ineligible products will not receive the 20% discount even if the discount is applied at checkout.</td></tr>
           <tr><td>Active Status</td><td>A checkbox to set products as Active. Inactive (archived) items are hidden from all cashier POS and inventory screens, but remain editable by administrators.</td></tr>
         </tbody>
       </table>
