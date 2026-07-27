@@ -16,13 +16,39 @@ export interface BIRTaxLedgerRow {
   order_status: 'completed' | 'pending' | 'voided' | string
   gross_amount: number
   vatable_sales: number
-  vat_amount: number
+  /** Gross output VAT collected on this invoice (before refunds) */
+  gross_vat_amount: number
+  /** Output VAT reversed via refunds on this invoice */
+  refund_vat_amount: number
+  /** Net VAT after deducting refund VAT (capped at 0) */
+  net_vat_amount: number
   vat_exempt_sales: number
   zero_rated_sales: number
   sc_pwd_discount: number
   promo_discount: number
   refund_amount: number
   net_taxable_sales: number
+}
+
+/** KPI summary block returned by pos2_get_bir_tax_ledger */
+export interface BIRTaxLedgerSummary {
+  gross_transactions: number
+  total_invoices_recorded: number
+  completed_invoices: number
+  voided_invoices: number
+  vatable_sales_base: number
+  gross_output_vat: number
+  refund_output_vat: number
+  net_output_vat_payable: number
+  excess_vat_credit: number
+  exempt_and_zero_rated: number
+  net_taxable_realized: number
+}
+
+/** Full response shape from pos2_get_bir_tax_ledger */
+export interface BIRTaxLedgerResponse {
+  summary: BIRTaxLedgerSummary
+  ledger: BIRTaxLedgerRow[]
 }
 
 export interface MonthlyTaxPrepParams {
@@ -61,6 +87,7 @@ export interface MonthlyTaxPrepTaxBreakdown {
   OutputVATCollected: number
   LessRefundOutputVAT: number
   NetOutputVATPayable: number
+  ExcessVATCreditCarriedOver?: number
   VATExemptSales: number
   ZeroRatedSales: number
 }
@@ -96,6 +123,7 @@ export interface NonVATTaxDeclaration {
   PercentageTaxDue: number
 }
 
+/** @deprecated Use BIRTaxLedgerResponse instead */
 export interface BIRTaxLedgerResult {
   TaxRegistrationType: 'VAT-REGISTERED' | 'NON-VAT (PERCENTAGE TAXPAYER)'
   TargetForm: string

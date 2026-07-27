@@ -31,8 +31,9 @@ export const AccountingSection: React.FC = () => {
       <ul className="list-disc list-inside space-y-1 ml-2">
         <li><strong>Registered Business Details:</strong> Automatically loads registered Business Name, Taxpayer Identification Number (TIN), Address, and Taxpayer Category (VAT-REGISTERED vs NON-VAT).</li>
         <li><strong>Sales Realization & Statutory Deductions:</strong> Computes Gross Invoiced Sales, Less Voids, Less Promotions, Less SC/PWD Statutory Discounts, Less Statutory VAT Exemptions, Less Returns/Refunds, and Net Taxable Sales.</li>
-        <li><strong>BIR Tax Liability Schedule:</strong> Calculates Form 2550Q Line 15A VATable Sales Base, Line 15B 12% Output VAT Collected, Output VAT component on refunds, Net Output VAT Payable owed to BIR, Line 18 Exempt Sales Base, and Line 17 Zero-Rated Sales Base.</li>
+        <li><strong>BIR Tax Liability Schedule:</strong> Calculates Form 2550Q Line 15A VATable Sales Base, Line 15B 12% Output VAT Collected, Output VAT component on refunds, Net Output VAT Payable owed to BIR, Line 23 Excess VAT Credit Carried Over (for net refund periods), Line 18 Exempt Sales Base, and Line 17 Zero-Rated Sales Base.</li>
         <li><strong>Installment Credit & Financing Schedule:</strong> Summarizes new installment contracts created in period, total invoiced principal, financed amount on credit, and unearned interest recognized.</li>
+        <li><strong>Composable Architecture:</strong> Modular schedule components (Header Card, KPI Summary Grid, Sales Realization Table, Tax Liability Schedule, Installment Financing Grid) capable of independent rendering or unified declaration views.</li>
       </ul>
 
       <h3 className="text-base font-semibold text-gray-800 mt-4">3. Accounts Receivable (A/R) Aging Report</h3>
