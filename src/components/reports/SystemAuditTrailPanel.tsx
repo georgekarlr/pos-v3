@@ -147,12 +147,16 @@ const AuditRow: React.FC<{ row: SystemAuditTrailRow }> = ({ row }) => {
 // These map to the API's p_table_filter friendly keys
 
 const MODULE_FILTERS: { value: string; label: string }[] = [
-  { value: 'staff', label: 'Staff Profile' },
-  { value: 'products', label: 'Product Catalog' },
-  { value: 'settings', label: 'Business Header' },
-  { value: 'registers', label: 'Register Configuration' },
-  { value: 'promos', label: 'Promotion Rules' },
-  { value: 'security', label: 'System Access' },
+  { value: 'staff',        label: 'Staff Profile' },
+  { value: 'products',     label: 'Product Catalog' },
+  { value: 'settings',     label: 'Business Header' },
+  { value: 'registers',    label: 'Register Configuration' },
+  { value: 'promos',       label: 'Promotion Rules' },
+  { value: 'inventory',    label: 'Inventory Stock' },
+  { value: 'orders',       label: 'Invoices & Voids' },
+  { value: 'debt',         label: 'Debt Ledger' },
+  { value: 'installments', label: 'Installment Plan' },
+  { value: 'security',     label: 'System Access' },
 ]
 
 const ACTION_OPTIONS = ['INSERT', 'UPDATE', 'DELETE', 'LOGIN', 'LOGOUT', 'FAILED_LOGIN']

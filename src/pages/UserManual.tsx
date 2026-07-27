@@ -442,7 +442,7 @@ const chapters: ManualChapter[] = [
       <ul>
         <li><strong>Columns:</strong> Timestamp, Table Name, Action (INSERT / UPDATE / DELETE), Row ID, and the DB Operator.</li>
         <li><strong>Before/After Diff:</strong> Click any row to expand an inline field-level diff with changed fields highlighted.</li>
-        <li><strong>Filters:</strong> Narrow results by Table Name, Action type, and date range.</li>
+        <li><strong>Filters:</strong> Narrow results by Module (Staff, Products, Settings, Registers, Promos, Inventory, Invoices & Voids, Debt Ledger, Installment Plan, System Access), Action type, and date range.</li>
         <li><strong>CSV Export:</strong> Download the current filtered page as a comma-separated file complete with receipt-style business headers and full-width column-spanning header rows.</li>
         <li><strong>Admin Only:</strong> Enforced by pos_is_admin() server-side security check.</li>
       </ul>
