@@ -267,6 +267,7 @@ export const TaxLedgerView: React.FC<TaxLedgerViewProps> = ({
                 <th className="px-3 py-3 text-right font-semibold text-amber-700">Exempt</th>
                 <th className="px-3 py-3 text-right font-semibold text-teal-700">Zero-Rated</th>
                 <th className="px-3 py-3 text-right font-semibold text-purple-700">SC/PWD Disc</th>
+                <th className="px-3 py-3 text-right font-semibold text-orange-700">Promo Disc</th>
                 <th className="px-3 py-3 text-right font-semibold text-pink-700">Refunds</th>
                 <th className="px-3 py-3 text-right font-semibold text-gray-900">Net Taxable</th>
               </tr>
@@ -274,13 +275,13 @@ export const TaxLedgerView: React.FC<TaxLedgerViewProps> = ({
             <tbody className="divide-y divide-gray-200 bg-white">
               {loading ? (
                 <tr>
-                  <td colSpan={13} className="px-4 py-8 text-center text-gray-500">
+                  <td colSpan={14} className="px-4 py-8 text-center text-gray-500">
                     Loading BIR tax ledger records...
                   </td>
                 </tr>
               ) : filteredRows.length === 0 ? (
                 <tr>
-                  <td colSpan={13} className="px-4 py-8 text-center text-gray-500">
+                  <td colSpan={14} className="px-4 py-8 text-center text-gray-500">
                     No tax ledger transactions found for the selected period.
                   </td>
                 </tr>
@@ -329,6 +330,9 @@ export const TaxLedgerView: React.FC<TaxLedgerViewProps> = ({
                     <td className="px-3 py-2.5 text-right font-mono text-purple-700">
                       {formatCurrency(row.sc_pwd_discount)}
                     </td>
+                    <td className="px-3 py-2.5 text-right font-mono text-orange-700">
+                      {row.promo_discount > 0 ? `- ${formatCurrency(row.promo_discount)}` : '₱0.00'}
+                    </td>
                     <td className="px-3 py-2.5 text-right font-mono text-red-600">
                       {row.refund_amount > 0 ? `- ${formatCurrency(row.refund_amount)}` : '₱0.00'}
                     </td>
@@ -362,6 +366,9 @@ export const TaxLedgerView: React.FC<TaxLedgerViewProps> = ({
                   </td>
                   <td className="px-3 py-3 text-right font-mono text-purple-900">
                     {formatCurrency(totals.scPwd)}
+                  </td>
+                  <td className="px-3 py-3 text-right font-mono text-orange-900">
+                    - {formatCurrency(totals.promo)}
                   </td>
                   <td className="px-3 py-3 text-right font-mono text-red-700">
                     - {formatCurrency(totals.refund)}
