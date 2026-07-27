@@ -20,7 +20,7 @@ import { ReportService } from '../../services/reportService'
 import { FormatDateTime } from '../../utils/formatDateTime'
 import { PersonaService } from '../../services/personaService'
 import { SettingsService } from '../../services/settingsService'
-import { ZReadingDisplay } from '../reports/ZReadingPanel'
+import { ZReadingDisplay, generateZReadingText } from '../reports/ZReadingPanel'
 import { BusinessSettings } from '../../types/settings'
 import { ZReadingResult } from '../../types/report'
 
@@ -55,32 +55,9 @@ export const ZReadingCatchupModal: React.FC<ZReadingCatchupModalProps> = ({
     })
   }, [])
 
-  // Generate combined raw ESC/POS text representation of all Z-Reading reports
+  // Generate combined raw ESC/POS text representation of Z-Reading report
   const getRawTextForReport = (rep: ZReadingResult) => {
-    // Generate text via helper in ZReadingPanel or custom renderer
-    const line = '='.repeat(40)
-    const center = (t: string) => {
-      if (!t) return ''
-      if (t.length <= 40) {
-        const left = Math.floor((40 - t.length) / 2)
-        return ' '.repeat(left) + t
-      }
-      return t.slice(0, 40)
-    }
-    const align = (l: string, r: string) => {
-      const spaces = Math.max(1, 40 - l.length - r.length)
-      return l + ' '.repeat(spaces) + r
-    }
-    const fmtAmt = (n: number) => `PHP ${n.toFixed(2).padStart(10)}`
-
-    let text = `${line}\n${center('Z-READING (CATCH-UP)')}\n${line}\n`
-    text += `${align('Terminal:', rep.Terminal?.Name || String(terminalId))}\n`
-    text += `${align('Date:', rep.ReadingDate || '')}\n`
-    text += `${align('Net Sales:', fmtAmt(rep.NetSales || 0))}\n`
-    text += `${align('Gross Sales:', fmtAmt(rep.GrossSales || 0))}\n`
-    text += `${align('New Grand Total:', fmtAmt(rep.GrandTotals?.NewCumulative || 0))}\n`
-    text += `${line}\n\n`
-    return text
+    return generateZReadingText(rep, businessSettings)
   }
 
   const runBatchCatchup = async (adminId: number) => {

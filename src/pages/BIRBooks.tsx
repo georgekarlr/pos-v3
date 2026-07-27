@@ -89,11 +89,15 @@ const BIRBooks: React.FC = () => {
   // Computed summary values for KPI cards
   const zReadingSummary = useMemo(() => {
     const totalGross = zReadingData.reduce((sum, row) => sum + Number(row.gross_sales || 0), 0)
-    const totalVAT = zReadingData.reduce((sum, row) => sum + Number(row.vat_amount || 0), 0)
+    const totalGrossVAT = zReadingData.reduce((sum, row) => sum + Number(row.gross_vat_amount || 0), 0)
+    const totalRefundVAT = zReadingData.reduce((sum, row) => sum + Number(row.refund_vat_amount || 0), 0)
+    const totalNetVAT = zReadingData.reduce((sum, row) => sum + Number(row.net_vat_amount || 0), 0)
     return {
       count: zReadingData.length,
       totalGross,
-      totalVAT,
+      totalGrossVAT,
+      totalRefundVAT,
+      totalNetVAT,
     }
   }, [zReadingData])
 
@@ -139,7 +143,9 @@ const BIRBooks: React.FC = () => {
         'Ending Invoice',
         'Gross Sales',
         'VATable Sales',
-        'VAT Amount (12%)',
+        'Gross Output VAT',
+        'Refund VAT',
+        'Net Output VAT',
         'VAT-Exempt Sales',
         'Zero-Rated Sales',
         'Total Discounts',
@@ -154,7 +160,9 @@ const BIRBooks: React.FC = () => {
         r.ending_invoice || 'N/A',
         r.gross_sales,
         r.vatable_sales,
-        r.vat_amount,
+        r.gross_vat_amount ?? 0,
+        r.refund_vat_amount ?? 0,
+        r.net_vat_amount ?? 0,
         r.vat_exempt_sales,
         r.zero_rated_sales,
         r.total_discounts,
@@ -385,7 +393,7 @@ const BIRBooks: React.FC = () => {
 
         {/* KPI Summaries - Dynamic per active tab */}
         {activeTab === 'z-reading' && !loading && !error && (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
             <div className="bg-white border rounded-xl p-4 shadow-sm flex items-center justify-between">
               <div>
                 <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Daily Readings</p>
@@ -406,10 +414,19 @@ const BIRBooks: React.FC = () => {
             </div>
             <div className="bg-white border rounded-xl p-4 shadow-sm flex items-center justify-between">
               <div>
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total VAT Collected</p>
-                <h3 className="text-2xl font-bold text-slate-900 mt-1 tabular-nums">{formatCurrency(zReadingSummary.totalVAT)}</h3>
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Gross VAT Collected</p>
+                <h3 className="text-2xl font-bold text-slate-900 mt-1 tabular-nums">{formatCurrency(zReadingSummary.totalGrossVAT)}</h3>
               </div>
               <div className="p-3 bg-indigo-50 text-indigo-600 rounded-lg">
+                <FileSpreadsheet className="w-6 h-6" />
+              </div>
+            </div>
+            <div className="bg-white border rounded-xl p-4 shadow-sm flex items-center justify-between">
+              <div>
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Net Output VAT</p>
+                <h3 className="text-2xl font-bold text-slate-900 mt-1 tabular-nums">{formatCurrency(zReadingSummary.totalNetVAT)}</h3>
+              </div>
+              <div className="p-3 bg-purple-50 text-purple-600 rounded-lg">
                 <FileSpreadsheet className="w-6 h-6" />
               </div>
             </div>
@@ -520,7 +537,9 @@ const BIRBooks: React.FC = () => {
                       <th className="py-3 px-2">End Inv</th>
                       <th className="py-3 px-2 text-right">Gross Sales</th>
                       <th className="py-3 px-2 text-right">VATable Base</th>
-                      <th className="py-3 px-2 text-right">VAT (12%)</th>
+                      <th className="py-3 px-2 text-right">Gross VAT</th>
+                      <th className="py-3 px-2 text-right">Refund VAT</th>
+                      <th className="py-3 px-2 text-right">Net VAT</th>
                       <th className="py-3 px-2 text-right">VAT-Exempt</th>
                       <th className="py-3 px-2 text-right">Zero-Rated</th>
                       <th className="py-3 px-2 text-right">Discounts</th>
@@ -538,7 +557,9 @@ const BIRBooks: React.FC = () => {
                         <td className="py-3 px-2 font-mono whitespace-nowrap">{row.ending_invoice || 'N/A'}</td>
                         <td className="py-3 px-2 text-right font-mono tabular-nums">{formatCurrency(row.gross_sales)}</td>
                         <td className="py-3 px-2 text-right font-mono tabular-nums">{formatCurrency(row.vatable_sales)}</td>
-                        <td className="py-3 px-2 text-right font-mono tabular-nums">{formatCurrency(row.vat_amount)}</td>
+                        <td className="py-3 px-2 text-right font-mono tabular-nums">{formatCurrency(row.gross_vat_amount ?? 0)}</td>
+                        <td className="py-3 px-2 text-right font-mono tabular-nums text-amber-700">{formatCurrency(row.refund_vat_amount ?? 0)}</td>
+                        <td className="py-3 px-2 text-right font-mono tabular-nums font-semibold">{formatCurrency(row.net_vat_amount ?? 0)}</td>
                         <td className="py-3 px-2 text-right font-mono tabular-nums">{formatCurrency(row.vat_exempt_sales)}</td>
                         <td className="py-3 px-2 text-right font-mono tabular-nums">{formatCurrency(row.zero_rated_sales)}</td>
                         <td className="py-3 px-2 text-right font-mono tabular-nums">{formatCurrency(row.total_discounts)}</td>
@@ -548,7 +569,7 @@ const BIRBooks: React.FC = () => {
                     ))}
                     {zReadingData.length === 0 && (
                       <tr>
-                        <td colSpan={13} className="py-8 text-center text-slate-400 font-medium text-sm">
+                        <td colSpan={15} className="py-8 text-center text-slate-400 font-medium text-sm">
                           No daily Z-Reading records found in the specified range.
                         </td>
                       </tr>
@@ -562,7 +583,9 @@ const BIRBooks: React.FC = () => {
                         <td className="py-3 px-2 font-mono tabular-nums">
                           {formatCurrency(zReadingData.reduce((sum, r) => sum + Number(r.vatable_sales || 0), 0))}
                         </td>
-                        <td className="py-3 px-2 font-mono tabular-nums">{formatCurrency(zReadingSummary.totalVAT)}</td>
+                        <td className="py-3 px-2 font-mono tabular-nums">{formatCurrency(zReadingSummary.totalGrossVAT)}</td>
+                        <td className="py-3 px-2 font-mono tabular-nums text-amber-700">{formatCurrency(zReadingSummary.totalRefundVAT)}</td>
+                        <td className="py-3 px-2 font-mono tabular-nums font-bold text-slate-900">{formatCurrency(zReadingSummary.totalNetVAT)}</td>
                         <td className="py-3 px-2 font-mono tabular-nums">
                           {formatCurrency(zReadingData.reduce((sum, r) => sum + Number(r.vat_exempt_sales || 0), 0))}
                         </td>

@@ -168,11 +168,17 @@ const generateXReadingText = (
   text += `${align('NET SALES:', fmtAmt(report.NetSales))}\n`;
   text += `${line}\n`;
   if (businessSettings?.is_vat_registered !== false) {
+    const grossVat = report.VAT?.GrossVATAmount ?? (report.VAT?.VATAmount || 0);
+    const refundVat = report.VAT?.RefundVAT || 0;
+    const netVat = report.VAT?.NetVATPayable ?? (report.VAT?.VATAmount || 0);
     text += `VAT DETAILS (So far today)\n\n`;
     text += `${align('VATable Sales:', fmtAmt(report.VAT?.VATable || 0))}\n`;
-    text += `${align('VAT Amount (12%):', fmtAmt(report.VAT?.VATAmount || 0))}\n`;
+    text += `${align('Gross VAT Amount (12%):', fmtAmt(grossVat))}\n`;
+    text += `${align('Less: Refund VAT:', fmtAmt(refundVat))}\n`;
+    text += `                            ---------------\n`;
+    text += `${align('NET Output VAT Payable:', fmtAmt(netVat))}\n`;
     text += `${align('VAT-Exempt Sales:', fmtAmt(report.VAT?.Exempt || 0))}\n`;
-    const zeroRatedVal = (report.VAT as any)?.ZeroRated || (report.VAT as any)?.zero_rated || 0;
+    const zeroRatedVal = report.VAT?.ZeroRated || (report.VAT as any)?.zero_rated || 0;
     text += `${align('Zero-Rated Sales:', fmtAmt(zeroRatedVal))}\n`;
     text += `${line}\n`;
   }
