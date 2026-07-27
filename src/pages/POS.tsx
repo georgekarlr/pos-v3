@@ -28,7 +28,9 @@ import OfflineSalesModal from '../components/pos/OfflineSalesModal'
 import PettyCashModal from '../components/pos/PettyCashModal'
 import { getCachedBusinessSettings } from '../utils/settingsCache'
 import { FormatDateTime } from '../utils/formatDateTime'
-import { getTerminalId } from '../utils/terminalStorage'
+import { getTerminalId, saveTerminalId } from '../utils/terminalStorage'
+import { ReportService } from '../services/reportService'
+import ZReadingCatchupModal from '../components/pos/ZReadingCatchupModal'
 
 const POS: React.FC = () => {
   const { persona } = useAuth()
@@ -51,6 +53,22 @@ const POS: React.FC = () => {
   // Terminals
   const [terminals, setTerminals] = useState<any[]>([])
   const [selectedTerminalId, setSelectedTerminalId] = useState<number | null>(null)
+  const [hasUnclosedZReading, setHasUnclosedZReading] = useState(false)
+
+  // Check for unclosed Z-Readings on terminal change/load
+  useEffect(() => {
+    if (selectedTerminalId && isOnline) {
+      ReportService.checkUnclosedZReadings(selectedTerminalId)
+        .then((res) => {
+          setHasUnclosedZReading(Boolean(res.has_unclosed_day))
+        })
+        .catch((err) => {
+          console.error('Error checking unclosed Z-Readings:', err)
+        })
+    } else {
+      setHasUnclosedZReading(false)
+    }
+  }, [selectedTerminalId, isOnline])
 
   // SC/PWD Discount state
   const [isScPwdDiscount, setIsScPwdDiscount] = useState<boolean>(false)
@@ -566,19 +584,22 @@ const POS: React.FC = () => {
             {/* Active Terminal Display */}
             <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-gray-200 shadow-sm text-sm">
               <span className="text-gray-500 font-medium">Terminal:</span>
-              <span className="font-semibold text-gray-900">
-                {selectedTerminalId
-                  ? (terminals.find(t => t.id === selectedTerminalId)?.terminal_name ||
-                    terminals.find(t => t.id === selectedTerminalId)?.name ||
-                    `Terminal #${selectedTerminalId}`)
-                  : 'None'}
-              </span>
-              <Link
-                to="/settings"
-                className="text-xs text-blue-600 hover:text-blue-800 hover:underline ml-1.5 border-l pl-1.5 border-gray-300 font-medium"
+              <select
+                value={selectedTerminalId || ''}
+                onChange={(e) => {
+                  const val = Number(e.target.value) || null
+                  setSelectedTerminalId(val)
+                  saveTerminalId(val)
+                }}
+                className="font-semibold text-gray-900 bg-transparent border-none focus:outline-none focus:ring-0 cursor-pointer text-sm"
               >
-                Change
-              </Link>
+                <option value="">-- Select Terminal --</option>
+                {terminals.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.terminal_name || t.name || `Terminal #${t.id}`}
+                  </option>
+                ))}
+              </select>
             </div>
 
             {selectedTerminalId && (
@@ -840,6 +861,17 @@ const POS: React.FC = () => {
             setSuccessMessage(msg)
             setTimeout(() => setSuccessMessage(null), 5000)
           }}
+        />
+      )}
+
+      {selectedTerminalId && hasUnclosedZReading && (
+        <ZReadingCatchupModal
+          terminalId={selectedTerminalId}
+          terminalName={
+            terminals.find((t) => t.id === selectedTerminalId)?.terminal_name ||
+            terminals.find((t) => t.id === selectedTerminalId)?.name
+          }
+          onUnlocked={() => setHasUnclosedZReading(false)}
         />
       )}
     </div>

@@ -1,49 +1,31 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { Product } from '../types/product'
 import ProductList from '../components/products/ProductList'
 import ProductForm, { ProductFormData } from '../components/products/ProductForm'
+import ProductFilterBar from '../components/products/ProductFilterBar'
 import LoadingSpinner from '../components/LoadingSpinner'
 import { Plus, AlertCircle, RefreshCw } from 'lucide-react'
-import { ProductService } from "../services/productService.ts";
+import { useProducts } from '../hooks/useProducts'
 
 const Products: React.FC = () => {
   const { persona } = useAuth()
-  const [products, setProducts] = useState<Product[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
-  const [showForm, setShowForm] = useState(false)
-  const [successMessage, setSuccessMessage] = useState<string | null>(null)
-
-  // Filters State
-  const [searchQuery, setSearchQuery] = useState('')
-  const [forSaleFilter, setForSaleFilter] = useState<'all' | 'for_sale' | 'not_for_sale'>('all')
-  const [activeFilter, setActiveFilter] = useState<'all' | 'active' | 'inactive'>('all')
-  const [inventoryTypeFilter, setInventoryTypeFilter] = useState<'all' | 'perishable' | 'non_perishable'>('all')
-
   const isAdmin = persona?.type === 'admin'
 
-  const loadProducts = async () => {
-    setIsLoading(true)
-    setError(null)
-    try {
-      const response = await ProductService.getAllProducts(1000, 0, undefined, undefined, null)
-      if (response.error) {
-        setError(response.error)
-      } else {
-        setProducts(response.data || [])
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load products')
-    } finally {
-      setIsLoading(false)
-    }
-  }
+  const {
+    filteredProducts,
+    isLoading,
+    error,
+    successMessage,
+    filters,
+    setFilters,
+    resetFilters,
+    loadProducts,
+    saveProduct
+  } = useProducts(persona?.id)
 
-  useEffect(() => {
-    loadProducts()
-  }, [])
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  const [showForm, setShowForm] = useState(false)
 
   const handleAddProduct = () => {
     setSelectedProduct(null)
@@ -61,89 +43,9 @@ const Products: React.FC = () => {
   }
 
   const handleSubmit = async (formData: ProductFormData) => {
-    try {
-      if (!persona?.id) {
-        throw new Error('Account ID not found')
-      }
-
-      if (selectedProduct) {
-        const result = await ProductService.updateProduct({
-          p_product_id: selectedProduct.id,
-          p_account_id: persona.id,
-          p_name: formData.name,
-          p_description: formData.description,
-          p_base_price: formData.base_price,
-          p_tax_rate: formData.tax_rate,
-          p_sku: formData.sku,
-          p_barcode: formData.barcode,
-          p_image_url: formData.image_url,
-          p_selling_method: formData.selling_method,
-          p_inventory_type: formData.inventory_type,
-          p_unit_type: formData.unit_type,
-          p_is_for_sale: formData.is_for_sale,
-          p_tax_type: formData.tax_type,
-          p_is_active: formData.is_active,
-          p_is_sc_pwd_eligible: formData.is_sc_pwd_eligible
-        })
-
-        if (result.error) {
-          throw new Error(result.error)
-        }
-
-        if (result.data && !result.data.success) {
-          throw new Error(result.data.message)
-        }
-
-        setSuccessMessage('Product updated successfully!')
-      } else {
-        const result = await ProductService.createProduct({
-          p_account_id: persona.id,
-          p_name: formData.name,
-          p_description: formData.description,
-          p_base_price: formData.base_price,
-          p_tax_rate: formData.tax_rate,
-          p_sku: formData.sku,
-          p_barcode: formData.barcode,
-          p_image_url: formData.image_url,
-          p_selling_method: formData.selling_method,
-          p_inventory_type: formData.inventory_type,
-          p_unit_type: formData.unit_type,
-          p_is_for_sale: formData.is_for_sale,
-          p_tax_type: formData.tax_type,
-          p_is_sc_pwd_eligible: formData.is_sc_pwd_eligible
-        })
-
-        if (result.error) {
-          throw new Error(result.error)
-        }
-
-        if (result.data && !result.data.success) {
-          throw new Error(result.data.message)
-        }
-
-        setSuccessMessage('Product created successfully!')
-      }
-
-      handleCloseForm()
-      await loadProducts()
-
-      setTimeout(() => setSuccessMessage(null), 3000)
-    } catch (err) {
-      throw err
-    }
+    await saveProduct(formData, selectedProduct)
+    handleCloseForm()
   }
-
-  const filteredProducts = products.filter((p) => {
-    const q = searchQuery.trim().toLowerCase()
-    const matchesSearch = q === '' ||
-      p.name.toLowerCase().includes(q) ||
-      (p.sku ? p.sku.toLowerCase().includes(q) : false) ||
-      (p.barcode ? p.barcode.toLowerCase().includes(q) : false)
-    const matchesForSale = forSaleFilter === 'all' || (forSaleFilter === 'for_sale' ? p.is_for_sale : !p.is_for_sale)
-    const matchesActive = activeFilter === 'all' || (activeFilter === 'active' ? p.is_active : !p.is_active)
-    const matchesType = inventoryTypeFilter === 'all' || p.inventory_type === inventoryTypeFilter
-    return matchesSearch && matchesForSale && matchesActive && matchesType
-  })
 
   if (isLoading) {
     return (
@@ -162,15 +64,15 @@ const Products: React.FC = () => {
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Products</h1>
               <p className="mt-1 text-sm text-gray-500">
                 {isAdmin
-                  ? 'Manage your product catalog, pricing, and inventory'
-                  : 'View product information and details'}
+                  ? 'Manage your product catalog, pricing, cost tracking, and inventory'
+                  : 'View product information and catalog details'}
               </p>
             </div>
 
             <div className="flex items-center gap-3">
               <button
                 onClick={loadProducts}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium text-sm"
               >
                 <RefreshCw className="h-4 w-4" />
                 <span className="hidden sm:inline">Refresh</span>
@@ -179,7 +81,7 @@ const Products: React.FC = () => {
               {isAdmin && (
                 <button
                   onClick={handleAddProduct}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-sm"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-sm text-sm"
                 >
                   <Plus className="h-5 w-5" />
                   <span>Add Product</span>
@@ -222,79 +124,13 @@ const Products: React.FC = () => {
           )}
         </div>
 
-        {/* Filters Panel */}
-        <div className="bg-white border border-gray-200 rounded-lg p-4 mb-6 shadow-sm">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Search Products</label>
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search name, SKU, barcode..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-              />
-            </div>
+        {/* Modular Filters Panel */}
+        <ProductFilterBar filters={filters} onChange={setFilters} onReset={resetFilters} />
 
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Active Status</label>
-              <select
-                value={activeFilter}
-                onChange={(e) => setActiveFilter(e.target.value as 'all' | 'active' | 'inactive')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-              >
-                <option value="all">All (Active & Archived)</option>
-                <option value="active">Active Only</option>
-                <option value="inactive">Archived Only</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Sale Status</label>
-              <select
-                value={forSaleFilter}
-                onChange={(e) => setForSaleFilter(e.target.value as 'all' | 'for_sale' | 'not_for_sale')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-              >
-                <option value="all">All Sale Statuses</option>
-                <option value="for_sale">For Sale Only</option>
-                <option value="not_for_sale">Not For Sale Only</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Inventory Type</label>
-              <select
-                value={inventoryTypeFilter}
-                onChange={(e) => setInventoryTypeFilter(e.target.value as 'all' | 'perishable' | 'non_perishable')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-              >
-                <option value="all">All Inventory Types</option>
-                <option value="non_perishable">Non-Perishable</option>
-                <option value="perishable">Perishable</option>
-              </select>
-            </div>
-          </div>
-
-          {(searchQuery || activeFilter !== 'all' || forSaleFilter !== 'all' || inventoryTypeFilter !== 'all') && (
-            <div className="mt-3 flex justify-end">
-              <button
-                onClick={() => {
-                  setSearchQuery('');
-                  setActiveFilter('all');
-                  setForSaleFilter('all');
-                  setInventoryTypeFilter('all');
-                }}
-                className="text-xs text-blue-600 hover:text-blue-800 font-medium transition-colors"
-              >
-                Clear Filters
-              </button>
-            </div>
-          )}
-        </div>
-
+        {/* Composable Product List */}
         <ProductList products={filteredProducts} onEdit={handleEditProduct} isAdmin={isAdmin} />
 
+        {/* Product Form Modal */}
         {showForm && (
           <ProductForm
             product={selectedProduct}

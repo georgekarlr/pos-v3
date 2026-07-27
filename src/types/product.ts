@@ -44,6 +44,7 @@ export interface Product {
   name: string;
   description: string | null;
   base_price: number;
+  cost_price: number;
   tax_rate: number;
   display_price: number;
   sku: string | null;
@@ -69,6 +70,7 @@ export interface CreatePosProductParams {
   p_name: string;
   p_description: string | null;
   p_base_price: number;
+  p_cost_price?: number;
   p_tax_rate: number;
   p_sku: string | null;
   p_barcode: string | null;

@@ -106,6 +106,41 @@ export const ReportService = {
   },
 
   /**
+   * Check if there are any unclosed Z-Readings for past dates on a given terminal.
+   */
+  async checkUnclosedZReadings(terminal_id: number, current_date?: string): Promise<{ has_unclosed_day: boolean; unclosed_date: string | null }> {
+    const { data, error } = await supabase.rpc('pos2_check_unclosed_z_readings', {
+      p_terminal_id: terminal_id,
+      ...(current_date ? { p_current_date: current_date } : {}),
+    })
+    if (error) { console.error('Error checking unclosed Z-Readings:', error); throw new Error(error.message) }
+    const row = Array.isArray(data) ? data[0] : data
+    return {
+      has_unclosed_day: Boolean(row?.has_unclosed_day),
+      unclosed_date: row?.unclosed_date || null,
+    }
+  },
+
+  /**
+   * Execute batch catch-up Z-Readings for all unclosed past dates. Admin-only.
+   */
+  async batchCatchupZReadings(params: { requesting_account_id: number; terminal_id: number; current_date?: string }): Promise<{ success: boolean; message: string; data: ZReadingResult[] | null }> {
+    const { requesting_account_id, terminal_id, current_date } = params
+    const { data, error } = await supabase.rpc('pos2_batch_catchup_z_readings', {
+      p_requesting_account_id: requesting_account_id,
+      p_terminal_id: terminal_id,
+      ...(current_date ? { p_current_date: current_date } : {}),
+    })
+    if (error) { console.error('Error batch catching up Z-Readings:', error); throw new Error(error.message) }
+    const row = Array.isArray(data) ? data[0] : data
+    return {
+      success: Boolean(row?.success),
+      message: row?.message || '',
+      data: (row?.data || null) as ZReadingResult[] | null,
+    }
+  },
+
+  /**
    * Fetch paginated E-Journal entries. Admin-only.
    */
   async getEJournal(params: GetEJournalParams): Promise<EJournalRow[]> {

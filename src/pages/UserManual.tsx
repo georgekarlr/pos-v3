@@ -11,6 +11,7 @@ import { SalesSection } from '../components/usermanual/SalesSection'
 import { DebtSection } from '../components/usermanual/DebtSection'
 import { InstallmentSection } from '../components/usermanual/InstallmentSection'
 import { ComplianceSection } from '../components/usermanual/ComplianceSection'
+import { AccountingSection } from '../components/usermanual/AccountingSection'
 import { SettingsSection } from '../components/usermanual/SettingsSection'
 import { OfflineSection } from '../components/usermanual/OfflineSection'
 import { ArchitectureSection } from '../components/usermanual/ArchitectureSection'
@@ -185,7 +186,7 @@ const chapters: ManualChapter[] = [
       <h3>1. Product Directory</h3>
       <p>The directory adapts gracefully: presenting detailed columns on desktop tables, and shifting to simplified cards on mobile devices.</p>
       <ul>
-        <li><strong>Search Bar:</strong> Real-time filtering by Product Name or exact Barcode values.</li>
+        <li><strong>Search Bar & Filters:</strong> Real-time filtering by Product Name, SKU, Barcode, Active status, Sale status, or Inventory type.</li>
         <li><strong>Refresh:</strong> Triggers ProductService.getAllProducts() to load updates from the Postgres database.</li>
       </ul>
       <h3>2. Product Configuration Fields</h3>
@@ -201,8 +202,10 @@ const chapters: ManualChapter[] = [
           <tr><td>Selling Method</td><td>Unit (discrete counts e.g., pieces, cans) or Measured (fractional values e.g., kg, liters).</td></tr>
           <tr><td>Inventory Type</td><td>Perishable (tracks batches and expiration dates) or Non-perishable (general stock count).</td></tr>
           <tr><td>Pricing Logic</td><td>Base Price is entered manually. Entering a Tax Rate (e.g. 12%) automatically computes and previews the tax-inclusive Display Price.</td></tr>
+          <tr><td>Cost Price & Margin</td><td>Cost Price (COGS) input tracks product acquisition cost. Real-time profit margin amount (Base Price - Cost Price) and margin percentage are dynamically previewed.</td></tr>
           <tr><td>Identifiers</td><td>SKU and Barcode inputs to hook items to POS barcode scan listeners.</td></tr>
           <tr><td>Sale Status</td><td>A toggle to set products as For Sale. Non-retail items (such as raw materials) can be configured and are filtered out from the cashier POS screen.</td></tr>
+          <tr><td>SC/PWD Eligibility</td><td>A toggle to mark products as eligible for Senior Citizen and PWD discounts. Ineligible products will not receive the 20% discount even if the discount is applied at checkout.</td></tr>
           <tr><td>Active Status</td><td>A checkbox to set products as Active. Inactive (archived) items are hidden from all cashier POS and inventory screens, but remain editable by administrators.</td></tr>
         </tbody>
       </table>
@@ -412,9 +415,16 @@ const chapters: ManualChapter[] = [
       <h3>1. X-Reading</h3>
       <p><strong>Route:</strong> <code>/reports-compliance/x-reading</code></p>
       <p>Generates a temporary snapshot report of the selected terminal's daily activity: gross sales, net sales, voids, refunds, senior citizen discounts, tax values, and payment collections breakdown (Cash, Card, GCash, etc.). Non-persistent: no database commits. The physical printout includes the software provider and PTU compliance footer just like Z-readings.</p>
-      <h3>2. Z-Reading</h3>
+      <h3>2. Z-Reading &amp; Morning Register Open Check</h3>
       <p><strong>Route:</strong> <code>/reports-compliance/z-reading</code></p>
       <p>The official daily closing procedure required for tax registry and audit logs: compiles active sales transactions, writes them into a permanent ledger lock, increments the Z-Counter, and resets daily counts. Non-reversible transaction.</p>
+      <p><strong>Morning "Register Open" Catch-Up Gate:</strong></p>
+      <ul>
+        <li><strong>Automatic Background Check:</strong> When a terminal is selected in the POS screen, the system automatically calls <code>pos2_check_unclosed_z_readings</code>.</li>
+        <li><strong>Screen Lock Warning Modal:</strong> If unclosed past sales dates exist for the terminal, an un-dismissible lock-screen modal appears and blocks sales operations until caught up.</li>
+        <li><strong>Manager Batch Catch-Up:</strong> Administrators can process all unclosed dates in a single click (or validate with Admin password if a staff persona is active). The system executes <code>pos2_batch_catchup_z_readings</code> to generate and save missing Z-Readings.</li>
+        <li><strong>Tape Stack Printing:</strong> Shows a stack of generated Z-Reading audit tapes with options to auto-print to the receipt printer, print/save via browser PDF, or navigate to Settings to configure printers before unlocking the register.</li>
+      </ul>
       <h3>3. Electronic Journal (E-Journal)</h3>
       <p><strong>Route:</strong> <code>/reports-compliance/e-journal</code></p>
       <p>A complete audit log of all system actions: logs transactions, refunds, logins, settings modifications, voided sales, and stock adjustments. Search and filter by keywords, terminal IDs, or cashier names. Each sale event details the items sold, payments applied, taxes, discounts, and any VAT exemption amounts removed for BIR auditing compliance.</p>
@@ -439,11 +449,29 @@ const chapters: ManualChapter[] = [
     `
   },
   {
+    id: 'accounting',
+    title: '12. Accounting & Financial Management (BIR Tax Ledger, A/R Aging & P&L Statement)',
+    component: <AccountingSection />,
+    rawHtml: `
+      <h2>12. Accounting &amp; Financial Management</h2>
+      <p><strong>Sub-Menu:</strong> Accounting | <strong>Access:</strong> BIR Tax Ledger, A/R Aging Report, P&amp;L Statement (Admin only)</p>
+      <h3>1. BIR Tax Ledger</h3>
+      <p><strong>Route:</strong> <code>/accounting/bir-tax-ledger</code></p>
+      <p>Automated BIR Form 2550Q (Quarterly VAT) and BIR Form 2551Q (Quarterly Percentage Tax) return declarations with automatic store VAT status detection, Line 15A/15B breakdowns, discount deductions, CSV exports, and print views.</p>
+      <h3>2. Accounts Receivable (A/R) Aging Report</h3>
+      <p><strong>Route:</strong> <code>/accounting/ar-aging</code></p>
+      <p>Consolidated customer debt and installment balance aging report with risk buckets (0-30 days current, 31-60 days, 61-90 days, over 90 days high risk), customer search, and CSV export.</p>
+      <h3>3. Profit &amp; Loss (P&amp;L) Statement</h3>
+      <p><strong>Route:</strong> <code>/accounting/pnl-statement</code></p>
+      <p>Income Statement breaking down gross revenue, discounts, net sales realized, cost of goods sold (COGS), gross profit margins, petty cash operating expenses, and net operating income with visual margin indicators.</p>
+    `
+  },
+  {
     id: 'settings',
-    title: '12. Terminals, Printers & Staff Configuration',
+    title: '13. Terminals, Printers & Staff Configuration',
     component: <SettingsSection />,
     rawHtml: `
-      <h2>12. Terminals, Printers & Staff Configuration</h2>
+      <h2>13. Terminals, Printers &amp; Staff Configuration</h2>
       <h3>1. System Settings Pages</h3>
       <p><strong>Route:</strong> <code>/settings</code> | <strong>Access:</strong> Admin, Staff (limited)</p>
       <ul>
