@@ -58,7 +58,7 @@ const POS: React.FC = () => {
   // Check for unclosed Z-Readings on terminal change/load
   useEffect(() => {
     if (selectedTerminalId && isOnline) {
-      ReportService.checkUnclosedZReadings(selectedTerminalId)
+      ReportService.checkUnclosedZReadings(selectedTerminalId, FormatDateTime.getLocalDateISO())
         .then((res) => {
           setHasUnclosedZReading(Boolean(res.has_unclosed_day))
         })
@@ -69,6 +69,7 @@ const POS: React.FC = () => {
       setHasUnclosedZReading(false)
     }
   }, [selectedTerminalId, isOnline])
+
 
   // SC/PWD Discount state
   const [isScPwdDiscount, setIsScPwdDiscount] = useState<boolean>(false)

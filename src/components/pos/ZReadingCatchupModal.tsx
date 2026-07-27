@@ -17,6 +17,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext'
 import { usePrinter } from '../../contexts/PrinterContext'
 import { ReportService } from '../../services/reportService'
+import { FormatDateTime } from '../../utils/formatDateTime'
 import { PersonaService } from '../../services/personaService'
 import { SettingsService } from '../../services/settingsService'
 import { ZReadingDisplay } from '../reports/ZReadingPanel'
@@ -89,6 +90,7 @@ export const ZReadingCatchupModal: React.FC<ZReadingCatchupModalProps> = ({
       const res = await ReportService.batchCatchupZReadings({
         requesting_account_id: adminId,
         terminal_id: terminalId,
+        current_date: FormatDateTime.getLocalDateISO(),
       })
 
       if (!res.success) {
