@@ -53,7 +53,7 @@ const adminNavigation: NavigationItem[] = [
   },
   { name: 'Installments', href: '/installments', icon: CreditCard },
   {
-    name: 'Accounting (Beta)',
+    name: 'Accounting',
     icon: Calculator,
     children: [
       { name: 'BIR Tax Ledger', href: '/accounting/bir-tax-ledger' },
