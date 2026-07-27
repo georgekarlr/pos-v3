@@ -57,6 +57,7 @@ const adminNavigation: NavigationItem[] = [
     icon: Calculator,
     children: [
       { name: 'BIR Tax Ledger', href: '/accounting/bir-tax-ledger' },
+      { name: 'Monthly Tax Prep', href: '/accounting/monthly-tax-prep' },
       { name: 'A/R Aging Report', href: '/accounting/ar-aging' },
       { name: 'P&L Statement', href: '/accounting/pnl-statement' },
     ]

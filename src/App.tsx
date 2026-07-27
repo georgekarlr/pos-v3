@@ -32,6 +32,7 @@ import Settings from './pages/Settings'
 import UserManual from './pages/UserManual'
 import Promotions from './pages/Promotions'
 import BIRTaxLedgerPage from './pages/accounting/BIRTaxLedgerPage'
+import MonthlyTaxPrepPage from './pages/accounting/MonthlyTaxPrepPage'
 import ARAgingPage from './pages/accounting/ARAgingPage'
 import PnLStatementPage from './pages/accounting/PnLStatementPage'
 
@@ -167,6 +168,16 @@ function App() {
                   <PersonaProtectedRoute>
                     <Layout>
                       <BIRTaxLedgerPage />
+                    </Layout>
+                  </PersonaProtectedRoute>
+                </ProtectedRoute>
+              } />
+
+              <Route path="/accounting/monthly-tax-prep" element={
+                <ProtectedRoute>
+                  <PersonaProtectedRoute>
+                    <Layout>
+                      <MonthlyTaxPrepPage />
                     </Layout>
                   </PersonaProtectedRoute>
                 </ProtectedRoute>

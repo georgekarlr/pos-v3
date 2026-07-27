@@ -4,25 +4,38 @@ export const AccountingSection: React.FC = () => {
   return (
     <div className="space-y-4 text-sm text-gray-700">
       <p>
-        <strong>Sub-Menu:</strong> Accounting | <strong>Access:</strong> BIR Tax Ledger, A/R Aging Report, P&L Statement (Admin only)
+        <strong>Sub-Menu:</strong> Accounting | <strong>Access:</strong> BIR Tax Ledger, Monthly Tax Prep, A/R Aging Report, P&L Statement (Admin only)
       </p>
 
-      <h3 className="text-base font-semibold text-gray-800 mt-2">1. BIR Tax Ledger</h3>
+      <h3 className="text-base font-semibold text-gray-800 mt-2">1. BIR Tax Ledger (Itemized Invoices)</h3>
       <p>
         <strong>Route:</strong> <code className="bg-gray-100 px-1 rounded">/accounting/bir-tax-ledger</code>
       </p>
       <p>
-        Automated BIR Form 2550Q (Quarterly Value-Added Tax Return) and Form 2551Q (Quarterly Percentage Tax Return) calculation ledger:
+        Itemized sales transaction tax ledger tracking line-by-line tax components for every invoice issued:
       </p>
       <ul className="list-disc list-inside space-y-1 ml-2">
-        <li><strong>Automatic Tax Status Detection:</strong> Checks store tax registration status (VAT-REGISTERED vs NON-VAT).</li>
-        <li><strong>VAT-Registered (BIR Form 2550Q):</strong> Computes Gross Sales, Sales Returns/Refunds deductions, Line 15A VATable Sales Base, Line 15B 12% Output VAT Due, Line 17 Zero-Rated Sales, Line 18 Exempt Sales, and Senior Citizen / PWD discount offsets.</li>
-        <li><strong>Non-VAT Taxpayer (BIR Form 2551Q):</strong> Computes Gross Receipts taxable base, applies the 3.00% Percentage Tax rate, and calculates total Line 14 Percentage Tax Due.</li>
-        <li><strong>Date Range Filter:</strong> Interactive custom date ranges and presets (Today, This Month, This Quarter, YTD).</li>
-        <li><strong>CSV & Print:</strong> One-click export to CSV with store header padding or direct print preview for tax filing documentation.</li>
+        <li><strong>Itemized Transaction Fields:</strong> Tracks Invoice #, Date & Time, POS Terminal Name, Customer Name, Order Status (Completed / Voided), Gross Amount, VATable Sales Base, Output VAT (12%), VAT-Exempt Sales, Zero-Rated Sales, Senior Citizen / PWD Discounts, Promo Discounts, Refunds, and Net Taxable Realized Sales.</li>
+        <li><strong>Terminal & Search Filters:</strong> Filter tax ledger transactions by specific POS terminals or search by invoice number and customer name.</li>
+        <li><strong>Summary KPI Cards:</strong> Instant grand totals for Gross Transactions, VATable Base, 12% Output VAT, Exempt/Zero-Rated sales, and Net Taxable Realized Sales.</li>
+        <li><strong>CSV & Print Preview:</strong> Export complete itemized tax ledger data to CSV or format for direct printing.</li>
       </ul>
 
-      <h3 className="text-base font-semibold text-gray-800 mt-4">2. Accounts Receivable (A/R) Aging Report</h3>
+      <h3 className="text-base font-semibold text-gray-800 mt-4">2. BIR Monthly Tax Preparation (Returns Declaration)</h3>
+      <p>
+        <strong>Route:</strong> <code className="bg-gray-100 px-1 rounded">/accounting/monthly-tax-prep</code>
+      </p>
+      <p>
+        Consolidated BIR Form 2550Q (Quarterly Value-Added Tax Return) and Form 2551Q (Percentage Tax Return) declaration generator:
+      </p>
+      <ul className="list-disc list-inside space-y-1 ml-2">
+        <li><strong>Registered Business Details:</strong> Automatically loads registered Business Name, Taxpayer Identification Number (TIN), Address, and Taxpayer Category (VAT-REGISTERED vs NON-VAT).</li>
+        <li><strong>Sales Realization & Statutory Deductions:</strong> Computes Gross Invoiced Sales, Less Voids, Less Promotions, Less SC/PWD Statutory Discounts, Less Statutory VAT Exemptions, Less Returns/Refunds, and Net Taxable Sales.</li>
+        <li><strong>BIR Tax Liability Schedule:</strong> Calculates Form 2550Q Line 15A VATable Sales Base, Line 15B 12% Output VAT Collected, Output VAT component on refunds, Net Output VAT Payable owed to BIR, Line 18 Exempt Sales Base, and Line 17 Zero-Rated Sales Base.</li>
+        <li><strong>Installment Credit & Financing Schedule:</strong> Summarizes new installment contracts created in period, total invoiced principal, financed amount on credit, and unearned interest recognized.</li>
+      </ul>
+
+      <h3 className="text-base font-semibold text-gray-800 mt-4">3. Accounts Receivable (A/R) Aging Report</h3>
       <p>
         <strong>Route:</strong> <code className="bg-gray-100 px-1 rounded">/accounting/ar-aging</code>
       </p>
@@ -35,7 +48,7 @@ export const AccountingSection: React.FC = () => {
         <li><strong>CSV Export:</strong> Full CSV report download including per-customer risk breakdown and footer total balance row.</li>
       </ul>
 
-      <h3 className="text-base font-semibold text-gray-800 mt-4">3. Profit & Loss (P&L) Statement</h3>
+      <h3 className="text-base font-semibold text-gray-800 mt-4">4. Profit & Loss (P&L) Statement</h3>
       <p>
         <strong>Route:</strong> <code className="bg-gray-100 px-1 rounded">/accounting/pnl-statement</code>
       </p>

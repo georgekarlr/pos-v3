@@ -2,6 +2,81 @@ export interface BIRTaxLedgerParams {
   requesting_account_id: number
   start_date: string
   end_date: string
+  terminal_id?: number | null
+  limit?: number
+  offset?: number
+}
+
+export interface BIRTaxLedgerRow {
+  invoice_id: number
+  invoice_date: string
+  invoice_number: string
+  terminal_name: string
+  customer_name: string
+  order_status: 'completed' | 'pending' | 'voided' | string
+  gross_amount: number
+  vatable_sales: number
+  vat_amount: number
+  vat_exempt_sales: number
+  zero_rated_sales: number
+  sc_pwd_discount: number
+  promo_discount: number
+  refund_amount: number
+  net_taxable_sales: number
+}
+
+export interface MonthlyTaxPrepParams {
+  requesting_account_id: number
+  start_date: string
+  end_date: string
+}
+
+export interface MonthlyTaxPrepBusinessInfo {
+  Name: string | null
+  TIN: string | null
+  Address: string | null
+}
+
+export interface MonthlyTaxPrepSalesSummary {
+  TotalCompletedTransactions: number
+  TotalVoidTransactions: number
+  GrossSalesWithVoids: number
+  LessVoids: number
+  LessPromotions: number
+  LessSCPWDDiscounts: number
+  LessVATExemptions: number
+  LessReturnsRefunds: number
+  NetTaxableSales: number
+}
+
+export interface MonthlyTaxPrepInstallmentSummary {
+  NewContractsCreated: number
+  TotalInvoicedPrincipal: number
+  FinancedAmountOnCredit: number
+  UnearnedInterestRecognized: number
+}
+
+export interface MonthlyTaxPrepTaxBreakdown {
+  VATableSales: number
+  OutputVATCollected: number
+  LessRefundOutputVAT: number
+  NetOutputVATPayable: number
+  VATExemptSales: number
+  ZeroRatedSales: number
+}
+
+export interface MonthlyTaxPrepResult {
+  ReportType: string
+  TaxpayerCategory: 'VAT-REGISTERED' | 'NON-VAT' | string
+  TaxPeriod: {
+    StartDate: string
+    EndDate: string
+  }
+  BusinessInfo: MonthlyTaxPrepBusinessInfo
+  GeneratedAt: string
+  SalesSummary: MonthlyTaxPrepSalesSummary
+  InstallmentFinancingSummary: MonthlyTaxPrepInstallmentSummary
+  TaxBreakdown: MonthlyTaxPrepTaxBreakdown
 }
 
 export interface VATTaxDeclaration {
