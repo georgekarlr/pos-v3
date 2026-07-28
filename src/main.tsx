@@ -27,6 +27,14 @@ registerSW({
       }
     });
   },
+  onNeedRefresh() {
+    window.location.reload();
+  },
+
+  onOfflineReady() {
+    console.log('App is ready even when offline');
+  },
+
   onRegisterError(error) {
     console.error('SW registration failed:', error);
   },
