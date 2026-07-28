@@ -1,7 +1,8 @@
 import React, { useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
-import { Shield, Users, AlertCircle, Eye, EyeOff, ArrowLeft, LogOut } from 'lucide-react'
+import { Shield, Users, AlertCircle, Eye, EyeOff, ArrowLeft, LogOut, HelpCircle } from 'lucide-react'
 import { PersonaType } from '../../types/auth'
+import { ForgotAdminPasswordModal } from './ForgotAdminPasswordModal'
 
 const PersonaSelection: React.FC = () => {
   const { user, validateAdminPersona, validateStaffPersona, personaLoading, switchPersona, persona, signOut } = useAuth()
@@ -10,6 +11,7 @@ const PersonaSelection: React.FC = () => {
   const [loginName, setLoginName] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
+  const [showForgotAdminModal, setShowForgotAdminModal] = useState(false)
 
   const handlePersonaSelect = (personaType: PersonaType) => {
     setSelectedPersona(personaType)
@@ -141,7 +143,7 @@ const PersonaSelection: React.FC = () => {
 
               <button
                 onClick={() => handlePersonaSelect('staff')}
-                className="w-full flex items-center justify-center space-x-3 py-4 px-6 border-2 border-gray-200 rounded-lg hover:border-green-300 hover:bg-green-50 transition-all group"
+                className="w-full flex items-center justify-center space-x-3 py-4 px-6 border-2 border-green-200 rounded-lg hover:border-green-300 hover:bg-green-50 transition-all group border-2"
               >
                 <Users className="h-8 w-8 text-green-600 group-hover:text-green-700" />
                 <div className="text-left">
@@ -149,6 +151,17 @@ const PersonaSelection: React.FC = () => {
                   <div className="text-sm text-gray-500">Limited access</div>
                 </div>
               </button>
+
+              <div className="pt-2 text-center">
+                <button
+                  type="button"
+                  onClick={() => setShowForgotAdminModal(true)}
+                  className="text-xs text-gray-500 hover:text-blue-600 font-medium transition-colors inline-flex items-center space-x-1"
+                >
+                  <HelpCircle className="h-3.5 w-3.5" />
+                  <span>Forgot admin password?</span>
+                </button>
+              </div>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -198,9 +211,21 @@ const PersonaSelection: React.FC = () => {
               )}
 
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                  {selectedPersona === 'admin' ? 'Admin Password' : 'Staff Password'}
-                </label>
+                <div className="flex items-center justify-between mb-2">
+                  <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                    {selectedPersona === 'admin' ? 'Admin Password' : 'Staff Password'}
+                  </label>
+                  {selectedPersona === 'admin' && (
+                    <button
+                      type="button"
+                      onClick={() => setShowForgotAdminModal(true)}
+                      className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors flex items-center space-x-1"
+                    >
+                      <HelpCircle className="h-3.5 w-3.5" />
+                      <span>Forgot admin password?</span>
+                    </button>
+                  )}
+                </div>
                 <div className="relative">
                   <input
                     id="password"
@@ -243,6 +268,11 @@ const PersonaSelection: React.FC = () => {
             </form>
           )}
         </div>
+
+        <ForgotAdminPasswordModal
+          isOpen={showForgotAdminModal}
+          onClose={() => setShowForgotAdminModal(false)}
+        />
       </div>
     </div>
   )

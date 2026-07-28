@@ -33,6 +33,36 @@ export const AuthSection: React.FC = () => {
         </div>
       </div>
 
+      <div className="border border-amber-200 bg-amber-50/70 rounded-lg p-3.5 my-3">
+        <h4 className="font-semibold text-amber-900 text-xs uppercase tracking-wider mb-1 flex items-center gap-1">
+          🔑 Resetting Forgot Admin Password
+        </h4>
+        <p className="text-xs text-amber-900 mb-2">
+          Resetting your account password automatically resets your Admin persona password back to default <code className="bg-amber-100 text-amber-950 px-1 py-0.5 rounded font-mono font-bold">admin123</code>. You can perform this reset using two options:
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+          <div className="bg-white/80 border border-amber-200/80 rounded-md p-2.5 space-y-1">
+            <span className="font-bold text-amber-950">Option 1 (Account Settings):</span>
+            <ol className="list-decimal list-inside space-y-0.5 text-amber-900 ml-1">
+              <li>Go to <strong>ceintelly.com</strong></li>
+              <li>Login to your account</li>
+              <li>Go to <strong>Settings</strong></li>
+              <li>Reset account password</li>
+            </ol>
+          </div>
+          <div className="bg-white/80 border border-amber-200/80 rounded-md p-2.5 space-y-1">
+            <span className="font-bold text-amber-950">Option 2 (Forgot Password Link):</span>
+            <ol className="list-decimal list-inside space-y-0.5 text-amber-900 ml-1">
+              <li>Go to <strong>ceintelly.com</strong></li>
+              <li>Click login button then click <strong>forgot password</strong></li>
+              <li>Send email to reset password</li>
+              <li>Go to Gmail to reset password</li>
+              <li>Reset account password</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+
       <h3 className="text-base font-semibold text-gray-800 mt-4">3. Automatic Workspace Setup & Offline Data Sync</h3>
       <p>
         Upon successful login and persona authentication, the system displays an interactive <strong>"Setting Up Your Workspace"</strong> transition screen. During this phase, the application automatically fetches essential system resources and pre-caches them into IndexedDB and local storage:
