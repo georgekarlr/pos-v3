@@ -91,6 +91,11 @@ const chapters: ManualChapter[] = [
       <p>For store managers and system developers. Full access to inventory, pricing, terminals, analytics reports, staff setup, and BIR settings. Required verification via the Admin PIN/Password.</p>
       <h4>👥 Staff Member Persona</h4>
       <p>For cashiers and shift staff. Operational focus on checkout transactions, sales tracking, customers registry, and X-Readings. Requires matching login name and staff credentials configured by Admin.</p>
+      <div class="note">
+        <strong>Resetting Forgot Admin Password:</strong> Resetting your account password automatically resets your Admin password to <code>admin123</code>.
+        <br/><strong>Option 1:</strong> Go to ceintelly.com &rarr; Login account &rarr; Go to settings &rarr; Reset account password.
+        <br/><strong>Option 2:</strong> Go to ceintelly.com &rarr; Click login button &rarr; Click forgot password &rarr; Send email to reset password &rarr; Go to gmail to reset password &rarr; Reset account password.
+      </div>
       <h3>3. Automatic Workspace Setup & Offline Data Sync</h3>
       <p>Upon successful login and persona authentication, an interactive <strong>"Setting Up Your Workspace"</strong> transition screen appears. The application automatically fetches and caches essential store resources into IndexedDB and local storage:</p>
       <ul>
