@@ -1,7 +1,36 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { registerSW } from 'virtual:pwa-register';
 import App from './App.tsx';
 import './index.css';
+
+console.log('main.tsx starting');
+
+// Register service worker using official vite-plugin-pwa API
+registerSW({
+  immediate: true,
+  onRegisteredSW(_swScriptUrl, registration) {
+    if (!registration) return;
+
+    // Check for updates every 5 minutes (300,000 ms)
+    setInterval(async () => {
+      if (!registration.installing && registration.waiting) return;
+      if (navigator.onLine) {
+        await registration.update();
+      }
+    }, 5 * 60 * 1000);
+
+    // Check for updates when document/app becomes visible
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && navigator.onLine) {
+        registration.update();
+      }
+    });
+  },
+  onRegisterError(error) {
+    console.error('SW registration failed:', error);
+  },
+});
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -9,34 +38,3 @@ createRoot(document.getElementById('root')!).render(
   </StrictMode>
 );
 
-// Register service worker in production for PWA installability
-if ('serviceWorker' in navigator && import.meta.env.PROD) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').then((registration) => {
-      // Check for updates every 1 hour
-      setInterval(() => {
-        registration.update();
-      }, 1000 * 60 * 60);
-
-      // Check for updates when user returns to/focuses the app
-      document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') {
-          registration.update();
-        }
-      });
-    }).catch((err) => {
-      console.error('SW registration failed:', err);
-    });
-
-    // Auto-reload page when service worker is updated (only if previously controlled to avoid reload loops)
-    const hadController = !!navigator.serviceWorker.controller;
-    let refreshing = false;
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
-      if (refreshing) return;
-      if (hadController) {
-        refreshing = true;
-        window.location.reload();
-      }
-    });
-  });
-}
