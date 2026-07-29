@@ -179,12 +179,14 @@ export function calculateCartTotals(params: {
       }
     }
 
-    // ── Step 2: SC/PWD Branch — applies ONLY to VATable + SC-eligible items ──
-    // (BIR RA 9994 — Zero-Rated / VAT-Exempt items get no additional SC benefit)
-    if (isScPwdDiscount && product.is_sc_pwd_eligible && isVatable) {
-      // BIR RULE: VAT Exemption is UNCONDITIONAL when SC ID is presented.
-      // Record the VAT component being removed regardless of which discount wins.
-      serverVatExemptionDiscount += grossRaw * taxRate;
+    // ── Step 2: SC/PWD Branch — applies to all SC/PWD eligible items ──
+    // (For VATable items, 12% VAT is removed as VAT exemption; for Non-VAT/Exempt, 20% SC discount still applies)
+    if (isScPwdDiscount && product.is_sc_pwd_eligible) {
+      if (isVatable) {
+        // BIR RULE: VAT Exemption is UNCONDITIONAL when SC ID is presented.
+        // Record the VAT component being removed regardless of which discount wins.
+        serverVatExemptionDiscount += grossRaw * taxRate;
+      }
 
       // Option A: best per-unit BASE price achievable with the promo (VAT-Exempt, no 12% added)
       const optionAPerUnitBase =
@@ -212,7 +214,7 @@ export function calculateCartTotals(params: {
           promoDiscount: 0,
           lineGross: grossRaw,
           lineTax: 0,
-          vatExemptLineTotal: netAfterSc,
+          vatExemptLineTotal: isVatable ? netAfterSc : 0,
           displayLineTotal: displayPricePerUnit * qty,
         };
 
@@ -233,7 +235,7 @@ export function calculateCartTotals(params: {
           promoDiscount,
           lineGross: lineGrossAfterPromo,
           lineTax: 0,
-          vatExemptLineTotal: lineGrossAfterPromo,
+          vatExemptLineTotal: isVatable ? lineGrossAfterPromo : 0,
           displayLineTotal: lineGrossAfterPromo, // promo-adjusted base, no VAT
         };
       }

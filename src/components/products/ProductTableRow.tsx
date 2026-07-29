@@ -66,6 +66,17 @@ export const ProductTableRow: React.FC<ProductTableRowProps> = ({
           {product.tax_type || 'VATable'}
         </span>
       </td>
+      <td className="px-6 py-4 whitespace-nowrap text-sm">
+        <span
+          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+            product.is_sc_pwd_eligible
+              ? 'bg-purple-100 text-purple-800 border border-purple-200'
+              : 'bg-gray-100 text-gray-800 border border-gray-200'
+          }`}
+        >
+          {product.is_sc_pwd_eligible ? 'Eligible' : 'Ineligible'}
+        </span>
+      </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
         {formatCurrency(product.display_price)}
       </td>

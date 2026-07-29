@@ -138,8 +138,9 @@ export const TaxScenariosSection: React.FC = () => {
       <Scenario number="3" title="Senior Citizen / PWD Sale (No Promos Active)" badge="SC/PWD" badgeColor="bg-purple-100 text-purple-700">
         <p><strong>Customer:</strong> Senior Citizen (ID provided) &nbsp;|&nbsp; <strong>Cart:</strong> 1× Steak (eligible) + 1× Wine (ineligible)</p>
         <Rule>
-          VAT is ALWAYS removed for SC/PWD-eligible items. A 20% SC discount is applied on the VAT-exclusive base price.
-          Ineligible items (alcohol, luxury) continue to carry standard VAT.
+          For VATable items, 12% VAT is removed (unconditional VAT exemption) and a 20% SC discount is applied on the VAT-exclusive base price.
+          For Non-VAT items/businesses, the 20% SC discount still applies to eligible products on their base price (with ₱0 VAT exemption as Non-VAT prices do not contain VAT).
+          Ineligible items (alcohol, luxury) do not receive the SC discount.
         </Rule>
         <div className="space-y-1">
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Math Breakdown — Item by Item</p>
