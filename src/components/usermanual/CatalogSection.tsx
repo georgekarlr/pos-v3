@@ -9,7 +9,7 @@ export const CatalogSection: React.FC = () => {
 
       <h3 className="text-base font-semibold text-gray-800 mt-2">1. Product Directory</h3>
       <p>
-        The directory adapts gracefully: presenting detailed columns on desktop tables, and shifting to simplified cards on mobile devices.
+        The directory adapts gracefully: presenting detailed columns (Product, SKU/Barcode, Base & Cost Price, Profit Margin, Tax Rate, Tax Type, SC/PWD Eligibility, Display Price, Inventory, Sale Status, and Status) on desktop tables, and shifting to simplified cards on mobile devices.
       </p>
       <ul className="list-disc list-inside space-y-1 ml-2">
         <li><strong>Search Bar & Filters:</strong> Real-time filtering by Product Name, SKU, Barcode, Active status, Sale status, or Inventory type.</li>
