@@ -28,7 +28,7 @@ export function decrypt(encoded: string): string {
 
 // Check if settings represent an expired subscription
 export function isSubscriptionExpired(settings: BusinessSettings | null | undefined): boolean {
-  if (!settings) return false;
+  if (!settings) return true;
 
   // Check subscription status
   if (settings.subscription_status?.toLowerCase() === 'expired') {
