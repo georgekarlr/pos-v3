@@ -72,8 +72,9 @@ export const ForgotAdminPasswordModal: React.FC<ForgotAdminPasswordModalProps> =
                 </a>
               </li>
               <li>Login to your account</li>
-              <li>Go to <strong>Settings</strong></li>
-              <li>Reset account password (resets admin password to <code className="font-mono bg-slate-200/80 px-1 py-0.5 rounded">admin123</code>)</li>
+              <li>Go to <strong>Account Settings</strong></li>
+              <li>Request &amp; enter <strong>OTP code</strong> to unlock update form</li>
+              <li>Update account password (resets admin password to <code className="font-mono bg-slate-200/80 px-1 py-0.5 rounded">admin123</code> and auto-locks form)</li>
             </ol>
           </div>
 
@@ -101,9 +102,9 @@ export const ForgotAdminPasswordModal: React.FC<ForgotAdminPasswordModalProps> =
                 </a>
               </li>
               <li>Click <strong>Login</strong> button then click <strong>Forgot password</strong></li>
-              <li>Send email to reset password</li>
-              <li>Go to Gmail (or your email inbox) to reset password</li>
-              <li>Reset account password (resets admin password to <code className="font-mono bg-slate-200/80 px-1 py-0.5 rounded">admin123</code>)</li>
+              <li>Send email to receive <strong>OTP code</strong></li>
+              <li>Enter OTP code to unlock update password form</li>
+              <li>Update account password (resets admin password to <code className="font-mono bg-slate-200/80 px-1 py-0.5 rounded">admin123</code> and auto-locks form)</li>
             </ol>
           </div>
         </div>
