@@ -46,8 +46,9 @@ export const AuthSection: React.FC = () => {
             <ol className="list-decimal list-inside space-y-0.5 text-amber-900 ml-1">
               <li>Go to <strong>ceintelly.com</strong></li>
               <li>Login to your account</li>
-              <li>Go to <strong>Settings</strong></li>
-              <li>Reset account password</li>
+              <li>Go to <strong>Account Settings</strong></li>
+              <li>Request &amp; enter <strong>OTP code</strong> to unlock password update</li>
+              <li>Update account password (auto-locks upon success)</li>
             </ol>
           </div>
           <div className="bg-white/80 border border-amber-200/80 rounded-md p-2.5 space-y-1">
@@ -55,9 +56,9 @@ export const AuthSection: React.FC = () => {
             <ol className="list-decimal list-inside space-y-0.5 text-amber-900 ml-1">
               <li>Go to <strong>ceintelly.com</strong></li>
               <li>Click login button then click <strong>forgot password</strong></li>
-              <li>Send email to reset password</li>
-              <li>Go to Gmail to reset password</li>
-              <li>Reset account password</li>
+              <li>Send email to request <strong>OTP code</strong></li>
+              <li>Enter OTP code to unlock password reset form</li>
+              <li>Update account password (auto-locks upon success)</li>
             </ol>
           </div>
         </div>
