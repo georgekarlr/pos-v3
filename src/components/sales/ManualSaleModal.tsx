@@ -271,7 +271,7 @@ const ManualSaleModal: React.FC<ManualSaleModalProps> = ({ open, onClose, onSucc
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 overflow-hidden" role="dialog" aria-modal="true">
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[5vh] pb-[5vh] px-3 sm:px-4 overflow-y-auto overscroll-contain" role="dialog" aria-modal="true">
       {/* Backdrop */}
       <div
         className={`fixed inset-0 bg-slate-950/70 backdrop-blur-sm transition-opacity duration-300 ${show ? 'opacity-100' : 'opacity-0'}`}
@@ -281,7 +281,7 @@ const ManualSaleModal: React.FC<ManualSaleModalProps> = ({ open, onClose, onSucc
       {/* Main Modal Card - Strictly locked at h-[85vh] on all viewports so height never changes when toggling SC/PWD */}
       <form
         onSubmit={handleSubmit}
-        className={`relative bg-white rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-5xl h-[85vh] flex flex-col overflow-hidden border border-slate-200 transition-all duration-300 transform ${show ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-4'}`}
+        className={`relative bg-white rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-5xl max-h-[100vh] flex flex-col overflow-hidden border border-slate-200 transition-all duration-300 transform ${show ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-4'}`}
       >
         {/* Header - Fixed Top Anchor */}
         <div className="px-4 py-3 sm:px-6 sm:py-3.5 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800 shrink-0">
@@ -310,7 +310,7 @@ const ManualSaleModal: React.FC<ManualSaleModalProps> = ({ open, onClose, onSucc
 
         {/* Scrollable Form Content Body */}
         <div className="flex-1 min-h-0 overflow-y-auto p-3.5 sm:p-4 space-y-3.5 bg-slate-50/40">
-          
+
           {/* Error Banner */}
           {error && (
             <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 text-xs flex items-start gap-2.5 shadow-sm animate-fadeIn">
@@ -324,10 +324,10 @@ const ManualSaleModal: React.FC<ManualSaleModalProps> = ({ open, onClose, onSucc
 
           {/* Main 2-Column Responsive Layout - items-start prevents vertical column stretch gaps */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 sm:gap-4 items-start">
-            
+
             {/* Left Column: Transaction Meta & Cart (7 cols) */}
             <div className="lg:col-span-7 space-y-3.5">
-              
+
               {/* Receipt Info Card */}
               <div className="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-sm space-y-2.5">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
@@ -408,7 +408,7 @@ const ManualSaleModal: React.FC<ManualSaleModalProps> = ({ open, onClose, onSucc
                         className="w-full pl-8 pr-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
                       />
                       <User className="h-3.5 w-3.5 text-slate-400 absolute left-2.5 top-2" />
-                      
+
                       {searchingCustomers && (
                         <div className="absolute right-3 top-2 text-[10px] text-indigo-600 font-medium">Searching...</div>
                       )}
@@ -473,7 +473,7 @@ const ManualSaleModal: React.FC<ManualSaleModalProps> = ({ open, onClose, onSucc
                     className="w-full pl-8 pr-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
                   />
                   <Search className="h-3.5 w-3.5 text-slate-400 absolute left-2.5 top-2" />
-                  
+
                   {searchingProducts && (
                     <div className="absolute right-3 top-2 text-[10px] text-indigo-600 font-medium">Searching...</div>
                   )}
@@ -580,7 +580,7 @@ const ManualSaleModal: React.FC<ManualSaleModalProps> = ({ open, onClose, onSucc
 
             {/* Right Column: Payments, Loyalty & Financial Totals (5 cols) */}
             <div className="lg:col-span-5 space-y-3.5">
-              
+
               {/* Payment Methods Card */}
               <div className="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-sm space-y-2.5">
                 <div className="flex items-center justify-between">
@@ -676,7 +676,7 @@ const ManualSaleModal: React.FC<ManualSaleModalProps> = ({ open, onClose, onSucc
 
               {/* Coupons & Special Discounts Panel */}
               <div className="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-sm space-y-2.5">
-                
+
                 {/* Coupons */}
                 <div className="space-y-1">
                   <label className="flex items-center gap-1.5 text-[11px] font-bold text-slate-600 uppercase tracking-wider">
@@ -823,7 +823,7 @@ const ManualSaleModal: React.FC<ManualSaleModalProps> = ({ open, onClose, onSucc
                     <span>Gross Subtotal</span>
                     <span className="font-mono">₱{subtotal.toFixed(2)}</span>
                   </div>
-                  
+
                   {totalPromoDiscount > 0 && (
                     <div className="flex justify-between text-emerald-400">
                       <span>Promo Discount</span>
