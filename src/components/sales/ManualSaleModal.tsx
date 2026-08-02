@@ -241,7 +241,7 @@ const ManualSaleModal: React.FC<ManualSaleModalProps> = ({ open, onClose, onSucc
         onClick={onClose}
       />
 
-      <div className={`relative bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col transition-all duration-300 ${show ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
+      <div className={`relative bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col min-h-0 transition-all duration-300 ${show ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
         <div className="px-6 py-4 border-b flex items-center justify-between bg-gray-50">
           <h3 className="text-xl font-bold text-gray-900">Record Manual Receipt</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
@@ -249,7 +249,7 @@ const ManualSaleModal: React.FC<ManualSaleModalProps> = ({ open, onClose, onSucc
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="flex-1 min-h-0 overflow-y-auto p-6 space-y-6">
           {error && (
             <div className="p-4 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm">
               {error}
@@ -321,65 +321,6 @@ const ManualSaleModal: React.FC<ManualSaleModalProps> = ({ open, onClose, onSucc
                 )}
               </div>
 
-              {isScPwdDiscount && (
-                <div className="p-3 border border-orange-200 bg-orange-50/50 rounded-md space-y-3">
-                  <h4 className="text-xs font-bold text-orange-800 uppercase tracking-wider">BIR SC/PWD Compliance</h4>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700">ID Number</label>
-                      <input
-                        type="text"
-                        required
-                        value={scPwdIdNumber}
-                        onChange={e => setScPwdIdNumber(e.target.value)}
-                        placeholder="ID No."
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-xs"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700">Full Name</label>
-                      <input
-                        type="text"
-                        required
-                        value={scPwdName}
-                        onChange={e => setScPwdName(e.target.value)}
-                        placeholder="Name"
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-xs"
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {selectedCustomer && (
-                <div className="p-3 border border-blue-200 bg-blue-50/50 rounded-md space-y-3">
-                  <h4 className="text-xs font-bold text-blue-800 uppercase tracking-wider">Loyalty Program</h4>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700">Earned Points</label>
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={loyaltyPointsEarned}
-                        onChange={e => setLoyaltyPointsEarned(Number(e.target.value))}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-xs"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700">Redeemed Points</label>
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={loyaltyPointsRedeemed}
-                        onChange={e => setLoyaltyPointsRedeemed(Number(e.target.value))}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-xs"
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
 
               <div>
                 <label className="block text-sm font-medium text-gray-700">Notes</label>
@@ -618,6 +559,66 @@ const ManualSaleModal: React.FC<ManualSaleModalProps> = ({ open, onClose, onSucc
                   </div>
                   <span className="text-red-600 font-bold">-₱{scPwdDiscountAmount.toFixed(2)}</span>
                 </div>
+
+                {isScPwdDiscount && (
+                  <div className="p-3 border border-orange-200 bg-orange-50/50 rounded-md space-y-3">
+                    <h4 className="text-xs font-bold text-orange-800 uppercase tracking-wider">BIR SC/PWD Compliance</h4>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700">ID Number</label>
+                        <input
+                          type="text"
+                          required
+                          value={scPwdIdNumber}
+                          onChange={e => setScPwdIdNumber(e.target.value)}
+                          placeholder="ID No."
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-xs"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700">Full Name</label>
+                        <input
+                          type="text"
+                          required
+                          value={scPwdName}
+                          onChange={e => setScPwdName(e.target.value)}
+                          placeholder="Name"
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-xs"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {selectedCustomer && (
+                  <div className="p-3 border border-blue-200 bg-blue-50/50 rounded-md space-y-3">
+                    <h4 className="text-xs font-bold text-blue-800 uppercase tracking-wider">Loyalty Program</h4>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700">Earned Points</label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={loyaltyPointsEarned}
+                          onChange={e => setLoyaltyPointsEarned(Number(e.target.value))}
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-xs"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700">Redeemed Points</label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={loyaltyPointsRedeemed}
+                          onChange={e => setLoyaltyPointsRedeemed(Number(e.target.value))}
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-xs"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 <div className="pt-2 border-t flex justify-between font-bold text-lg">
                   <span>Net Due</span>
