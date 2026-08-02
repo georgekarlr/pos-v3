@@ -132,7 +132,7 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ open, data, onClose, autoDe
     <div className="fixed inset-0 z-[1000] flex items-end sm:items-center justify-center p-0 sm:p-4" role="dialog" aria-modal="true">
       <div className={`absolute inset-0 bg-gray-900/60 transition-opacity duration-300 ${show ? 'opacity-100' : 'opacity-0'}`} onClick={onClose} />
 
-      <div className={`relative bg-white w-full sm:w-auto sm:max-w-md rounded-t-lg sm:rounded-lg shadow-xl transition-all duration-300 ${show ? 'opacity-100 translate-y-0 sm:scale-100' : 'opacity-0 translate-y-3 sm:scale-95'}`}>
+      <div className={`relative bg-white w-full sm:w-auto sm:max-w-md rounded-t-lg sm:rounded-lg shadow-xl flex flex-col max-h-[90vh] sm:max-h-[95vh] transition-all duration-300 ${show ? 'opacity-100 translate-y-0 sm:scale-100' : 'opacity-0 translate-y-3 sm:scale-95'}`}>
         <div className="px-4 py-3 border-b">
           <div className="flex items-center justify-between">
             <h3 className="text-base font-semibold">Receipt</h3>
@@ -140,7 +140,7 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ open, data, onClose, autoDe
           </div>
         </div>
 
-        <div className="p-4 flex items-start justify-center overflow-y-auto max-h-[calc(100vh-16rem)] min-h-[200px]">
+        <div className="p-4 flex-1 flex items-start justify-center overflow-y-auto min-h-[200px]">
           <div ref={receiptRef}>
             <Receipt data={data} />
           </div>

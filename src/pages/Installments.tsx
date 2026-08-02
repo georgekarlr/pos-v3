@@ -27,10 +27,11 @@ import InstallmentReceiptModal from '../components/pos/InstallmentReceiptModal';
 import { ReceiptData } from '../components/pos/Receipt';
 import { getCachedBusinessSettings } from '../utils/settingsCache';
 import {FormatDateTime} from "../utils/formatDateTime.ts";
-import { getTerminalId } from '../utils/terminalStorage';
+import { usePrinter } from '../contexts/PrinterContext';
 
 const Installments: React.FC = () => {
   const { persona } = useAuth();
+  const { autoPrint } = usePrinter();
 
   // --- All-contracts list (search + filter + pagination) ---
   const {
@@ -729,12 +730,14 @@ const Installments: React.FC = () => {
         open={showReceiptModal}
         data={receiptData}
         onClose={() => setShowReceiptModal(false)}
+        autoDevicePrint={autoPrint}
       />
 
       <InstallmentReceiptModal
         open={showInstallmentReceiptModal}
         data={receiptData}
         onClose={() => setShowInstallmentReceiptModal(false)}
+        autoDevicePrint={autoPrint}
       />
     </div>
   );

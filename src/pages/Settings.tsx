@@ -1144,7 +1144,11 @@ const Settings: React.FC = () => {
                     <button
                       id="btn-toggle-auto-print"
                       type="button"
-                      onClick={() => setAutoPrint(!autoPrint)}
+                      onClick={() => {
+                        const next = !autoPrint
+                        setAutoPrint(next)
+                        setPrinterMessage(next ? 'Auto-print on checkout enabled ✓' : 'Auto-print on checkout disabled')
+                      }}
                       className={`flex-shrink-0 transition-colors ${autoPrint ? 'text-blue-600' : 'text-gray-400'}`}
                       title={autoPrint ? 'Auto-print ON — click to disable' : 'Auto-print OFF — click to enable'}
                     >
