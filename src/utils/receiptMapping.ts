@@ -1,6 +1,7 @@
 import { ReceiptData, ReceiptLine, ReceiptPayment } from '../components/pos/Receipt'
 import { SaleDetailsResponse } from '../types/sales'
 import { getCachedBusinessSettings } from './settingsCache'
+import { SOFTWARE_PROVIDER_INFO } from '../constants/provider'
 
 export function mapSaleDetailsToReceipt(details: SaleDetailsResponse): ReceiptData {
     const order = details.order
@@ -55,10 +56,11 @@ export function mapSaleDetailsToReceipt(details: SaleDetailsResponse): ReceiptDa
     let min: string | undefined = undefined;
     let ptuNumber: string | undefined = undefined;
     let ptuIssuedBy: string | undefined = undefined;
-    let softwareProviderName: string | undefined = undefined;
-    let softwareProviderAddress: string | undefined = undefined;
-    let softwareProviderTin: string | undefined = undefined;
-    let softwareProviderAccreditationNo: string | undefined = undefined;
+
+    const softwareProviderName: string = SOFTWARE_PROVIDER_INFO.name;
+    const softwareProviderAddress: string = SOFTWARE_PROVIDER_INFO.address;
+    const softwareProviderTin: string = SOFTWARE_PROVIDER_INFO.tin;
+    const softwareProviderAccreditationNo: string = SOFTWARE_PROVIDER_INFO.accreditationNo;
 
     try {
         const settings = getCachedBusinessSettings();
@@ -70,10 +72,6 @@ export function mapSaleDetailsToReceipt(details: SaleDetailsResponse): ReceiptDa
             min = settings.min || undefined;
             ptuNumber = settings.ptu_number || undefined;
             ptuIssuedBy = settings.ptu_issued_by || undefined;
-            softwareProviderName = settings.software_provider_name || undefined;
-            softwareProviderAddress = settings.software_provider_address || undefined;
-            softwareProviderTin = settings.software_provider_tin || undefined;
-            softwareProviderAccreditationNo = settings.software_provider_accreditation_no || undefined;
         }
     } catch (e) {
         console.error('Error reading cached business settings in mapping:', e);

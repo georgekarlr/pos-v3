@@ -4,6 +4,7 @@ import { OfflineDB, OfflineSale } from '../../db/offlineDB';
 import { ReceiptData, ReceiptLine } from './Receipt';
 import ReceiptModal from './ReceiptModal';
 import { getCachedBusinessSettings } from '../../utils/settingsCache';
+import { SOFTWARE_PROVIDER_INFO } from '../../constants/provider';
 
 interface OfflineSalesModalProps {
   open: boolean;
@@ -50,10 +51,10 @@ const OfflineSalesModal: React.FC<OfflineSalesModalProps> = ({ open, onClose }) 
     let min: string | undefined;
     let ptuNumber: string | undefined;
     let ptuIssuedBy: string | undefined;
-    let softwareProviderName: string | undefined;
-    let softwareProviderAddress: string | undefined;
-    let softwareProviderTin: string | undefined;
-    let softwareProviderAccreditationNo: string | undefined;
+    const softwareProviderName: string = SOFTWARE_PROVIDER_INFO.name;
+    const softwareProviderAddress: string = SOFTWARE_PROVIDER_INFO.address;
+    const softwareProviderTin: string = SOFTWARE_PROVIDER_INFO.tin;
+    const softwareProviderAccreditationNo: string = SOFTWARE_PROVIDER_INFO.accreditationNo;
 
     try {
       const settings = getCachedBusinessSettings();
@@ -65,10 +66,6 @@ const OfflineSalesModal: React.FC<OfflineSalesModalProps> = ({ open, onClose }) 
         min = settings.min || undefined;
         ptuNumber = settings.ptu_number || undefined;
         ptuIssuedBy = settings.ptu_issued_by || undefined;
-        softwareProviderName = settings.software_provider_name || undefined;
-        softwareProviderAddress = settings.software_provider_address || undefined;
-        softwareProviderTin = settings.software_provider_tin || undefined;
-        softwareProviderAccreditationNo = settings.software_provider_accreditation_no || undefined;
       }
     } catch (e) {
       console.error('Error reading cached business settings in offline viewReceipt:', e);
