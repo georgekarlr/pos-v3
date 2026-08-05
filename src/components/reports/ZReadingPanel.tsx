@@ -114,23 +114,12 @@ export const generateZReadingText = (
   const ptuNo = report.Terminal?.PTU || businessSettings?.ptu_number || businessSettings?.ptu_issued_by || '[Subscriber\'s PTU Number]';
 
   // software provider details
-  const providerName = businessSettings?.software_provider_name || '[Your SaaS Company Name]';
-  const providerAddress = businessSettings?.software_provider_address || '[Your Address]';
-  const providerTIN = businessSettings?.software_provider_tin || '[Your TIN]';
-  const providerAccredNo = businessSettings?.software_provider_accreditation_no || '045-123456789-000000';
-  const providerDateIssued = businessSettings?.software_provider_date_issued ? formatDate(businessSettings.software_provider_date_issued) : 'Jan 01, 2024';
-
-  // Calculate Valid Until: 5 years after software_provider_date_issued
-  let providerValidUntil = 'Jan 01, 2029';
-  if (businessSettings?.software_provider_date_issued) {
-    try {
-      const issueDate = new Date(businessSettings.software_provider_date_issued);
-      const validDate = new Date(issueDate.setFullYear(issueDate.getFullYear() + 5));
-      providerValidUntil = validDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    } catch {
-      // ignore
-    }
-  }
+  const providerName = SOFTWARE_PROVIDER_INFO.name;
+  const providerAddress = SOFTWARE_PROVIDER_INFO.address;
+  const providerTIN = SOFTWARE_PROVIDER_INFO.tin;
+  const providerAccredNo = SOFTWARE_PROVIDER_INFO.accreditationNo;
+  const providerDateIssued = SOFTWARE_PROVIDER_INFO.dateIssued ? formatDate(SOFTWARE_PROVIDER_INFO.dateIssued) : 'Jan 01, 2024';
+  const providerValidUntil = SOFTWARE_PROVIDER_INFO.validUntil ? formatDate(SOFTWARE_PROVIDER_INFO.validUntil) : 'Jan 01, 2029';
 
   const zCounter = report.Terminal?.ZCounter || (report as any).z_counter || (report as any).id || (report as any).z_reading_id || 1;
   const zCounterStr = String(zCounter).padStart(6, '0');

@@ -27,6 +27,7 @@ import { usePrinter } from '../contexts/PrinterContext'
 import OfflineSalesModal from '../components/pos/OfflineSalesModal'
 import PettyCashModal from '../components/pos/PettyCashModal'
 import { getCachedBusinessSettings } from '../utils/settingsCache'
+import { SOFTWARE_PROVIDER_INFO } from '../constants/provider'
 import { FormatDateTime } from '../utils/formatDateTime'
 import { getTerminalId, saveTerminalId } from '../utils/terminalStorage'
 import { ReportService } from '../services/reportService'
@@ -463,10 +464,10 @@ const POS: React.FC = () => {
         let min: string | undefined;
         let ptuNumber: string | undefined;
         let ptuIssuedBy: string | undefined;
-        let softwareProviderName: string | undefined;
-        let softwareProviderAddress: string | undefined;
-        let softwareProviderTin: string | undefined;
-        let softwareProviderAccreditationNo: string | undefined;
+        const softwareProviderName: string = SOFTWARE_PROVIDER_INFO.name;
+        const softwareProviderAddress: string = SOFTWARE_PROVIDER_INFO.address;
+        const softwareProviderTin: string = SOFTWARE_PROVIDER_INFO.tin;
+        const softwareProviderAccreditationNo: string = SOFTWARE_PROVIDER_INFO.accreditationNo;
 
         try {
           const settings = getCachedBusinessSettings();
@@ -478,10 +479,6 @@ const POS: React.FC = () => {
             min = settings.min || undefined;
             ptuNumber = settings.ptu_number || undefined;
             ptuIssuedBy = settings.ptu_issued_by || undefined;
-            softwareProviderName = settings.software_provider_name || undefined;
-            softwareProviderAddress = settings.software_provider_address || undefined;
-            softwareProviderTin = settings.software_provider_tin || undefined;
-            softwareProviderAccreditationNo = settings.software_provider_accreditation_no || undefined;
           }
         } catch (e) {
           console.error('Error reading cached business settings in POS checkout:', e);

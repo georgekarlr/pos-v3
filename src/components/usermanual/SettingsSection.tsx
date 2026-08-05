@@ -17,9 +17,12 @@ export const SettingsSection: React.FC = () => {
         </div>
 
         <div className="border border-gray-200 rounded-lg p-3 bg-gray-50/50">
-          <h4 className="font-semibold text-gray-800">🏢 Business Profile (Admin Only)</h4>
+          <h4 className="font-semibold text-gray-800">🏢 Business Profile &amp; Software Provider Information (Admin Only)</h4>
           <p className="text-xs text-gray-600 mt-1">
             Configure Business Name, physical Address, Tax Identification Number (TIN), Machine Identification Number (MIN), and PTU (Permit to Use) authority for printed receipts. Toggle the VAT Registered setting.
+          </p>
+          <p className="text-xs text-gray-600 mt-2 bg-blue-50/60 p-2 rounded border border-blue-100">
+            <strong>BIR Software Provider Details:</strong> Provider Name (<em>Ceintelly Software Development Services</em>), Address, TIN, Accreditation No., Date Issued, and Valid Until are built as hardcoded system constants (<code className="bg-blue-100 px-1 rounded">SOFTWARE_PROVIDER_INFO</code>) for BIR compliance across receipts and X/Z readings.
           </p>
         </div>
 
